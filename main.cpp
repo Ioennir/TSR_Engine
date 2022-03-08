@@ -7,10 +7,9 @@
 
 #define DEBUG
 
-//TODO(Fran): Maybe refactor the HRESULT things, it's kind of messy
-
 bool InitD3D11(HWND hWnd, RECT wRect)
 {
+	HRESULT hr;
 	UINT wWidth = wRect.right - wRect.left;
 	UINT wHeight = wRect.bottom - wRect.top;
 	// Feature level
@@ -21,11 +20,12 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	ID3D11DeviceContext* DX11immediateContext;
 	// Create Device and Context
 	UINT createDeviceFlags = 0;
+
 #ifdef DEBUG
 	createDeviceFlags = D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-	HRESULT hr = D3D11CreateDevice(
+	hr = D3D11CreateDevice(
 		0, // uses primary display
 		D3D_DRIVER_TYPE_HARDWARE, // hardware rendering acceleration
 		0, // we are rendering with hardware
@@ -78,28 +78,29 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 
 	//Get the factory
 	IDXGIDevice* dxgiDevice = 0;
-	HRESULT hr1 = DX11device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
-	if (FAILED(hr1))
+	hr = DX11device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIDevice", 0, 0);
 	}
+	
 	IDXGIAdapter* dxgiAdapter = 0;
-	HRESULT hr2 = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
-	if (FAILED(hr2))
+	hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
+	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIAdapter", 0, 0);
 	}
+
 	IDXGIFactory* dxgiFactory = 0;
-	HRESULT hr3 = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
-	if (FAILED(hr3))
+	hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
+	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIFactory", 0, 0);
 	}
-
-	// now failing here.
+	
 	// finally create the swapchain...
-	HRESULT hr4 = dxgiFactory->CreateSwapChain(DX11device, &scDescriptor, &DX11swapChain);
-	if (FAILED(hr4))
+	hr = dxgiFactory->CreateSwapChain(DX11device, &scDescriptor, &DX11swapChain);
+	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to create the SwapChain", 0, 0);
 	}
@@ -110,10 +111,10 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	dxgiFactory->Release();
 
 	// Create Render Target view
-	ID3D11RenderTargetView* renderTargetView;
+	ID3D11RenderTargetView* renderTargetView = nullptr;
 	ID3D11Texture2D* backBuffer;
-	HRESULT hr5 = DX11swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
-	if (FAILED(hr5))
+	hr = DX11swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed accquiring backbuffer", 0, 0);
 	}
@@ -146,27 +147,19 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 
 	ID3D11Texture2D* depthStencilBuffer;
 	ID3D11DepthStencilView* depthStencilView;
-	HRESULT hr6 = DX11device->CreateTexture2D(&dsDescriptor, 0, &depthStencilBuffer);
-	if (FAILED(hr6)) {
+	hr = DX11device->CreateTexture2D(&dsDescriptor, 0, &depthStencilBuffer);
+	if (FAILED(hr)) {
 		MessageBox(0, L"Failed creating depth buffer", 0, 0);
 	}
-	else 
+	else
 	{
-		HRESULT hr7 = DX11device->CreateDepthStencilView(depthStencilBuffer, 0, &depthStencilView);
-		if (FAILED(hr7)) {
+		hr = DX11device->CreateDepthStencilView(depthStencilBuffer, 0, &depthStencilView);
+		if (FAILED(hr)) {
 			MessageBox(0, L"Failed creating depth view", 0, 0);
 		}
-
 		//bind views to output merger stage
 		// we can bind multiple render target views.
-		if (!FAILED(hr7) && !FAILED(hr5))
-		{
-			DX11immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
-		}
-		else
-		{
-			MessageBox(0, L"Failed binding render targets", 0, 0);
-		}
+		DX11immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 	}
 
 	// create viewport and set it
