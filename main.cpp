@@ -264,18 +264,10 @@ void UpdateTimeInformation(TimeInfo* tInfo)
 
 }
 
-INT WINAPI wWinMain(
-	_In_ HINSTANCE hInstance, 
-	_In_opt_ HINSTANCE hPrevInstance, 
-	_In_ LPWSTR lpCmdLine, 
-	_In_ int nCmdShow)
+HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int nCmdShow)
 {
-	// Initialize and reset the time information for the application
-	TimeInfo Time;
-	ResetTimeInformation(&Time);
-	
 	// create and register the class to spawn the window
-	LPCWSTR wcName = L"CGraphWindow";
+	LPCWSTR wcName = L"CGraphWindowClass";
 	WNDCLASSEX wclass = { 0 };
 	wclass.cbSize = sizeof(WNDCLASSEX);
 	wclass.style = CS_HREDRAW | CS_VREDRAW;
@@ -286,18 +278,36 @@ INT WINAPI wWinMain(
 	wclass.lpszClassName = wcName;
 	RegisterClassEx(&wclass);
 
-	// create the window and display it.
-	RECT wRect = { 0,0,1280,720 };
 	AdjustWindowRect(&wRect, WS_OVERLAPPEDWINDOW, FALSE);
 	HWND wHandler = CreateWindow(
 		wcName,
-		L"CGraph Window", // window name
+		winName, // window name
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, // style for the window
 		CW_USEDEFAULT, CW_USEDEFAULT, // X AND Y start positions for the window
 		wRect.right - wRect.left,
 		wRect.bottom - wRect.top,
 		0, 0, hInstance, 0);
+
+	//Show the window
 	ShowWindow(wHandler, nCmdShow);
+
+	return wHandler;
+}
+
+INT WINAPI wWinMain(
+	_In_ HINSTANCE hInstance, 
+	_In_opt_ HINSTANCE hPrevInstance, 
+	_In_ LPWSTR lpCmdLine, 
+	_In_ int nCmdShow)
+{
+	// Initialize and reset the time information for the application
+	TimeInfo Time;
+	ResetTimeInformation(&Time);
+
+	// create the window and display it.
+	RECT wRect = { 0,0,1280,720 };
+	HWND wHandler = CreateAndSpawnWindow(L"CGraph Window", wRect, hInstance, nCmdShow);
+
 	InitD3D11(wHandler, wRect);
 	// Message loop
 	MSG msg = { 0 };
