@@ -1,4 +1,6 @@
+// windows includes
 #include <Windows.h>
+#define WIN32_LEAN_AND_MEAN
 
 // std includes
 #include <iostream>
@@ -9,22 +11,32 @@
 #include <d3d11.h>
 #include <dxgi.h>
 
-#define WIN32_LEAN_AND_MEAN
 
 #define DEBUG
 
-bool InitD3D11(HWND hWnd, RECT wRect)
+
+struct DX11Info
+{
+	ID3D11Device* device;
+	ID3D11DeviceContext* imDeviceContext;
+	D3D_FEATURE_LEVEL* featureLevel;
+	IDXGISwapChain* swapChain;
+	ID3D11Texture2D* depthStencilBuffer;
+	ID3D11RenderTargetView* renderTargetView;
+	ID3D11DepthStencilView* depthStencilView;
+	D3D11_VIEWPORT screenViewport;
+
+} typedef DX11Info;
+
+bool InitD3D11(HWND hWnd, RECT wRect, DX11Info * dxInfo)
 {
 	HRESULT hr;
 	UINT wWidth = wRect.right - wRect.left;
 	UINT wHeight = wRect.bottom - wRect.top;
-	// Feature level
-	D3D_FEATURE_LEVEL fLevel = { D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0 };
 
-	ID3D11Device* DX11device;
-	D3D_FEATURE_LEVEL DX11featureLevel;
-	ID3D11DeviceContext* DX11immediateContext;
-	// Create Device and Context
+	// Desired Feature level
+	D3D_FEATURE_LEVEL fLevel = { D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0 };
+	// Device Flags
 	UINT createDeviceFlags = 0;
 
 #ifdef DEBUG
@@ -39,9 +51,9 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 		&fLevel,
 		1,
 		D3D11_SDK_VERSION,
-		&DX11device,
-		&DX11featureLevel,
-		&DX11immediateContext
+		&dxInfo->device,
+		dxInfo->featureLevel,
+		&dxInfo->imDeviceContext
 	);
 	if (FAILED(hr)) 
 	{
@@ -56,7 +68,8 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	DXGI_SWAP_CHAIN_DESC scDescriptor;
 	scDescriptor.BufferDesc.Width = wWidth;
 	scDescriptor.BufferDesc.Height = wHeight;
-	scDescriptor.BufferDesc.RefreshRate.Numerator = 60;
+	// TODO(Fran): maybe pool displays and query refresh rate to get this exact
+	scDescriptor.BufferDesc.RefreshRate.Numerator = 60; //this is weird
 	scDescriptor.BufferDesc.RefreshRate.Denominator = 1;
 	scDescriptor.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	scDescriptor.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -74,20 +87,20 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	scDescriptor.BufferCount = 1;
 	scDescriptor.OutputWindow = hWnd;
 	scDescriptor.Windowed = true;
-	//NOTE(Fran): when the swapEffect is set to FLIP_DISCARD the swapchain creation fails
-	// CHG[1]: DXGI_SWAP_EFFECT_FLIP_DISCARD
+
+	// NOTE(Fran): when the swapEffect is set to FLIP_DISCARD the swapchain creation fails
+	// DXGI_SWAP_EFFECT_FLIP_DISCARD
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = 0;
 
 	//Create Swap chain
-	IDXGISwapChain* DX11swapChain;
-
 	//Get the factory
 	IDXGIDevice* dxgiDevice = 0;
-	hr = DX11device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+	hr = dxInfo->device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIDevice", 0, 0);
+		return false;
 	}
 	
 	IDXGIAdapter* dxgiAdapter = 0;
@@ -95,6 +108,7 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIAdapter", 0, 0);
+		return false;
 	}
 
 	IDXGIFactory* dxgiFactory = 0;
@@ -102,32 +116,35 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIFactory", 0, 0);
+		return false;
 	}
 	
 	// finally create the swapchain...
-	hr = dxgiFactory->CreateSwapChain(DX11device, &scDescriptor, &DX11swapChain);
+	hr = dxgiFactory->CreateSwapChain(dxInfo->device, &scDescriptor, &dxInfo->swapChain);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to create the SwapChain", 0, 0);
+		return false;
 	}
 
-	//Release the COM interfaces
+	//Release the COM interfaces (decrement references)
 	dxgiDevice->Release();
 	dxgiAdapter->Release();
 	dxgiFactory->Release();
 
 	// Create Render Target view
-	ID3D11RenderTargetView* renderTargetView = nullptr;
 	ID3D11Texture2D* backBuffer;
-	hr = DX11swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+	hr = dxInfo->swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 	if (FAILED(hr))
 	{
-		MessageBox(0, L"Failed accquiring backbuffer", 0, 0);
+		MessageBox(0, L"Failed acquiring back buffer", 0, 0);
+		return false;
 	}
 	else
 	{
-		DX11device->CreateRenderTargetView(backBuffer, 0, &renderTargetView);
+		dxInfo->device->CreateRenderTargetView(backBuffer, 0, &dxInfo->renderTargetView);
 	}
+	//Release COM interface
 	backBuffer->Release();
 
 	// Depth buffer
@@ -151,34 +168,35 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	//dsDescriptor.CPUAccessFlags = 0; no cpu access
 	//dsDescriptor.MiscFlags = 0; optional flags
 
-	ID3D11Texture2D* depthStencilBuffer;
-	ID3D11DepthStencilView* depthStencilView;
-	hr = DX11device->CreateTexture2D(&dsDescriptor, 0, &depthStencilBuffer);
+	// set depth buffer and view
+	hr = dxInfo->device->CreateTexture2D(&dsDescriptor, 0, &dxInfo->depthStencilBuffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Failed creating depth buffer", 0, 0);
+		return false;
 	}
 	else
 	{
-		hr = DX11device->CreateDepthStencilView(depthStencilBuffer, 0, &depthStencilView);
+		hr = dxInfo->device->CreateDepthStencilView(dxInfo->depthStencilBuffer, 0, &dxInfo->depthStencilView);
 		if (FAILED(hr)) {
 			MessageBox(0, L"Failed creating depth view", 0, 0);
+			return false;
 		}
 		//bind views to output merger stage
 		// we can bind multiple render target views.
-		DX11immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
+		dxInfo->imDeviceContext->OMSetRenderTargets(1, &dxInfo->renderTargetView, dxInfo->depthStencilView);
 	}
 
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.
-	D3D11_VIEWPORT vp = { 0 };
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.Width = static_cast<float>(wWidth);
-	vp.Height = static_cast<float>(wHeight);
+	dxInfo->screenViewport = { 0 };
+	dxInfo->screenViewport.MinDepth = 0.0f;
+	dxInfo->screenViewport.MaxDepth = 1.0f;
+	dxInfo->screenViewport.TopLeftX = 0.0f;
+	dxInfo->screenViewport.TopLeftY = 0.0f;
+	dxInfo->screenViewport.Width = static_cast<float>(wWidth);
+	dxInfo->screenViewport.Height = static_cast<float>(wHeight);
 
-	DX11immediateContext->RSSetViewports(1, &vp);
+	dxInfo->imDeviceContext->RSSetViewports(1, &dxInfo->screenViewport);
 
 	return true;
 }
@@ -202,7 +220,7 @@ void CalculateFrameStats(HWND hWnd, float totalTime)
 		//build the caption string
 		std::wostringstream outstream;
 		outstream.precision(6);
-		outstream << L"CGraph window" << L" "
+		outstream << L"CGraph Window" << L" "
 			<< L"FPS: " << fps << L" "
 			<< L"Frame Time: " << mspf << L" (ms)";
 		SetWindowText(hWnd, outstream.str().c_str());
@@ -294,6 +312,16 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 	return wHandler;
 }
 
+void UpdateScene(float dt)
+{
+
+}
+
+void DrawScene()
+{
+
+}
+
 INT WINAPI wWinMain(
 	_In_ HINSTANCE hInstance, 
 	_In_opt_ HINSTANCE hPrevInstance, 
@@ -305,10 +333,13 @@ INT WINAPI wWinMain(
 	ResetTimeInformation(&Time);
 
 	// create the window and display it.
-	RECT wRect = { 0,0,1280,720 };
+	RECT wRect = { 0, 0, 1280, 720 };
 	HWND wHandler = CreateAndSpawnWindow(L"CGraph Window", wRect, hInstance, nCmdShow);
+	
+	// Initialize DX11 and get all the information needed
+	DX11Info dxInfo = { 0 };
+	InitD3D11(wHandler, wRect, &dxInfo);
 
-	InitD3D11(wHandler, wRect);
 	// Message loop
 	MSG msg = { 0 };
 	while (WM_QUIT != msg.message)
@@ -318,7 +349,7 @@ INT WINAPI wWinMain(
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		else
+		else // "game loop"
 		{
 			UpdateTimeInformation(&Time);
 			// calculate and show frame stats:
@@ -326,7 +357,8 @@ INT WINAPI wWinMain(
 			CalculateFrameStats(wHandler, (float)Time.totalTime);
 			
 			//do the update and render
-
+			UpdateScene((float)Time.deltaTime);
+			DrawScene();
 			
 		}
 	}
