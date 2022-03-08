@@ -1,5 +1,11 @@
 #include <Windows.h>
 
+// std includes
+#include <iostream>
+#include <sstream>
+
+
+// dx includes
 #include <d3d11.h>
 #include <dxgi.h>
 
@@ -177,6 +183,36 @@ bool InitD3D11(HWND hWnd, RECT wRect)
 	return true;
 }
 
+void CalculateFrameStats(HWND hWnd, float totalTime)
+{
+	// avg frames per second
+	// avg time in ms per frame
+	// append stats to window caption bar
+
+	static int frameCount = 0;
+	static float elapsedTime = 0.0f;
+
+	++frameCount;
+
+	if (totalTime - elapsedTime >= 1.0f)
+	{
+		float fps = (float)frameCount;
+		float mspf = 1000.0f / fps;
+
+		//build the caption string
+		std::wostringstream outstream;
+		outstream.precision(6);
+		outstream << L"CGraph window" << L" "
+			<< L"FPS: " << fps << L" "
+			<< L"Frame Time: " << mspf << L" (ms)";
+		SetWindowText(hWnd, outstream.str().c_str());
+
+		//reset
+		frameCount = 0;
+		elapsedTime += 1.0f;
+	}
+}
+
 LRESULT WINAPI WndProc(
 	HWND hWnd,
 	UINT message,
@@ -205,6 +241,7 @@ INT WINAPI wWinMain(
 	QueryPerformanceFrequency((LARGE_INTEGER *)&countsPerSec);
 	double secondsPerCount = 1.0 / (double)countsPerSec;
 	double deltaTime = 0.0;
+	double totalTime = 0.0;
 	// create and register the class to spawn the window
 	LPCWSTR wcName = L"CGraphWindow";
 	WNDCLASSEX wclass = { 0 };
@@ -245,9 +282,17 @@ INT WINAPI wWinMain(
 			QueryPerformanceCounter((LARGE_INTEGER *)&currTime);
 			deltaTime = (currTime - prevTime) * secondsPerCount;
 			prevTime = currTime;
-			//Force non negative
+			
+			// Force non negative
 			deltaTime = deltaTime < 0.0 ? 0.0 : deltaTime;
+			
+			// update total time
+			totalTime += deltaTime;
 
+			// calculate and show frame stats:
+			// Note(Fran): Currently it averages it every second.
+			CalculateFrameStats(wHandler, (float)totalTime);
+			
 			//do the update and render
 
 			
