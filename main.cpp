@@ -227,21 +227,53 @@ LRESULT WINAPI WndProc(
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
+struct TimeInfo
+{
+	__int64 baseTime;
+	__int64 currTime;
+	__int64 prevTime;
+	__int64 countsPerSec;
+	double secondsPerCount;
+	double deltaTime;
+	double totalTime;
+} typedef TimeInfo;
+
+void ResetTimeInformation(TimeInfo * tInfo)
+{
+	QueryPerformanceCounter((LARGE_INTEGER*)&tInfo->baseTime);
+	tInfo->currTime = tInfo->baseTime;
+	tInfo->prevTime = tInfo->baseTime;
+	QueryPerformanceFrequency((LARGE_INTEGER*)&tInfo->countsPerSec);
+	tInfo->secondsPerCount = 1.0 / (double)tInfo->countsPerSec;
+	tInfo->deltaTime = 0.0;
+	tInfo->totalTime = 0.0;
+}
+
+void UpdateTimeInformation(TimeInfo* tInfo)
+{
+	// get current time
+	QueryPerformanceCounter((LARGE_INTEGER*)&tInfo->currTime);
+	tInfo->deltaTime = (tInfo->currTime - tInfo->prevTime) * tInfo->secondsPerCount;
+	tInfo->prevTime = tInfo->currTime;
+
+	// Force non negative
+	tInfo->deltaTime = tInfo->deltaTime < 0.0 ? 0.0 : tInfo->deltaTime;
+
+	// update total time
+	tInfo->totalTime += tInfo->deltaTime;
+
+}
+
 INT WINAPI wWinMain(
 	_In_ HINSTANCE hInstance, 
 	_In_opt_ HINSTANCE hPrevInstance, 
 	_In_ LPWSTR lpCmdLine, 
 	_In_ int nCmdShow)
 {
-	__int64 baseTime;
-	QueryPerformanceCounter((LARGE_INTEGER*)&baseTime);
-	__int64 currTime = baseTime;
-	__int64 prevTime = baseTime;
-	__int64 countsPerSec = 0;
-	QueryPerformanceFrequency((LARGE_INTEGER *)&countsPerSec);
-	double secondsPerCount = 1.0 / (double)countsPerSec;
-	double deltaTime = 0.0;
-	double totalTime = 0.0;
+	// Initialize and reset the time information for the application
+	TimeInfo Time;
+	ResetTimeInformation(&Time);
+	
 	// create and register the class to spawn the window
 	LPCWSTR wcName = L"CGraphWindow";
 	WNDCLASSEX wclass = { 0 };
@@ -278,20 +310,10 @@ INT WINAPI wWinMain(
 		}
 		else
 		{
-			// get current time
-			QueryPerformanceCounter((LARGE_INTEGER *)&currTime);
-			deltaTime = (currTime - prevTime) * secondsPerCount;
-			prevTime = currTime;
-			
-			// Force non negative
-			deltaTime = deltaTime < 0.0 ? 0.0 : deltaTime;
-			
-			// update total time
-			totalTime += deltaTime;
-
+			UpdateTimeInformation(&Time);
 			// calculate and show frame stats:
 			// Note(Fran): Currently it averages it every second.
-			CalculateFrameStats(wHandler, (float)totalTime);
+			CalculateFrameStats(wHandler, (float)Time.totalTime);
 			
 			//do the update and render
 
