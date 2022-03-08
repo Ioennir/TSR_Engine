@@ -340,6 +340,10 @@ INT WINAPI wWinMain(
 	DX11Info dxInfo = { 0 };
 	InitD3D11(wHandler, wRect, &dxInfo);
 
+
+	//this is for testing purposes
+	const float* red = new float[4]{ 1.0f, 0.0f, 0.0f, 1.0f };
+
 	// Message loop
 	MSG msg = { 0 };
 	while (WM_QUIT != msg.message)
@@ -358,6 +362,11 @@ INT WINAPI wWinMain(
 			
 			//do the update and render
 			UpdateScene((float)Time.deltaTime);
+
+			//clear backbuffer
+			dxInfo.imDeviceContext->ClearRenderTargetView(dxInfo.renderTargetView, red);
+			dxInfo.imDeviceContext->ClearDepthStencilView(dxInfo.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+			dxInfo.swapChain->Present(0, 0);
 			DrawScene();
 			
 		}
