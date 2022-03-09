@@ -3,7 +3,7 @@
 .vs/*
 Debug/*
 *.vcxproj
-*.vcxproj.filters
+*.vcxproj.*
 
 
 # Prerequisites
