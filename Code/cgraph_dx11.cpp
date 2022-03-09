@@ -243,7 +243,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, ID3D11Buffer * vBuffer,
 	return true;
 }
 
-bool BuildTriangleInputLayout(ID3D11Device & device, ID3D11InputLayout * inputLayout)
+bool BuildTriangleInputLayout(ID3D11Device & device, ID3D11InputLayout * inputLayout, ID3D10Blob * vs_buffer)
 {
 	D3D11_INPUT_ELEMENT_DESC vertexDescriptor[] =
 	{
@@ -251,7 +251,27 @@ bool BuildTriangleInputLayout(ID3D11Device & device, ID3D11InputLayout * inputLa
 		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	
+	HRESULT hr = D3DReadFileToBlob(L"./x64/Debug/mainVS.cso", &vs_buffer);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed creating vertex shader blob", 0, 0);
+		return false;
+	}
+	ID3D11VertexShader* shader = nullptr;
+	hr = device.CreateVertexShader(vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), 0, &shader);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed creating vertex shader", 0, 0);
+		return false;
+	}
+
+	hr = device.CreateInputLayout(vertexDescriptor, 2, vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), &inputLayout);
+
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed creating Input Layout", 0, 0);
+		return false;
+	}
 
 	return true;
 }
