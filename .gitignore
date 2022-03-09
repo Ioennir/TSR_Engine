@@ -1,3 +1,11 @@
+# vs thingies
+.vs/
+.vs/*
+Debug/*
+*.vcxproj
+*.vcxproj.filters
+
+
 # Prerequisites
 *.d
 
