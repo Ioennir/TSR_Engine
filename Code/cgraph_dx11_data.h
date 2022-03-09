@@ -19,6 +19,7 @@ struct DX11Info
 	ID3D11Texture2D* depthStencilBuffer;
 	ID3D11RenderTargetView* renderTargetView;
 	ID3D11DepthStencilView* depthStencilView;
+	ID3D11RasterizerState* currentRasterizerState;
 	D3D11_VIEWPORT screenViewport;
 
 } typedef DX11Info;

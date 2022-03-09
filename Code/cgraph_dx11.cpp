@@ -175,11 +175,83 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 
 	dxInfo->imDeviceContext->RSSetViewports(1, &dxInfo->screenViewport);
 
+	//Rasterizer state??
+	D3D11_RASTERIZER_DESC rsDescriptor;
+	ZeroMemory(&rsDescriptor, sizeof(rsDescriptor));
+	rsDescriptor.FillMode = D3D11_FILL_SOLID;
+	rsDescriptor.CullMode = D3D11_CULL_BACK;
+	rsDescriptor.FrontCounterClockwise = false;
+	rsDescriptor.DepthClipEnable = true;
+
+	ID3D11RasterizerState* defaultRasterizer;
+	hr = dxInfo->device->CreateRasterizerState(&rsDescriptor, &defaultRasterizer);
+	if (FAILED(hr)) {
+		MessageBox(0, L"Failed creating Rasterizer State", 0, 0);
+		return false;
+	}
+	dxInfo->currentRasterizerState = defaultRasterizer;
+	dxInfo->imDeviceContext->RSSetState(dxInfo->currentRasterizerState);
+
 	return true;
 }
 
-bool TriangleBuffersInit()
+bool BuildTriangleGeometryBuffers(ID3D11Device & device, ID3D11Buffer * vBuffer, ID3D11Buffer * iBuffer)
 {
+	//testing purposes now
+	DirectX::XMFLOAT4 green = { 0.0f, 1.0f, 0.0f, 1.0f };
+	// Triangle vertex buffer
+	Vertex triangleVertices []=
+	{
+		{DirectX::XMFLOAT3(0.0f, 0.5f, 1.0f), green},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), green},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), green}
+	};
+
+	D3D11_BUFFER_DESC tvbd = { 0 };
+	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
+	tvbd.ByteWidth = sizeof(Vertex) * 3; //num of members in vertex array
+	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	
+	D3D11_SUBRESOURCE_DATA tvInitData = { 0 };
+	tvInitData.pSysMem = triangleVertices;
+
+	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer);
+	if (FAILED(hr)) {
+		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
+		return false;
+	}
+
+	UINT indices[] =
+	{
+		0, 1, 2
+	};
+
+	D3D11_BUFFER_DESC tibd = { 0 };
+	tibd.Usage = D3D11_USAGE_IMMUTABLE;
+	tibd.ByteWidth = sizeof(UINT) * 3;
+	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA tiInitData = { 0 };
+	tiInitData.pSysMem = indices;
+
+	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer);
+	if (FAILED(hr)) {
+		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
+		return false;
+	}
+
+	return true;
+}
+
+bool BuildTriangleInputLayout(ID3D11Device & device, ID3D11InputLayout * inputLayout)
+{
+	D3D11_INPUT_ELEMENT_DESC vertexDescriptor[] =
+	{
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+
+	
 
 	return true;
 }

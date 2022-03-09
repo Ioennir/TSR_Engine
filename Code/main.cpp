@@ -155,8 +155,13 @@ INT WINAPI wWinMain(
 	{
 		return -1;
 	}
-	//now init buffers and stuff
-
+	//now init buffers, fx and lastly layout
+	ID3D11Buffer* vertexBuff = nullptr;
+	ID3D11Buffer* indexBuff = nullptr;
+	ID3D11InputLayout* inputLayout = nullptr;
+	BuildTriangleGeometryBuffers(*dxInfo.device, vertexBuff, indexBuff);
+	
+	BuildTriangleInputLayout(*dxInfo.device, inputLayout);
 
 	//this is for testing purposes;
 	DirectX::XMVECTORF32 red = { 1.0f, 0.0f, 0.0f, 1.0f };
