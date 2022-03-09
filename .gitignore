@@ -4,6 +4,7 @@
 Debug/*
 *.vcxproj
 *.vcxproj.*
+x64/*
 
 
 # Prerequisites
