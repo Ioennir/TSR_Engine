@@ -15,14 +15,14 @@
 
 struct TimeData
 {
-	__int64 baseTime;
-	__int64 currTime;
-	__int64 prevTime;
-	__int64 countsPerSec;
-	double secondsPerCount;
-	double deltaTime;
-	double totalTime;
-} typedef TimeData;
+	__int64 baseTime {0};
+	__int64 currTime {0};
+	__int64 prevTime {0};
+	__int64 countsPerSec {0};
+	double secondsPerCount {0.0};
+	double deltaTime {0.0};
+	double totalTime {0.0};
+};
 
 void CalculateFrameStats(HWND hWnd, float totalTime)
 {
@@ -57,7 +57,7 @@ void CalculateFrameStats(HWND hWnd, float totalTime)
 void UpdateTimeInformation(TimeData* tData)
 {
 	// get current time
-	QueryPerformanceCounter((LARGE_INTEGER*)&tData->currTime);
+	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tData->currTime));
 	tData->deltaTime = (tData->currTime - tData->prevTime) * tData->secondsPerCount;
 	tData->prevTime = tData->currTime;
 
@@ -71,11 +71,11 @@ void UpdateTimeInformation(TimeData* tData)
 
 void ResetTimeInformation(TimeData* tData)
 {
-	QueryPerformanceCounter((LARGE_INTEGER*)&tData->baseTime);
+	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tData->baseTime));
 	tData->currTime = tData->baseTime;
 	tData->prevTime = tData->baseTime;
-	QueryPerformanceFrequency((LARGE_INTEGER*)&tData->countsPerSec);
-	tData->secondsPerCount = 1.0 / (double)tData->countsPerSec;
+	QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&tData->countsPerSec));
+	tData->secondsPerCount = 1.0 / static_cast<double>(tData->countsPerSec);
 	tData->deltaTime = 0.0;
 	tData->totalTime = 0.0;
 }
@@ -99,7 +99,7 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 {
 	// create and register the class to spawn the window
 	LPCWSTR wcName = L"CGraphWindowClass";
-	WNDCLASSEX wclass = { 0 };
+	WNDCLASSEX wclass { 0 };
 	wclass.cbSize = sizeof(WNDCLASSEX);
 	wclass.style = CS_HREDRAW | CS_VREDRAW;
 	wclass.lpfnWndProc = WndProc;
@@ -133,7 +133,7 @@ void UpdateScene(float dt)
 void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
-	DirectX::XMVECTORF32 red = { 1.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMVECTORF32 red { 1.0f, 0.0f, 0.0f, 1.0f };
 	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	
@@ -162,11 +162,11 @@ INT WINAPI wWinMain(
 	ResetTimeInformation(&Time);
 
 	// create the window and display it.
-	RECT wRect = { 0, 0, 1280, 720 };
+	RECT wRect { 0, 0, 1280, 720 };
 	HWND wHandler = CreateAndSpawnWindow(L"CGraph Window", wRect, hInstance, nCmdShow);
 	
 	// Initialize DX11 and get all the information needed
-	DX11Data dxData = { 0 };
+	DX11Data dxData;
 	if (!InitD3D11(wHandler, wRect, &dxData))
 	{
 		return -1;
@@ -175,8 +175,6 @@ INT WINAPI wWinMain(
 	//now init buffers and shaders
 	BufferData vertexBuff;
 	BufferData indexBuff;
-	//ID3D11Buffer* vertexBuff = nullptr; // store vertices
-	//ID3D11Buffer* indexBuff = nullptr;	// store indices
 	DX11VertexShaderData vsData;
 	DX11PixelShaderData psData;
 
@@ -195,7 +193,7 @@ INT WINAPI wWinMain(
 	
 
 	// Message loop
-	MSG msg = { 0 };
+	MSG msg { 0 };
 	while (WM_QUIT != msg.message)
 	{
 		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))

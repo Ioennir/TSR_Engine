@@ -46,7 +46,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	scDescriptor.BufferDesc.Width = wWidth;
 	scDescriptor.BufferDesc.Height = wHeight;
 	// TODO(Fran): maybe pool displays and query refresh rate to get this exact
-	scDescriptor.BufferDesc.RefreshRate.Numerator = 60; //this is weird
+	scDescriptor.BufferDesc.RefreshRate.Numerator = 60;
 	scDescriptor.BufferDesc.RefreshRate.Denominator = 1;
 	scDescriptor.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	scDescriptor.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -68,11 +68,11 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	// NOTE(Fran): when the swapEffect is set to FLIP_DISCARD the swapchain creation fails
 	// DXGI_SWAP_EFFECT_FLIP_DISCARD
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	scDescriptor.Flags = 0;
+	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	//Create Swap chain
 	//Get the factory
-	IDXGIDevice* dxgiDevice = 0;
+	IDXGIDevice* dxgiDevice;
 	hr = dxData->device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
 	if (FAILED(hr))
 	{
@@ -80,7 +80,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		return false;
 	}
 
-	IDXGIAdapter* dxgiAdapter = 0;
+	IDXGIAdapter* dxgiAdapter;
 	hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
 	if (FAILED(hr))
 	{
@@ -88,7 +88,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		return false;
 	}
 
-	IDXGIFactory* dxgiFactory = 0;
+	IDXGIFactory* dxgiFactory;
 	hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
 	if (FAILED(hr))
 	{
@@ -125,7 +125,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	backBuffer->Release();
 
 	// Depth buffer
-	D3D11_TEXTURE2D_DESC dsDescriptor = { 0 };
+	D3D11_TEXTURE2D_DESC dsDescriptor{ 0 };
 	dsDescriptor.Width = wWidth;
 	dsDescriptor.Height = wHeight;
 	dsDescriptor.MipLevels = 1;
@@ -198,24 +198,26 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
 {
 	//testing purposes now
-	DirectX::XMFLOAT4 green = { 0.0f, 1.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 green { 0.0f, 1.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 red { 1.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT4 blue { 0.0f, 0.0f, 1.0f, 1.0f };
 	// Triangle vertex buffer
 	Vertex triangleVertices []=
 	{
 		{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), green}
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), red},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), blue}
 	};
 
 	vBuffer->stride = sizeof(Vertex);
 	vBuffer->offset = 0;
 
-	D3D11_BUFFER_DESC tvbd = { 0 };
+	D3D11_BUFFER_DESC tvbd { 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
 	tvbd.ByteWidth = vBuffer->stride * 3; //num of members in vertex array
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	
-	D3D11_SUBRESOURCE_DATA tvInitData = { 0 };
+	D3D11_SUBRESOURCE_DATA tvInitData { 0 };
 	tvInitData.pSysMem = triangleVertices;
 
 	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
@@ -232,12 +234,12 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	iBuffer->stride = sizeof(UINT);
 	iBuffer->offset = 0;
 
-	D3D11_BUFFER_DESC tibd = { 0 };
+	D3D11_BUFFER_DESC tibd { 0 };
 	tibd.Usage = D3D11_USAGE_IMMUTABLE;
 	tibd.ByteWidth = iBuffer->stride * 3;
 	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
-	D3D11_SUBRESOURCE_DATA tiInitData = { 0 };
+	D3D11_SUBRESOURCE_DATA tiInitData { 0 };
 	tiInitData.pSysMem = indices;
 
 	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
