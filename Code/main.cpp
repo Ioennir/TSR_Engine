@@ -13,7 +13,7 @@
 //TODO(Fran): start sort of a profiling layer and add the time thing into that.
 
 
-struct TimeInfo
+struct TimeData
 {
 	__int64 baseTime;
 	__int64 currTime;
@@ -22,7 +22,7 @@ struct TimeInfo
 	double secondsPerCount;
 	double deltaTime;
 	double totalTime;
-} typedef TimeInfo;
+} typedef TimeData;
 
 void CalculateFrameStats(HWND hWnd, float totalTime)
 {
@@ -54,30 +54,30 @@ void CalculateFrameStats(HWND hWnd, float totalTime)
 	}
 }
 
-void UpdateTimeInformation(TimeInfo* tInfo)
+void UpdateTimeInformation(TimeData* tData)
 {
 	// get current time
-	QueryPerformanceCounter((LARGE_INTEGER*)&tInfo->currTime);
-	tInfo->deltaTime = (tInfo->currTime - tInfo->prevTime) * tInfo->secondsPerCount;
-	tInfo->prevTime = tInfo->currTime;
+	QueryPerformanceCounter((LARGE_INTEGER*)&tData->currTime);
+	tData->deltaTime = (tData->currTime - tData->prevTime) * tData->secondsPerCount;
+	tData->prevTime = tData->currTime;
 
 	// Force non negative
-	tInfo->deltaTime = tInfo->deltaTime < 0.0 ? 0.0 : tInfo->deltaTime;
+	tData->deltaTime = tData->deltaTime < 0.0 ? 0.0 : tData->deltaTime;
 
 	// update total time
-	tInfo->totalTime += tInfo->deltaTime;
+	tData->totalTime += tData->deltaTime;
 
 }
 
-void ResetTimeInformation(TimeInfo* tInfo)
+void ResetTimeInformation(TimeData* tData)
 {
-	QueryPerformanceCounter((LARGE_INTEGER*)&tInfo->baseTime);
-	tInfo->currTime = tInfo->baseTime;
-	tInfo->prevTime = tInfo->baseTime;
-	QueryPerformanceFrequency((LARGE_INTEGER*)&tInfo->countsPerSec);
-	tInfo->secondsPerCount = 1.0 / (double)tInfo->countsPerSec;
-	tInfo->deltaTime = 0.0;
-	tInfo->totalTime = 0.0;
+	QueryPerformanceCounter((LARGE_INTEGER*)&tData->baseTime);
+	tData->currTime = tData->baseTime;
+	tData->prevTime = tData->baseTime;
+	QueryPerformanceFrequency((LARGE_INTEGER*)&tData->countsPerSec);
+	tData->secondsPerCount = 1.0 / (double)tData->countsPerSec;
+	tData->deltaTime = 0.0;
+	tData->totalTime = 0.0;
 }
 
 
@@ -130,9 +130,25 @@ void UpdateScene(float dt)
 
 }
 
-void DrawScene()
+void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
+	//clear backbuffer
+	DirectX::XMVECTORF32 red = { 1.0f, 0.0f, 0.0f, 1.0f };
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
+	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	
+	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
+	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
+	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
+	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
 
+	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
+	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
+	
+	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
+
+	dxData.swapChain->Present(NO_VSYNC, 0);
 }
 
 INT WINAPI wWinMain(
@@ -142,7 +158,7 @@ INT WINAPI wWinMain(
 	_In_ int nCmdShow)
 {
 	// Initialize and reset the time information for the application
-	TimeInfo Time;
+	TimeData Time;
 	ResetTimeInformation(&Time);
 
 	// create the window and display it.
@@ -150,22 +166,33 @@ INT WINAPI wWinMain(
 	HWND wHandler = CreateAndSpawnWindow(L"CGraph Window", wRect, hInstance, nCmdShow);
 	
 	// Initialize DX11 and get all the information needed
-	DX11Info dxInfo = { 0 };
-	if (!InitD3D11(wHandler, wRect, &dxInfo))
+	DX11Data dxData = { 0 };
+	if (!InitD3D11(wHandler, wRect, &dxData))
 	{
 		return -1;
 	}
-	//now init buffers, fx and lastly layout
-	ID3D11Buffer* vertexBuff = nullptr;
-	ID3D11Buffer* indexBuff = nullptr;
-	ID3D11InputLayout* inputLayout = nullptr;
-	ID3D10Blob* vs_buffer = nullptr;
-	BuildTriangleGeometryBuffers(*dxInfo.device, vertexBuff, indexBuff);
+
+	//now init buffers and shaders
+	BufferData vertexBuff;
+	BufferData indexBuff;
+	//ID3D11Buffer* vertexBuff = nullptr; // store vertices
+	//ID3D11Buffer* indexBuff = nullptr;	// store indices
+	DX11VertexShaderData vsData;
+	DX11PixelShaderData psData;
+
 	
-	BuildTriangleInputLayout(*dxInfo.device, inputLayout, vs_buffer);
+	if (!BuildTriangleShaders(*dxData.device, &vsData, &psData))
+	{
+		return -1;
+	}
+
+	if (!BuildTriangleGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
+	{
+		return -1;
+	}
 
 	//this is for testing purposes;
-	DirectX::XMVECTORF32 red = { 1.0f, 0.0f, 0.0f, 1.0f };
+	
 
 	// Message loop
 	MSG msg = { 0 };
@@ -186,11 +213,7 @@ INT WINAPI wWinMain(
 			//do the update and render
 			UpdateScene((float)Time.deltaTime);
 
-			//clear backbuffer
-			dxInfo.imDeviceContext->ClearRenderTargetView(dxInfo.renderTargetView, reinterpret_cast<const float*>(&red));
-			dxInfo.imDeviceContext->ClearDepthStencilView(dxInfo.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-			dxInfo.swapChain->Present(0, 0);
-			DrawScene();
+			DrawScene(dxData, vsData, psData, vertexBuff, indexBuff);
 			
 		}
 	}

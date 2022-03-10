@@ -11,7 +11,10 @@
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 
-struct DX11Info
+#define NO_VSYNC 0
+#define VSYNC 1
+
+struct DX11Data
 {
 	ID3D11Device* device;
 	ID3D11DeviceContext* imDeviceContext;
@@ -23,7 +26,21 @@ struct DX11Info
 	ID3D11RasterizerState* currentRasterizerState;
 	D3D11_VIEWPORT screenViewport;
 
-} typedef DX11Info;
+} typedef DX11Data;
+
+struct DX11VertexShaderData
+{
+	ID3D10Blob* shaderBuffer;
+	ID3D11VertexShader* shader;
+	ID3D11InputLayout* inputLayout;
+} typedef DX11VertexShaderData;
+
+struct DX11PixelShaderData
+{
+	ID3D10Blob* shaderBuffer;
+	ID3D11PixelShader* shader;
+
+} typedef DX11PixelShaderData;
 
 //Simple vertex implementation
 struct Vertex 
@@ -31,3 +48,10 @@ struct Vertex
 	DirectX::XMFLOAT3 Position;
 	DirectX::XMFLOAT4 Color;
 } typedef Vertex;
+
+struct BufferData
+{
+	ID3D11Buffer* buffer;
+	UINT stride;
+	UINT offset;
+} typedef BufferData;

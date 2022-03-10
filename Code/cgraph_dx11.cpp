@@ -5,7 +5,7 @@
 
 //TODO(Fran): Do the debug implementation with dxtrace etc.
 //TODO(Fran): Check MSAA thingy.
-bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
+bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 {
 	HRESULT hr;
 	UINT wWidth = wRect.right - wRect.left;
@@ -28,9 +28,9 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 		&fLevel,
 		1,
 		D3D11_SDK_VERSION,
-		&dxInfo->device,
-		dxInfo->featureLevel,
-		&dxInfo->imDeviceContext
+		&dxData->device,
+		dxData->featureLevel,
+		&dxData->imDeviceContext
 	);
 	if (FAILED(hr))
 	{
@@ -73,7 +73,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 	//Create Swap chain
 	//Get the factory
 	IDXGIDevice* dxgiDevice = 0;
-	hr = dxInfo->device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+	hr = dxData->device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to get the DXGIDevice", 0, 0);
@@ -97,7 +97,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 	}
 
 	// finally create the swapchain...
-	hr = dxgiFactory->CreateSwapChain(dxInfo->device, &scDescriptor, &dxInfo->swapChain);
+	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor, &dxData->swapChain);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed to create the SwapChain", 0, 0);
@@ -111,7 +111,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 
 	// Create Render Target view
 	ID3D11Texture2D* backBuffer;
-	hr = dxInfo->swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+	hr = dxData->swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed acquiring back buffer", 0, 0);
@@ -119,7 +119,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 	}
 	else
 	{
-		dxInfo->device->CreateRenderTargetView(backBuffer, 0, &dxInfo->renderTargetView);
+		dxData->device->CreateRenderTargetView(backBuffer, 0, &dxData->renderTargetView);
 	}
 	//Release COM interface
 	backBuffer->Release();
@@ -146,35 +146,35 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 	//dsDescriptor.MiscFlags = 0; optional flags
 
 	// set depth buffer and view
-	hr = dxInfo->device->CreateTexture2D(&dsDescriptor, 0, &dxInfo->depthStencilBuffer);
+	hr = dxData->device->CreateTexture2D(&dsDescriptor, 0, &dxData->depthStencilBuffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Failed creating depth buffer", 0, 0);
 		return false;
 	}
 	else
 	{
-		hr = dxInfo->device->CreateDepthStencilView(dxInfo->depthStencilBuffer, 0, &dxInfo->depthStencilView);
+		hr = dxData->device->CreateDepthStencilView(dxData->depthStencilBuffer, 0, &dxData->depthStencilView);
 		if (FAILED(hr)) {
 			MessageBox(0, L"Failed creating depth view", 0, 0);
 			return false;
 		}
 		//bind views to output merger stage
 		// we can bind multiple render target views.
-		dxInfo->imDeviceContext->OMSetRenderTargets(1, &dxInfo->renderTargetView, dxInfo->depthStencilView);
+		dxData->imDeviceContext->OMSetRenderTargets(1, &dxData->renderTargetView, dxData->depthStencilView);
 	}
 
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.
-	dxInfo->screenViewport = { 0 };
-	dxInfo->screenViewport.MinDepth = 0.0f;
-	dxInfo->screenViewport.MaxDepth = 1.0f;
-	dxInfo->screenViewport.TopLeftX = 0.0f;
-	dxInfo->screenViewport.TopLeftY = 0.0f;
-	dxInfo->screenViewport.Width = static_cast<float>(wWidth);
-	dxInfo->screenViewport.Height = static_cast<float>(wHeight);
+	dxData->screenViewport = { 0 };
+	dxData->screenViewport.MinDepth = 0.0f;
+	dxData->screenViewport.MaxDepth = 1.0f;
+	dxData->screenViewport.TopLeftX = 0.0f;
+	dxData->screenViewport.TopLeftY = 0.0f;
+	dxData->screenViewport.Width = static_cast<float>(wWidth);
+	dxData->screenViewport.Height = static_cast<float>(wHeight);
 
-	dxInfo->imDeviceContext->RSSetViewports(1, &dxInfo->screenViewport);
-
+	dxData->imDeviceContext->RSSetViewports(1, &dxData->screenViewport);
+	/*
 	//Rasterizer state??
 	D3D11_RASTERIZER_DESC rsDescriptor;
 	ZeroMemory(&rsDescriptor, sizeof(rsDescriptor));
@@ -184,38 +184,41 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Info* dxInfo)
 	rsDescriptor.DepthClipEnable = true;
 
 	ID3D11RasterizerState* defaultRasterizer;
-	hr = dxInfo->device->CreateRasterizerState(&rsDescriptor, &defaultRasterizer);
+	hr = dxData->device->CreateRasterizerState(&rsDescriptor, &defaultRasterizer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Failed creating Rasterizer State", 0, 0);
 		return false;
 	}
-	dxInfo->currentRasterizerState = defaultRasterizer;
-	dxInfo->imDeviceContext->RSSetState(dxInfo->currentRasterizerState);
-
+	dxData->currentRasterizerState = defaultRasterizer;
+	dxData->imDeviceContext->RSSetState(dxData->currentRasterizerState);
+	*/
 	return true;
 }
 
-bool BuildTriangleGeometryBuffers(ID3D11Device & device, ID3D11Buffer * vBuffer, ID3D11Buffer * iBuffer)
+bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
 {
 	//testing purposes now
 	DirectX::XMFLOAT4 green = { 0.0f, 1.0f, 0.0f, 1.0f };
 	// Triangle vertex buffer
 	Vertex triangleVertices []=
 	{
-		{DirectX::XMFLOAT3(0.0f, 0.5f, 1.0f), green},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), green},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), green}
+		{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), green}
 	};
+
+	vBuffer->stride = sizeof(Vertex);
+	vBuffer->offset = 0;
 
 	D3D11_BUFFER_DESC tvbd = { 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
-	tvbd.ByteWidth = sizeof(Vertex) * 3; //num of members in vertex array
+	tvbd.ByteWidth = vBuffer->stride * 3; //num of members in vertex array
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	
 	D3D11_SUBRESOURCE_DATA tvInitData = { 0 };
 	tvInitData.pSysMem = triangleVertices;
 
-	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer);
+	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
 		return false;
@@ -226,15 +229,18 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, ID3D11Buffer * vBuffer,
 		0, 1, 2
 	};
 
+	iBuffer->stride = sizeof(UINT);
+	iBuffer->offset = 0;
+
 	D3D11_BUFFER_DESC tibd = { 0 };
 	tibd.Usage = D3D11_USAGE_IMMUTABLE;
-	tibd.ByteWidth = sizeof(UINT) * 3;
+	tibd.ByteWidth = iBuffer->stride * 3;
 	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tiInitData = { 0 };
 	tiInitData.pSysMem = indices;
 
-	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer);
+	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
 		return false;
@@ -243,35 +249,65 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, ID3D11Buffer * vBuffer,
 	return true;
 }
 
-bool BuildTriangleInputLayout(ID3D11Device & device, ID3D11InputLayout * inputLayout, ID3D10Blob * vs_buffer)
+bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
-	D3D11_INPUT_ELEMENT_DESC vertexDescriptor[] =
+	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	HRESULT hr = D3DReadFileToBlob(L"./x64/Debug/mainVS.cso", &vs_buffer);
+	//BUILD VERTEX SHADER
+	//TODO(Fran): stablish a shaderfolderpath for debug and release
+	HRESULT hr = D3DReadFileToBlob(L"./x64/Debug/mainVS.cso", &vsData->shaderBuffer);
 	if (FAILED(hr))
 	{
-		MessageBox(0, L"Failed creating vertex shader blob", 0, 0);
+		MessageBox(0, L"Failed loading vertex shader", 0, 0);
 		return false;
 	}
-	ID3D11VertexShader* shader = nullptr;
-	hr = device.CreateVertexShader(vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), 0, &shader);
+
+	hr = device.CreateVertexShader(
+		vsData->shaderBuffer->GetBufferPointer(),
+		vsData->shaderBuffer->GetBufferSize(), 
+		0, 
+		&vsData->shader);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed creating vertex shader", 0, 0);
 		return false;
 	}
 
-	hr = device.CreateInputLayout(vertexDescriptor, 2, vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), &inputLayout);
-
+	hr = device.CreateInputLayout(
+		vsInputLayoutDescriptor, 
+		2, 
+		vsData->shaderBuffer->GetBufferPointer(), 
+		vsData->shaderBuffer->GetBufferSize(), 
+		&vsData->inputLayout);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed creating Input Layout", 0, 0);
 		return false;
 	}
+
+	//BUILD PIXEL SHADER
+	hr = D3DReadFileToBlob(L"./x64/Debug/mainPS.cso", &psData->shaderBuffer);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed loading pixel shader", 0, 0);
+		return false;
+	}
+
+	hr = device.CreatePixelShader(
+		psData->shaderBuffer->GetBufferPointer(),
+		psData->shaderBuffer->GetBufferSize(),
+		0,
+		&psData->shader);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed creating pixel shader", 0, 0);
+		return false;
+	}
+
 
 	return true;
 }

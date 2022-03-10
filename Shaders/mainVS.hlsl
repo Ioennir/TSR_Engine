@@ -1,8 +1,3 @@
-cbuffer cbPerObject
-{
-    float4x4 worldViewProj;
-}
-
 void main(
     float3 iPos : POSITION,
     float4 iCol : COLOR,
@@ -10,7 +5,7 @@ void main(
     out float4 oCol : COLOR
 )
 {
-    oPos = mul(float4(iPos, 1.0f), worldViewProj);
+    oPos = float4(iPos, 1.0f);
 
     oCol = iCol;
 }
