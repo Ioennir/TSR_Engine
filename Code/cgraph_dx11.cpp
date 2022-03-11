@@ -260,7 +260,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 	};
 
 	//BUILD VERTEX SHADER
-	//TODO(Fran): stablish a shaderfolderpath for debug and release
+	//TODO(Fran): establish a shader folder path for debug and release
 	HRESULT hr = D3DReadFileToBlob(L"./x64/Debug/mainVS.cso", &vsData->shaderBuffer);
 	if (FAILED(hr))
 	{

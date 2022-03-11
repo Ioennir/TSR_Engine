@@ -136,7 +136,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	DirectX::XMVECTORF32 red { 1.0f, 0.0f, 0.0f, 1.0f };
 	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	
+
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
