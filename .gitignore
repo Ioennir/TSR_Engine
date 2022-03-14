@@ -1,9 +1,6 @@
 # vs thingies
 .vs/
 .vs/*
-Debug/*
-*.vcxproj
-*.vcxproj.*
 x64/*
 
 
