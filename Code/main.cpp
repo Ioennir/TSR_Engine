@@ -2,6 +2,7 @@
 #include <Windows.h>
 #define WIN32_LEAN_AND_MEAN
 #define DEBUG
+//#define BORDERLESS
 
 // std includes
 #include <iostream>
@@ -11,7 +12,8 @@
 #include "cgraph_dx11.cpp"
 
 //TODO(Fran): start sort of a profiling layer and add the time thing into that.
-
+//TODO(Fran): https://stackoverflow.com/questions/431470/window-border-width-and-height-in-win32-how-do-i-get-it
+// check the window vs windowclient size thingy
 
 struct TimeData
 {
@@ -109,17 +111,26 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 	wclass.lpszClassName = wcName;
 	RegisterClassEx(&wclass);
 
+	DWORD wStyle;
+
+#ifdef BORDERLESS
+	wStyle = WS_POPUPWINDOW; //borderless window
+#else
+	wStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX; // style for the window
+#endif 
+
+
 	AdjustWindowRect(&wRect, WS_OVERLAPPEDWINDOW, FALSE);
 	HWND wHandler = CreateWindow(
 		wcName,
 		winName, // window name
-		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, // style for the window
-		CW_USEDEFAULT, CW_USEDEFAULT, // X AND Y start positions for the window
+		wStyle,
+		100,100,//CW_USEDEFAULT, CW_USEDEFAULT, // X AND Y start positions for the window
 		wRect.right - wRect.left,
 		wRect.bottom - wRect.top,
 		0, 0, hInstance, 0);
 
-	//Show the window
+	// Show the window
 	ShowWindow(wHandler, nCmdShow);
 
 	return wHandler;
