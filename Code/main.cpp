@@ -174,8 +174,9 @@ void DrawGUI(DX11Data & dxData)
 	ImGui::End();
 
 	ImGui::Render();
-	
+	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	
 }
 
 void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
@@ -197,6 +198,14 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
 
 	DrawGUI(dxData);
+
+	
+
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
 
 	dxData.swapChain->Present(NO_VSYNC, 0);
 }
@@ -226,6 +235,7 @@ INT WINAPI wWinMain(
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& imIO = ImGui::GetIO();
+	imIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 	ImGui_ImplWin32_Init(wHandler);
 	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
 	ImGui::StyleColorsDark();
