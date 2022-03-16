@@ -1,7 +1,7 @@
 // windows includes
-#include <Windows.h>
 #define WIN32_LEAN_AND_MEAN
-#define DEBUG
+#include <Windows.h>
+//#define DEBUG
 //#define BORDERLESS
 
 #include "imgui/imgui.h"
@@ -152,7 +152,7 @@ void UpdateScene(float dt)
 
 }
 
-void DrawGUI()
+void DrawGUI(DX11Data & dxData)
 {
 	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();
@@ -162,6 +162,15 @@ void DrawGUI()
 	ImGui::Begin("Test Window");
 		ImGui::Text("This is example text.");
 	
+	ImGui::End();
+	ImGuiWindowFlags rtWindowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+	ImVec2 rtSize{640.0f, 360.0f};
+	ImGui::SetNextWindowSize(rtSize);
+	ImGui::SetNextWindowBgAlpha(1.0f);
+	ImGui::Begin("Viewport", 0, rtWindowFlags);
+	{
+		//ImGui::Image(0,&rtSize,)
+	}
 	ImGui::End();
 
 	ImGui::Render();
@@ -187,7 +196,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
 
-	DrawGUI();
+	DrawGUI(dxData);
 
 	dxData.swapChain->Present(NO_VSYNC, 0);
 }

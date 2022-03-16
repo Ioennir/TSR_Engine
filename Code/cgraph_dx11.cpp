@@ -16,7 +16,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	// Device Flags
 	UINT createDeviceFlags = 0;
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	createDeviceFlags = D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
