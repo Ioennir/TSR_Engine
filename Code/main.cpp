@@ -4,6 +4,10 @@
 #define DEBUG
 //#define BORDERLESS
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx11.h"
+
 // std includes
 #include <iostream>
 #include <sstream>
@@ -14,6 +18,9 @@
 //TODO(Fran): start sort of a profiling layer and add the time thing into that.
 //TODO(Fran): https://stackoverflow.com/questions/431470/window-border-width-and-height-in-win32-how-do-i-get-it
 // check the window vs windowclient size thingy
+//TODO(Fran): It might be a good idea to draw the editor with imgui first and 
+// then setup the render target within the editor to render the scene, it might be cool to be able to swap between wireframe
+// and full rendered or smth like that it would allow in the future to have lit, unlit etc.
 
 struct TimeData
 {
@@ -82,13 +89,17 @@ void ResetTimeInformation(TimeData* tData)
 	tData->totalTime = 0.0;
 }
 
-
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(
 	HWND hWnd,
 	UINT message,
 	WPARAM wParam,
 	LPARAM lParam)
 {
+	
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+		return true;
+
 	switch (message)
 	{
 	case WM_DESTROY:
@@ -141,6 +152,23 @@ void UpdateScene(float dt)
 
 }
 
+void DrawGUI()
+{
+	// Start the Dear ImGui frame
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Test Window");
+		ImGui::Text("This is example text.");
+	
+	ImGui::End();
+
+	ImGui::Render();
+	
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
 void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
@@ -158,6 +186,8 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
 	
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
+
+	DrawGUI();
 
 	dxData.swapChain->Present(NO_VSYNC, 0);
 }
@@ -182,6 +212,14 @@ INT WINAPI wWinMain(
 	{
 		return -1;
 	}
+
+	// setup Imgui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& imIO = ImGui::GetIO();
+	ImGui_ImplWin32_Init(wHandler);
+	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
+	ImGui::StyleColorsDark();
 
 	//now init buffers and shaders
 	BufferData vertexBuff;

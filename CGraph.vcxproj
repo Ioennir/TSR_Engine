@@ -19,11 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Code\imgui\imgui.cpp" />
+    <ClCompile Include="Code\imgui\imgui_draw.cpp" />
+    <ClCompile Include="Code\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="Code\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Code\imgui\imgui_tables.cpp" />
+    <ClCompile Include="Code\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Code\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\cgraph_dx11.cpp" />
     <ClInclude Include="Code\cgraph_dx11_data.h" />
+    <ClInclude Include="Code\imgui\imconfig.h" />
+    <ClInclude Include="Code\imgui\imgui.h" />
+    <ClInclude Include="Code\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="Code\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="Code\imgui\imgui_internal.h" />
+    <ClInclude Include="Code\imgui\imstb_rectpack.h" />
+    <ClInclude Include="Code\imgui\imstb_textedit.h" />
+    <ClInclude Include="Code\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\mainPS.hlsl">
