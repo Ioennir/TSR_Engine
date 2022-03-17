@@ -11,6 +11,9 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	UINT wWidth = wRect.right - wRect.left;
 	UINT wHeight = wRect.bottom - wRect.top;
 
+	UINT rtWidth = 640;
+	UINT rtHeight = 360;
+
 	// Desired Feature level
 	D3D_FEATURE_LEVEL fLevel = { D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0 };
 	// Device Flags
@@ -123,6 +126,51 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	}
 	//Release COM interface
 	backBuffer->Release();
+
+	// Render Target Texture
+	D3D11_TEXTURE2D_DESC rtDescriptor{ 0 };
+	rtDescriptor.Width = rtWidth;
+	rtDescriptor.Height = rtHeight;
+	rtDescriptor.MipLevels = 1;
+	rtDescriptor.ArraySize = 1;
+	rtDescriptor.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	rtDescriptor.SampleDesc.Count = 1;
+	rtDescriptor.Usage = D3D11_USAGE_DEFAULT;
+	rtDescriptor.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	
+	hr = dxData->device->CreateTexture2D(&rtDescriptor, 0, &dxData->renderTexture);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed to create render target texture.", 0, 0);
+		return false;
+	}
+
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+	rtvDesc.Format = rtDescriptor.Format;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+
+	hr = dxData->device->CreateRenderTargetView(dxData->renderTexture, &rtvDesc, &dxData->textureRTView);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed to create texture RT view.", 0, 0);
+		return false;
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{ };
+	srvDesc.Format = rtvDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	
+	hr = dxData->device->CreateShaderResourceView(dxData->renderTexture, &srvDesc, &dxData->shaderResView);
+	
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed to shader resource view.", 0, 0);
+		return false;
+	}
+
 
 	// Depth buffer
 	D3D11_TEXTURE2D_DESC dsDescriptor{ 0 };

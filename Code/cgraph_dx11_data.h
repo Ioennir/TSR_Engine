@@ -22,8 +22,11 @@ struct DX11Data
 	IDXGISwapChain* swapChain{};
 	ID3D11Texture2D* depthStencilBuffer{};
 	ID3D11RenderTargetView* renderTargetView{};
+	ID3D11RenderTargetView* textureRTView{};
 	ID3D11DepthStencilView* depthStencilView{};
+	ID3D11ShaderResourceView* shaderResView{};
 	ID3D11RasterizerState* currentRasterizerState{};
+	ID3D11Texture2D* renderTexture{};
 	D3D11_VIEWPORT screenViewport{};
 };
 

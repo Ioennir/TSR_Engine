@@ -158,24 +158,25 @@ void DrawGUI(DX11Data & dxData)
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+	ImGui::DockSpaceOverViewport();
 
 	ImGui::Begin("Test Window");
 		ImGui::Text("This is example text.");
-	
 	ImGui::End();
-	ImGuiWindowFlags rtWindowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
-	ImVec2 rtSize{640.0f, 360.0f};
-	ImGui::SetNextWindowSize(rtSize);
+	ImGuiWindowFlags rtWindowFlags = 0;// = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+	ImVec2 rtSize{ 640.0f, 360.0f };
+	//ImGui::SetNextWindowSize(rtSize);
 	ImGui::SetNextWindowBgAlpha(1.0f);
 	ImGui::Begin("Viewport", 0, rtWindowFlags);
 	{
-		//ImGui::Image(0,&rtSize,)
+		 
+		ImGui::Image(reinterpret_cast<void*>(dxData.shaderResView), { 640.0f, 360.0f }, { 0,0 }, { 1,1 }, { 1,1,1,1 }, { 0,0,0,0 });
 	}
 	ImGui::End();
 	ImGui::Render();	
 	
 	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
-
+	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.textureRTView, dxData.depthStencilView);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	
 }
@@ -184,8 +185,13 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 red { 1.0f, 0.0f, 0.0f, 1.0f };
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
+
+	//text
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.textureRTView, reinterpret_cast<const float*>(&red));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	//dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
+	//dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
