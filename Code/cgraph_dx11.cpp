@@ -67,11 +67,38 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	scDescriptor.BufferCount = 1;
 	scDescriptor.OutputWindow = hWnd;
 	scDescriptor.Windowed = true;
-
 	// NOTE(Fran): when the swapEffect is set to FLIP_DISCARD the swapchain creation fails
 	// DXGI_SWAP_EFFECT_FLIP_DISCARD
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+
+	//Describe Swap Chain
+	DXGI_SWAP_CHAIN_DESC scDescriptor2;
+	scDescriptor2.BufferDesc.Width = rtWidth;
+	scDescriptor2.BufferDesc.Height = rtHeight;
+	// TODO(Fran): maybe pool displays and query refresh rate to get this exact
+	scDescriptor2.BufferDesc.RefreshRate.Numerator = 60;
+	scDescriptor2.BufferDesc.RefreshRate.Denominator = 1;
+	scDescriptor2.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	scDescriptor2.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	scDescriptor2.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	if (msaaOn)
+	{
+
+	}
+	else
+	{
+		scDescriptor2.SampleDesc.Count = 1;
+		scDescriptor2.SampleDesc.Quality = 0;
+	}
+	scDescriptor2.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	scDescriptor2.BufferCount = 1;
+	scDescriptor2.OutputWindow = hWnd;
+	scDescriptor2.Windowed = true;
+	scDescriptor2.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	scDescriptor2.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
 
 	//Create Swap chain
 	//Get the factory
@@ -99,11 +126,18 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		return false;
 	}
 
-	// finally create the swapchain...
+	// finally create the swapchain 1...
 	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor, &dxData->swapChain);
 	if (FAILED(hr))
 	{
-		MessageBox(0, L"Failed to create the SwapChain", 0, 0);
+		MessageBox(0, L"Failed to create the SwapChain 1", 0, 0);
+		return false;
+	}
+
+	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor2, &dxData->swapChain2);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed to create the SwapChain 2", 0, 0);
 		return false;
 	}
 

@@ -169,13 +169,16 @@ void DrawGUI(DX11Data & dxData)
 	ImGui::SetNextWindowBgAlpha(1.0f);
 	ImGui::Begin("Viewport", 0, rtWindowFlags);
 	{
-		 
-		ImGui::Image(reinterpret_cast<void*>(dxData.shaderResView), { 640.0f, 360.0f }, { 0,0 }, { 1,1 }, { 1,1,1,1 }, { 0,0,0,0 });
+		//https://github.com/ocornut/imgui/issues/2987
+		ImGui::Image(reinterpret_cast<void*>(dxData.shaderResView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 1,0 }, ImVec2{ 0,1 });
 	}
 	ImGui::End();
 	ImGui::Render();	
 	
-	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
+	ID3D11RenderTargetView * views[2];
+	views[0] = dxData.renderTargetView;
+	views[1] = dxData.textureRTView;
+	dxData.imDeviceContext->OMSetRenderTargets(2, views, dxData.depthStencilView);
 	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.textureRTView, dxData.depthStencilView);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	
@@ -189,7 +192,6 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	//text
 	dxData.imDeviceContext->ClearRenderTargetView(dxData.textureRTView, reinterpret_cast<const float*>(&red));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
 	//dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
 	//dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 

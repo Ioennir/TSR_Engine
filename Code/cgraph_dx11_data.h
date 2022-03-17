@@ -20,6 +20,7 @@ struct DX11Data
 	ID3D11DeviceContext* imDeviceContext{};
 	D3D_FEATURE_LEVEL* featureLevel{};
 	IDXGISwapChain* swapChain{};
+	IDXGISwapChain* swapChain2{};
 	ID3D11Texture2D* depthStencilBuffer{};
 	ID3D11RenderTargetView* renderTargetView{};
 	ID3D11RenderTargetView* textureRTView{};
