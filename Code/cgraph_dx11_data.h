@@ -21,6 +21,7 @@ struct DX11ScnData
 	ID3D11RenderTargetView* renderTargetView{};
 	ID3D11DepthStencilView* depthStencilView{};
 	ID3D11ShaderResourceView* shaderResourceView{};
+	D3D11_VIEWPORT viewport{};
 };
 
 struct DX11Data
@@ -33,7 +34,7 @@ struct DX11Data
 	ID3D11RenderTargetView* renderTargetView{};
 	ID3D11DepthStencilView* depthStencilView{};
 	ID3D11RasterizerState* currentRasterizerState{};
-	D3D11_VIEWPORT screenViewport{};
+	D3D11_VIEWPORT windowViewport{};
 	DX11ScnData scnData{};
 };
 

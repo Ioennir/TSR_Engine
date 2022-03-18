@@ -66,8 +66,6 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	scDescriptor.BufferCount = 1;
 	scDescriptor.OutputWindow = hWnd;
 	scDescriptor.Windowed = true;
-	// NOTE(Fran): when the swapEffect is set to FLIP_DISCARD the swapchain creation fails
-	// DXGI_SWAP_EFFECT_FLIP_DISCARD
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
@@ -101,7 +99,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor, &dxData->swapChain);
 	if (FAILED(hr))
 	{
-		MessageBox(0, L"Failed to create the SwapChain", 0, 0);
+		MessageBox(0, L"Failed to create the SwapChain for the window", 0, 0);
 		return false;
 	}
 
@@ -226,15 +224,24 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.
-	dxData->screenViewport = { 0 };
-	dxData->screenViewport.MinDepth = 0.0f;
-	dxData->screenViewport.MaxDepth = 1.0f;
-	dxData->screenViewport.TopLeftX = 0.0f;
-	dxData->screenViewport.TopLeftY = 0.0f;
-	dxData->screenViewport.Width = static_cast<float>(wWidth);
-	dxData->screenViewport.Height = static_cast<float>(wHeight);
+	dxData->windowViewport = { 0 };
+	dxData->windowViewport.MinDepth = 0.0f;
+	dxData->windowViewport.MaxDepth = 1.0f;
+	dxData->windowViewport.TopLeftX = 0.0f;
+	dxData->windowViewport.TopLeftY = 0.0f;
+	dxData->windowViewport.Width = static_cast<float>(wWidth);
+	dxData->windowViewport.Height = static_cast<float>(wHeight);
 
-	dxData->imDeviceContext->RSSetViewports(1, &dxData->screenViewport);
+	dxData->scnData.viewport = { 0 };
+	dxData->scnData.viewport.MinDepth = 0.0f;
+	dxData->scnData.viewport.MaxDepth = 1.0f;
+	dxData->scnData.viewport.TopLeftX = 0.0f;
+	dxData->scnData.viewport.TopLeftY = 0.0f;
+	dxData->scnData.viewport.Width = static_cast<float>(rtWidth);
+	dxData->scnData.viewport.Height = static_cast<float>(rtHeight);
+
+
+	dxData->imDeviceContext->RSSetViewports(1, &dxData->windowViewport);
 	
 	return true;
 }

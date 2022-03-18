@@ -170,7 +170,7 @@ void DrawGUI(DX11Data & dxData)
 	ImGui::Begin("Viewport", 0, rtWindowFlags);
 	{
 		//https://github.com/ocornut/imgui/issues/2987
-		ImGui::Image(reinterpret_cast<void*>(dxData.scnData.shaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 1,0 }, ImVec2{ 0,1 });
+		ImGui::Image(reinterpret_cast<void*>(dxData.scnData.shaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
 	}
 	ImGui::End();
 	ImGui::Render();	
@@ -190,39 +190,56 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
 	DirectX::XMVECTORF32 clearColor_sw{ 0.0f, 0.5f, 0.5f, 1.0f };
 
-	//Set render target to update the main window.
-	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
+	// VIEWPORT RENDERING
 	
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&clearColor_mw));
-	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	// clear texture render target
 	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.scnData.renderTargetView, dxData.scnData.depthStencilView);
+	dxData.imDeviceContext->RSSetViewports(1, &dxData.scnData.viewport);
+
 	dxData.imDeviceContext->ClearRenderTargetView(dxData.scnData.renderTargetView, reinterpret_cast<const float*>(&clearColor_sw));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.scnData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	
-	// do the rendering
+
+	// TRIANGLE RENDERING
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
+
 	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
 	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
 
 	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
-	
+
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
 
-	//setup main render target again?
+	
+	// MAIN WINDOW RENDERING
 	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
+	dxData.imDeviceContext->RSSetViewports(1, &dxData.windowViewport);
 
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&clearColor_mw));
+	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	// TRIANGLE RENDERING
+	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
+	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
+	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
+
+	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
+	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
+
+	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
+	
+	// GUI RENDERING
 	DrawGUI(dxData);
 
+	
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 	}
+	
 
 	dxData.swapChain->Present(NO_VSYNC, 0);
 }
@@ -252,7 +269,7 @@ INT WINAPI wWinMain(
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& imIO = ImGui::GetIO();
-	imIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;// | ImGuiConfigFlags_ViewportsEnable;
+	imIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 	ImGui_ImplWin32_Init(wHandler);
 	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
 	ImGui::StyleColorsDark();
