@@ -14,21 +14,27 @@
 #define NO_VSYNC 0
 #define VSYNC 1
 
+struct DX11ScnData
+{
+	ID3D11Texture2D* depthStencilBuffer{};
+	ID3D11Texture2D* renderTexture{};
+	ID3D11RenderTargetView* renderTargetView{};
+	ID3D11DepthStencilView* depthStencilView{};
+	ID3D11ShaderResourceView* shaderResourceView{};
+};
+
 struct DX11Data
 {
 	ID3D11Device* device{};
 	ID3D11DeviceContext* imDeviceContext{};
 	D3D_FEATURE_LEVEL* featureLevel{};
 	IDXGISwapChain* swapChain{};
-	IDXGISwapChain* swapChain2{};
 	ID3D11Texture2D* depthStencilBuffer{};
 	ID3D11RenderTargetView* renderTargetView{};
-	ID3D11RenderTargetView* textureRTView{};
 	ID3D11DepthStencilView* depthStencilView{};
-	ID3D11ShaderResourceView* shaderResView{};
 	ID3D11RasterizerState* currentRasterizerState{};
-	ID3D11Texture2D* renderTexture{};
 	D3D11_VIEWPORT screenViewport{};
+	DX11ScnData scnData{};
 };
 
 struct DX11VertexShaderData

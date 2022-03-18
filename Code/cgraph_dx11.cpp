@@ -56,7 +56,6 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	scDescriptor.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	if (msaaOn)
 	{
-
 	}
 	else
 	{
@@ -71,34 +70,6 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	// DXGI_SWAP_EFFECT_FLIP_DISCARD
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-
-	//Describe Swap Chain
-	DXGI_SWAP_CHAIN_DESC scDescriptor2;
-	scDescriptor2.BufferDesc.Width = rtWidth;
-	scDescriptor2.BufferDesc.Height = rtHeight;
-	// TODO(Fran): maybe pool displays and query refresh rate to get this exact
-	scDescriptor2.BufferDesc.RefreshRate.Numerator = 60;
-	scDescriptor2.BufferDesc.RefreshRate.Denominator = 1;
-	scDescriptor2.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	scDescriptor2.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	scDescriptor2.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	if (msaaOn)
-	{
-
-	}
-	else
-	{
-		scDescriptor2.SampleDesc.Count = 1;
-		scDescriptor2.SampleDesc.Quality = 0;
-	}
-	scDescriptor2.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	scDescriptor2.BufferCount = 1;
-	scDescriptor2.OutputWindow = hWnd;
-	scDescriptor2.Windowed = true;
-	scDescriptor2.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	scDescriptor2.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
 
 	//Create Swap chain
 	//Get the factory
@@ -126,18 +97,11 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		return false;
 	}
 
-	// finally create the swapchain 1...
+	// finally create the swapchain ...
 	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor, &dxData->swapChain);
 	if (FAILED(hr))
 	{
-		MessageBox(0, L"Failed to create the SwapChain 1", 0, 0);
-		return false;
-	}
-
-	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor2, &dxData->swapChain2);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed to create the SwapChain 2", 0, 0);
+		MessageBox(0, L"Failed to create the SwapChain", 0, 0);
 		return false;
 	}
 
@@ -146,7 +110,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	dxgiAdapter->Release();
 	dxgiFactory->Release();
 
-	// Create Render Target view
+	// Create main window Render Target view
 	ID3D11Texture2D* backBuffer;
 	hr = dxData->swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 	if (FAILED(hr))
@@ -161,7 +125,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	//Release COM interface
 	backBuffer->Release();
 
-	// Render Target Texture
+	// RENDER TEXTURE
 	D3D11_TEXTURE2D_DESC rtDescriptor{ 0 };
 	rtDescriptor.Width = rtWidth;
 	rtDescriptor.Height = rtHeight;
@@ -169,41 +133,56 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	rtDescriptor.ArraySize = 1;
 	rtDescriptor.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	rtDescriptor.SampleDesc.Count = 1;
+	rtDescriptor.SampleDesc.Quality = 0;
 	rtDescriptor.Usage = D3D11_USAGE_DEFAULT;
 	rtDescriptor.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	
-	hr = dxData->device->CreateTexture2D(&rtDescriptor, 0, &dxData->renderTexture);
+	hr = dxData->device->CreateTexture2D(&rtDescriptor, 0, &dxData->scnData.renderTexture);
 	if (FAILED(hr))
 	{
-		MessageBox(0, L"Failed to create render target texture.", 0, 0);
+		MessageBox(0, L"Failed creating render texture", 0, 0);
 		return false;
 	}
 
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-	rtvDesc.Format = rtDescriptor.Format;
+	// RENDER TEXTURE DEPTH BUFFER
+	D3D11_TEXTURE2D_DESC rtdbDescriptor{ 0 };
+	rtdbDescriptor.Width = rtWidth;
+	rtdbDescriptor.Height = rtHeight;
+	rtdbDescriptor.MipLevels = 1;
+	rtdbDescriptor.ArraySize = 1;
+	rtdbDescriptor.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	rtdbDescriptor.SampleDesc.Count = 1;
+	rtdbDescriptor.SampleDesc.Quality = 0;
+	rtdbDescriptor.Usage = D3D11_USAGE_DEFAULT;
+	rtdbDescriptor.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	hr = dxData->device->CreateTexture2D(&rtdbDescriptor, 0, &dxData->scnData.depthStencilBuffer);
+	if (FAILED(hr))
+	{
+		MessageBox(0, L"Failed creating depth stencil texture", 0, 0);
+		return false;
+	}
+	else
+	{
+		hr = dxData->device->CreateDepthStencilView(dxData->scnData.depthStencilBuffer, 0, &dxData->scnData.depthStencilView);
+		if (FAILED(hr)) {
+			MessageBox(0, L"Failed creating depth view from depth stencil texture", 0, 0);
+			return false;
+		}
+	}
+
+	// RENDER TARGET VIEW DESCRIPTION FOR THE RENDER TEXTURE
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
+	rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	rtvDesc.Texture2D.MipSlice = 0;
+	dxData->device->CreateRenderTargetView(dxData->scnData.renderTexture, &rtvDesc, &dxData->scnData.renderTargetView);
 
-	hr = dxData->device->CreateRenderTargetView(dxData->renderTexture, &rtvDesc, &dxData->textureRTView);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed to create texture RT view.", 0, 0);
-		return false;
-	}
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{ };
-	srvDesc.Format = rtvDesc.Format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	
-	hr = dxData->device->CreateShaderResourceView(dxData->renderTexture, &srvDesc, &dxData->shaderResView);
-	
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed to shader resource view.", 0, 0);
-		return false;
-	}
+	// SHADER RESOURCE VIEW FOR THE RENDER TEXTURE
+	D3D11_SHADER_RESOURCE_VIEW_DESC srDesc{};
+	srDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	srDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srDesc.Texture2D.MostDetailedMip = 0;
+	srDesc.Texture2D.MipLevels = 1;
+	dxData->device->CreateShaderResourceView(dxData->scnData.renderTexture, &srDesc, &dxData->scnData.shaderResourceView);
 
 
 	// Depth buffer
@@ -212,7 +191,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	dsDescriptor.Height = wHeight;
 	dsDescriptor.MipLevels = 1;
 	dsDescriptor.ArraySize = 1;
-	dsDescriptor.Format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsDescriptor.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	if (msaaOn)
 	{
 
@@ -256,24 +235,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	dxData->screenViewport.Height = static_cast<float>(wHeight);
 
 	dxData->imDeviceContext->RSSetViewports(1, &dxData->screenViewport);
-	/*
-	//Rasterizer state??
-	D3D11_RASTERIZER_DESC rsDescriptor;
-	ZeroMemory(&rsDescriptor, sizeof(rsDescriptor));
-	rsDescriptor.FillMode = D3D11_FILL_SOLID;
-	rsDescriptor.CullMode = D3D11_CULL_BACK;
-	rsDescriptor.FrontCounterClockwise = false;
-	rsDescriptor.DepthClipEnable = true;
-
-	ID3D11RasterizerState* defaultRasterizer;
-	hr = dxData->device->CreateRasterizerState(&rsDescriptor, &defaultRasterizer);
-	if (FAILED(hr)) {
-		MessageBox(0, L"Failed creating Rasterizer State", 0, 0);
-		return false;
-	}
-	dxData->currentRasterizerState = defaultRasterizer;
-	dxData->imDeviceContext->RSSetState(dxData->currentRasterizerState);
-	*/
+	
 	return true;
 }
 

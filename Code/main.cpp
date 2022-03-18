@@ -158,7 +158,7 @@ void DrawGUI(DX11Data & dxData)
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	ImGui::DockSpaceOverViewport();
+	//ImGui::DockSpaceOverViewport();
 
 	ImGui::Begin("Test Window");
 		ImGui::Text("This is example text.");
@@ -170,15 +170,15 @@ void DrawGUI(DX11Data & dxData)
 	ImGui::Begin("Viewport", 0, rtWindowFlags);
 	{
 		//https://github.com/ocornut/imgui/issues/2987
-		ImGui::Image(reinterpret_cast<void*>(dxData.shaderResView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 1,0 }, ImVec2{ 0,1 });
+		ImGui::Image(reinterpret_cast<void*>(dxData.scnData.shaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 1,0 }, ImVec2{ 0,1 });
 	}
 	ImGui::End();
 	ImGui::Render();	
 	
-	ID3D11RenderTargetView * views[2];
+	ID3D11RenderTargetView * views[1];
 	views[0] = dxData.renderTargetView;
-	views[1] = dxData.textureRTView;
-	dxData.imDeviceContext->OMSetRenderTargets(2, views, dxData.depthStencilView);
+	//views[1] = dxData.textureRTView;
+	dxData.imDeviceContext->OMSetRenderTargets(1, views, dxData.depthStencilView);
 	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.textureRTView, dxData.depthStencilView);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	
@@ -187,14 +187,21 @@ void DrawGUI(DX11Data & dxData)
 void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
-	DirectX::XMVECTORF32 red { 1.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
+	DirectX::XMVECTORF32 clearColor_sw{ 0.0f, 0.5f, 0.5f, 1.0f };
 
-	//text
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.textureRTView, reinterpret_cast<const float*>(&red));
+	//Set render target to update the main window.
+	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
+	
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&clearColor_mw));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	//dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&red));
-	//dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
+	// clear texture render target
+	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.scnData.renderTargetView, dxData.scnData.depthStencilView);
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.scnData.renderTargetView, reinterpret_cast<const float*>(&clearColor_sw));
+	dxData.imDeviceContext->ClearDepthStencilView(dxData.scnData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	
+	// do the rendering
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
@@ -205,6 +212,9 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
 	
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
+
+	//setup main render target again?
+	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
 
 	DrawGUI(dxData);
 
