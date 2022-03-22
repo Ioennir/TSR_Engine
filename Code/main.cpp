@@ -21,6 +21,8 @@
 //TODO(Fran): It might be a good idea to draw the editor with imgui first and 
 // then setup the render target within the editor to render the scene, it might be cool to be able to swap between wireframe
 // and full rendered or smth like that it would allow in the future to have lit, unlit etc.
+//TODO(Fram): Setup cbuffers with proj matrix and do some animation using the deltatime.
+//TODO(Fram):
 
 struct TimeData
 {
