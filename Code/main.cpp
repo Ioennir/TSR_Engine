@@ -193,7 +193,6 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	DirectX::XMVECTORF32 clearColor_sw{ 0.0f, 0.5f, 0.5f, 1.0f };
 
 	// VIEWPORT RENDERING
-	
 	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.scnData.renderTargetView, dxData.scnData.depthStencilView);
 	dxData.imDeviceContext->RSSetViewports(1, &dxData.scnData.viewport);
 
@@ -201,14 +200,53 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.scnData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// TRIANGLE RENDERING
+	// Bind shaders and buffers
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
 	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
-
 	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
+
+	//CBUFFER
+	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
+	struct ConstantBuffer
+	{
+		DirectX::XMMATRIX mWVP;
+		DirectX::XMMATRIX mWorld;
+		DirectX::XMMATRIX mView;
+		DirectX::XMMATRIX mProj;
+	};
+
+	//float yRad = DirectX::XMConvertToRadians(90.0f);
+	const DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 5.0f); //DirectX::XMMatrixIdentity();
+	const DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, aspectRatio, 0.001f, 1000.f);
+	const DirectX::XMMATRIX mCam = DirectX::XMMatrixTranslation(0.0f, 0.0f, -4.0f);
+	const DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH({ 0.0f, 0.0f, -4.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 1.0f, 0.0f}); //DirectX::XMMatrixInverse(nullptr, mCam);
+	const DirectX::XMMATRIX mWVP = mWorld * mView * mProj;
+	struct ConstantBuffer cb {
+			mWVP,
+			mWorld,
+			mView,
+			mProj
+			//DirectX::XMMATRIX(
+				//DirectX::XMMatrixRotationZ(0.0f)*
+				//DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f)*
+				//DirectX::XMMatrixTranslation(0.0f, 0.0f, 1.0f)
+
+			//)
+	};
+
+	ID3D11Buffer* dx11_cbuffer;
+	D3D11_BUFFER_DESC cbdesc{ 0 };
+	cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbdesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbdesc.ByteWidth = sizeof(cb);
+	D3D11_SUBRESOURCE_DATA csd{};
+	csd.pSysMem = &cb;
+	dxData.device->CreateBuffer(&cbdesc, &csd, &dx11_cbuffer);
+	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dx11_cbuffer);
 
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
 
@@ -292,6 +330,10 @@ INT WINAPI wWinMain(
 	{
 		return -1;
 	}
+
+
+	
+
 
 	//this is for testing purposes;
 	

@@ -1,3 +1,10 @@
+cbuffer cb {
+    matrix wvp;
+    matrix w;
+    matrix v;
+    matrix p;
+};
+
 void main(
     float3 iPos : POSITION,
     float4 iCol : COLOR,
@@ -5,7 +12,7 @@ void main(
     out float4 oCol : COLOR
 )
 {
-    oPos = float4(iPos, 1.0f);
+    oPos = mul(float4(iPos, 1.0f), p * v * w);
 
     oCol = iCol;
 }
