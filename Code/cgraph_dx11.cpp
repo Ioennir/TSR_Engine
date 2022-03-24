@@ -222,6 +222,9 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		dxData->imDeviceContext->OMSetRenderTargets(1, &dxData->renderTargetView, dxData->depthStencilView);
 	}
 
+	//TODO(Frna): do this!!
+	//dxData->device->CreateDepthStencilState(, );
+
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.
 	dxData->windowViewport = { 0 };

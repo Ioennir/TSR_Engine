@@ -207,6 +207,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
 	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
+	
 
 	//CBUFFER
 
@@ -230,7 +231,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
 
 	// triangle transformations
-	DirectX::XMMATRIX tris = DirectX::XMMatrixRotationZ(0.0f) *
+	DirectX::XMMATRIX transform = DirectX::XMMatrixRotationZ(0.0f) *
 		DirectX::XMMatrixRotationX(0.0f) *
 		DirectX::XMMatrixTranslation(0.0f, -0.25f, 1.0f);
 
@@ -243,15 +244,15 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 		DirectX::XMMATRIX mProj;
 	};
 
-	DirectX::XMMATRIX tf = DirectX::XMMatrixTranspose(
-		tris *
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(
+		transform *
 		mWorld *
 		mView *
 		mProj
 	);
 
 	struct ConstantBuffer cb {
-		tf,
+		mWVP,
 		mWorld,
 		mView,
 		mProj
@@ -270,7 +271,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 
 	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
 
-	
+
 	// MAIN WINDOW RENDERING
 	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
 	dxData.imDeviceContext->RSSetViewports(1, &dxData.windowViewport);
