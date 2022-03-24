@@ -255,7 +255,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	// Triangle vertex buffer
 	Vertex triangleVertices []=
 	{
-		{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), green},
 		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), red},
 		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), blue}
 	};

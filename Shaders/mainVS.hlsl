@@ -1,4 +1,5 @@
 cbuffer cb {
+    matrix tf;
     matrix w;
     matrix v;
     matrix p;
@@ -11,7 +12,7 @@ void main(
     out float4 oCol : COLOR
 )
 {
-    oPos = float4(iPos, 1.0f);
+    oPos = mul(float4(iPos, 1.0f), tf);
 
     oCol = iCol;
 }

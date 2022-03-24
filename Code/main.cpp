@@ -212,11 +212,19 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
 	struct ConstantBuffer
 	{
+		DirectX::XMMATRIX transform;
 		//DirectX::XMMATRIX mWVP;
 		DirectX::XMMATRIX mWorld;
 		DirectX::XMMATRIX mView;
 		DirectX::XMMATRIX mProj;
 	};
+
+	DirectX::XMMATRIX tf = DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixRotationZ(0.0f) *
+		DirectX::XMMatrixRotationX(0.0f) *
+		DirectX::XMMatrixTranslation( 0.0f, 0.0f, 4.0f) * 
+		DirectX::XMMatrixPerspectiveLH( 1.0f, aspectRatio, 0.5f, 10.0f)
+	);
 
 	float constexpr yRad = DirectX::XMConvertToRadians(90.0f);
 
@@ -239,6 +247,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	//const DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH({ 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 1.0f, 0.0f}); //DirectX::XMMatrixInverse(nullptr, mCam);
 	//const DirectX::XMMATRIX mWVP = mWorld * mView * mProj;
 	struct ConstantBuffer cb {
+		tf,
 		DirectX::XMMatrixTranspose(mWorld),
 		DirectX::XMMatrixTranspose(mView),
 		DirectX::XMMatrixTranspose(mProj)
