@@ -212,23 +212,36 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
 	struct ConstantBuffer
 	{
-		DirectX::XMMATRIX mWVP;
+		//DirectX::XMMATRIX mWVP;
 		DirectX::XMMATRIX mWorld;
 		DirectX::XMMATRIX mView;
 		DirectX::XMMATRIX mProj;
 	};
 
-	//float yRad = DirectX::XMConvertToRadians(90.0f);
-	const DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 5.0f); //DirectX::XMMatrixIdentity();
-	const DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, aspectRatio, 0.001f, 1000.f);
-	const DirectX::XMMATRIX mCam = DirectX::XMMatrixTranslation(0.0f, 0.0f, -4.0f);
-	const DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH({ 0.0f, 0.0f, -4.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 1.0f, 0.0f}); //DirectX::XMMatrixInverse(nullptr, mCam);
-	const DirectX::XMMATRIX mWVP = mWorld * mView * mProj;
+	float constexpr yRad = DirectX::XMConvertToRadians(90.0f);
+
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 1.0f);
+	
+	DirectX::XMFLOAT3 cPos{0.0f, 0.0f, -1.0f};
+	DirectX::XMFLOAT3 cTarget{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 cUp{ 0.0f, 1.0f, 0.0f };
+	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(
+		DirectX::XMLoadFloat3(&cPos),
+		DirectX::XMLoadFloat3(&cTarget),
+		DirectX::XMLoadFloat3(&cUp));
+
+	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(
+		yRad, aspectRatio, 0.5f, 100.0f
+	);
+	//const DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 5.0f); //DirectX::XMMatrixIdentity();
+	//const DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(1.0f, aspectRatio, 0.001f, 1000.f);
+	//const DirectX::XMMATRIX mCam = DirectX::XMMatrixTranslation(0.0f, 0.0f, -4.0f);
+	//const DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH({ 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 1.0f, 0.0f}); //DirectX::XMMatrixInverse(nullptr, mCam);
+	//const DirectX::XMMATRIX mWVP = mWorld * mView * mProj;
 	struct ConstantBuffer cb {
-			mWVP,
-			mWorld,
-			mView,
-			mProj
+		DirectX::XMMatrixTranspose(mWorld),
+		DirectX::XMMatrixTranspose(mView),
+		DirectX::XMMatrixTranspose(mProj)
 			//DirectX::XMMATRIX(
 				//DirectX::XMMatrixRotationZ(0.0f)*
 				//DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f)*
