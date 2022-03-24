@@ -209,54 +209,52 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
 
 	//CBUFFER
+
+	// camera important data
+	DirectX::XMVECTOR cEye = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMVECTOR cFocus = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	DirectX::XMVECTOR cUp = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	
+	// build view matrix
+	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(cEye, cFocus, cUp);
+	
+	// frustum data
 	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
+	float constexpr yFov = DirectX::XMConvertToRadians(65.0f);
+	float nearZ = 0.1f;
+	float farZ = 1000.0f;
+	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(yFov, aspectRatio, nearZ, farZ);
+
+
+	// world mat
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
+
+	// triangle transformations
+	DirectX::XMMATRIX tris = DirectX::XMMatrixRotationZ(0.0f) *
+		DirectX::XMMatrixRotationX(0.0f) *
+		DirectX::XMMatrixTranslation(0.0f, -0.25f, 1.0f);
+
 	struct ConstantBuffer
 	{
 		DirectX::XMMATRIX transform;
-		//DirectX::XMMATRIX mWVP;
+
 		DirectX::XMMATRIX mWorld;
 		DirectX::XMMATRIX mView;
 		DirectX::XMMATRIX mProj;
 	};
 
 	DirectX::XMMATRIX tf = DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixRotationZ(0.0f) *
-		DirectX::XMMatrixRotationX(0.0f) *
-		DirectX::XMMatrixTranslation( 0.0f, 0.0f, 4.0f) * 
-		DirectX::XMMatrixPerspectiveLH( 1.0f, aspectRatio, 0.5f, 10.0f)
+		tris *
+		mWorld *
+		mView *
+		mProj
 	);
 
-	float constexpr yRad = DirectX::XMConvertToRadians(90.0f);
-
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 1.0f);
-	
-	DirectX::XMFLOAT3 cPos{0.0f, 0.0f, -1.0f};
-	DirectX::XMFLOAT3 cTarget{ 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 cUp{ 0.0f, 1.0f, 0.0f };
-	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(
-		DirectX::XMLoadFloat3(&cPos),
-		DirectX::XMLoadFloat3(&cTarget),
-		DirectX::XMLoadFloat3(&cUp));
-
-	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(
-		yRad, aspectRatio, 0.5f, 100.0f
-	);
-	//const DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 5.0f); //DirectX::XMMatrixIdentity();
-	//const DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(1.0f, aspectRatio, 0.001f, 1000.f);
-	//const DirectX::XMMATRIX mCam = DirectX::XMMatrixTranslation(0.0f, 0.0f, -4.0f);
-	//const DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH({ 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 1.0f, 0.0f}); //DirectX::XMMatrixInverse(nullptr, mCam);
-	//const DirectX::XMMATRIX mWVP = mWorld * mView * mProj;
 	struct ConstantBuffer cb {
 		tf,
-		DirectX::XMMatrixTranspose(mWorld),
-		DirectX::XMMatrixTranspose(mView),
-		DirectX::XMMatrixTranspose(mProj)
-			//DirectX::XMMATRIX(
-				//DirectX::XMMatrixRotationZ(0.0f)*
-				//DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f)*
-				//DirectX::XMMatrixTranslation(0.0f, 0.0f, 1.0f)
-
-			//)
+		mWorld,
+		mView,
+		mProj
 	};
 
 	ID3D11Buffer* dx11_cbuffer;
