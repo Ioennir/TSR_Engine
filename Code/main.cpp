@@ -18,11 +18,7 @@
 //TODO(Fran): start sort of a profiling layer and add the time thing into that.
 //TODO(Fran): https://stackoverflow.com/questions/431470/window-border-width-and-height-in-win32-how-do-i-get-it
 // check the window vs windowclient size thingy
-//TODO(Fran): It might be a good idea to draw the editor with imgui first and 
-// then setup the render target within the editor to render the scene, it might be cool to be able to swap between wireframe
-// and full rendered or smth like that it would allow in the future to have lit, unlit etc.
-//TODO(Fram): Setup cbuffers with proj matrix and do some animation using the deltatime.
-//TODO(Fram):
+//TODO(Fran): check the mem leak from the buffer construction.
 
 struct TimeData
 {
@@ -154,7 +150,7 @@ void UpdateScene(float dt)
 
 }
 
-void DrawGUI(DX11Data & dxData)
+void DrawGUI(DX11Data & dxData, IMData * imData)
 {
 	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();
@@ -164,6 +160,8 @@ void DrawGUI(DX11Data & dxData)
 
 	ImGui::Begin("Test Window");
 		ImGui::Text("This is example text.");
+		ImGui::SliderFloat3("Rotation axis", imData->rot, -1.0f, 1.0f);
+		ImGui::DragFloat("Rotation speed", &imData->rotSpeed, 60.0f, -1000.0f, 1000.0f);
 	ImGui::End();
 	ImGuiWindowFlags rtWindowFlags = 0;// = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 	ImVec2 rtSize{ 640.0f, 360.0f };
@@ -186,7 +184,7 @@ void DrawGUI(DX11Data & dxData)
 	
 }
 
-void DrawScene(float dtangle, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
+void DrawScene(float rotVelocity, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -230,11 +228,11 @@ void DrawScene(float dtangle, DX11Data & dxData, DX11VertexShaderData & vsData, 
 	// world mat
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
 	
-	float anim = DirectX::XMConvertToRadians(dtangle);
+	float anim = DirectX::XMConvertToRadians(rotVelocity);
 
 	// triangle transformations
 	DirectX::XMMATRIX transform =
-		DirectX::XMMatrixRotationAxis({0.0f, 1.0f, 0.0f, 0.0f}, anim) *
+		DirectX::XMMatrixRotationAxis({imData->rot[0], imData->rot[1], imData->rot[2], 0.0f}, anim) *
 		DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 
 	struct ConstantBuffer
@@ -281,20 +279,12 @@ void DrawScene(float dtangle, DX11Data & dxData, DX11VertexShaderData & vsData, 
 	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&clearColor_mw));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// TRIANGLE RENDERING
-	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
-	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
-	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
-
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
-	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
+	//// TRIANGLE RENDERING
 
 	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 	
 	// GUI RENDERING
-	DrawGUI(dxData);
+	DrawGUI(dxData, imData);
 
 	
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -357,10 +347,10 @@ INT WINAPI wWinMain(
 
 	
 
-
+	IMData imData{};
 	//this is for testing purposes;
 	
-	float dtangle = 0.0f;
+	float rotVelocity = 0.0f;
 	float dt = 0.0f;
 	// Message loop
 	MSG msg { 0 };
@@ -382,9 +372,9 @@ INT WINAPI wWinMain(
 			//do the update and render
 			UpdateScene(dt);
 
-			dtangle += 60.0f * dt;
-			dtangle = dtangle > 360.0f ? dtangle - 360.0f : dtangle;
-			DrawScene(dtangle, dxData, vsData, psData, vertexBuff, indexBuff);
+			rotVelocity += imData.rotSpeed * dt;
+			rotVelocity = rotVelocity > 360.0f ? rotVelocity - 360.0f : rotVelocity;
+			DrawScene(rotVelocity, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
 			
 		}
 	}

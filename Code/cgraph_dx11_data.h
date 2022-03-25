@@ -65,3 +65,9 @@ struct BufferData
 	UINT stride{0};
 	UINT offset{0};
 };
+
+struct IMData
+{
+	float rot[3]{ 0.0f, 1.0f, 0.0f };
+	float rotSpeed{ 60.0f };
+};
