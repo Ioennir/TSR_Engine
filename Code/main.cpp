@@ -186,7 +186,7 @@ void DrawGUI(DX11Data & dxData)
 	
 }
 
-void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
+void DrawScene(float dtangle, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -212,7 +212,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	//CBUFFER
 
 	// camera important data
-	DirectX::XMVECTOR cEye = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMVECTOR cEye = DirectX::XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);
 	DirectX::XMVECTOR cFocus = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	DirectX::XMVECTOR cUp = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	
@@ -229,11 +229,13 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 
 	// world mat
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
+	
+	float anim = DirectX::XMConvertToRadians(dtangle);
 
 	// triangle transformations
-	DirectX::XMMATRIX transform = DirectX::XMMatrixRotationZ(0.0f) *
-		DirectX::XMMatrixRotationX(0.0f) *
-		DirectX::XMMatrixTranslation(0.0f, -0.25f, 1.0f);
+	DirectX::XMMATRIX transform =
+		DirectX::XMMatrixRotationAxis({0.0f, 1.0f, 0.0f, 0.0f}, anim) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 3.0f);
 
 	struct ConstantBuffer
 	{
@@ -269,7 +271,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.device->CreateBuffer(&cbdesc, &csd, &dx11_cbuffer);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dx11_cbuffer);
 
-	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
+	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 
 
 	// MAIN WINDOW RENDERING
@@ -289,7 +291,7 @@ void DrawScene(DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShader
 	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
 	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
 
-	dxData.imDeviceContext->DrawIndexed(3, 0, 0);
+	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 	
 	// GUI RENDERING
 	DrawGUI(dxData);
@@ -358,7 +360,8 @@ INT WINAPI wWinMain(
 
 	//this is for testing purposes;
 	
-
+	float dtangle = 0.0f;
+	float dt = 0.0f;
 	// Message loop
 	MSG msg { 0 };
 	while (WM_QUIT != msg.message)
@@ -375,10 +378,13 @@ INT WINAPI wWinMain(
 			// Note(Fran): Currently it averages it every second.
 			CalculateFrameStats(wHandler, (float)Time.totalTime);
 			
+			dt = (float)Time.deltaTime;
 			//do the update and render
-			UpdateScene((float)Time.deltaTime);
+			UpdateScene(dt);
 
-			DrawScene(dxData, vsData, psData, vertexBuff, indexBuff);
+			dtangle += 60.0f * dt;
+			dtangle = dtangle > 360.0f ? dtangle - 360.0f : dtangle;
+			DrawScene(dtangle, dxData, vsData, psData, vertexBuff, indexBuff);
 			
 		}
 	}

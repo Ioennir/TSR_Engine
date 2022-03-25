@@ -255,20 +255,82 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	DirectX::XMFLOAT4 green { 0.0f, 1.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT4 red { 1.0f, 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT4 blue { 0.0f, 0.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT4 purple{ 1.0f, 0.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT4 cyan{ 0.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT4 yell{ 1.0f, 1.0f, 0.0f, 1.0f };
+
+
 	// Triangle vertex buffer
+	// now cube
 	Vertex triangleVertices []=
 	{
-		{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},
-		{DirectX::XMFLOAT3(-0.3f, 0.0f, 0.0f), blue}
+		// front face
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), green},
+
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), green},
+
+		// top face
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), red},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 1.0f), red},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), red},
+		
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), red},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), red},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), red},
+
+		// right face
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), purple},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 1.0f), purple},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), purple},
+
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), purple},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), purple},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), purple},
+
+		// back face
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), blue},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), blue},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 1.0f), blue},
+
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), blue},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), blue},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), blue},
+
+		// left face
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), cyan},
+
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), cyan},
+
+		// bottom face
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), yell},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), yell},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), yell},
+
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), yell},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), yell},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), yell},
+
+		//{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
+		//{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},
+		//{DirectX::XMFLOAT3(-0.3f, 0.0f, 0.0f), blue}
 	};
 
 	vBuffer->stride = sizeof(Vertex);
 	vBuffer->offset = 0;
 
+	float memberCount = sizeof(triangleVertices) / vBuffer->stride;
+
 	D3D11_BUFFER_DESC tvbd { 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
-	tvbd.ByteWidth = vBuffer->stride * 3; //num of members in vertex array
+	tvbd.ByteWidth = vBuffer->stride * memberCount; //num of members in vertex array
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	
 	D3D11_SUBRESOURCE_DATA tvInitData { 0 };
@@ -282,7 +344,30 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 
 	UINT indices[] =
 	{
-		0, 1, 2
+		// front face
+		0, 1, 2,
+		3, 4, 5,
+
+		// top face
+		6, 7, 8,
+		9, 10, 11,
+
+		// right face
+		12, 13, 14,
+		15, 16, 17,
+
+		// back face
+		18, 19, 20,
+		21, 22, 23,
+
+		//left face
+		24, 25, 26,
+		27, 28, 29,
+
+		//bottom
+		30, 31, 32,
+		33, 34, 35
+
 	};
 
 	iBuffer->stride = sizeof(UINT);
@@ -290,7 +375,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 
 	D3D11_BUFFER_DESC tibd { 0 };
 	tibd.Usage = D3D11_USAGE_IMMUTABLE;
-	tibd.ByteWidth = iBuffer->stride * 3;
+	tibd.ByteWidth = iBuffer->stride * memberCount;
 	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tiInitData { 0 };
