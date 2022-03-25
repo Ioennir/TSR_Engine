@@ -265,58 +265,58 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	Vertex triangleVertices []=
 	{
 		// front face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), green},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), green},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), green},
 
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), green},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), green},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), green},
 
 		// top face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), red},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 1.0f), red},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), red},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), red},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), red},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), red},
 		
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), red},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), red},
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), red},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), red},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), red},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), red},
 
 		// right face
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), purple},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 1.0f), purple},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), purple},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), purple},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), purple},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), purple},
 
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), purple},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), purple},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.0f), purple},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), purple},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), purple},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), purple},
 
 		// back face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), blue},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), blue},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 1.0f), blue},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), blue},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), blue},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), blue},
 
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), blue},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), blue},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), blue},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), blue},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), blue},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), blue},
 
 		// left face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.0f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), cyan},
 
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 1.0f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), cyan},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), cyan},
 
 		// bottom face
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), yell},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.0f), yell},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), yell},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yell},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), yell},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yell},
 
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 1.0f), yell},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 1.0f), yell},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f), yell},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yell},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), yell},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yell},
 
 		//{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
 		//{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},

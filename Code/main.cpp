@@ -235,7 +235,7 @@ void DrawScene(float dtangle, DX11Data & dxData, DX11VertexShaderData & vsData, 
 	// triangle transformations
 	DirectX::XMMATRIX transform =
 		DirectX::XMMatrixRotationAxis({0.0f, 1.0f, 0.0f, 0.0f}, anim) *
-		DirectX::XMMatrixTranslation(0.0f, 0.0f, 3.0f);
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 
 	struct ConstantBuffer
 	{
