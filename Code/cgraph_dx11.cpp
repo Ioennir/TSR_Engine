@@ -326,7 +326,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	vBuffer->stride = sizeof(Vertex);
 	vBuffer->offset = 0;
 
-	float memberCount = sizeof(triangleVertices) / vBuffer->stride;
+	UINT memberCount = sizeof(triangleVertices) / vBuffer->stride;
 
 	D3D11_BUFFER_DESC tvbd { 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
