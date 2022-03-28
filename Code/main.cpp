@@ -208,29 +208,35 @@ void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, Dire
 	camData->mProj = mProj;
 }
 
-void InitializeCBuffer(CameraData & camData, ConstantBuffer * cbuffer) {
+void InitializeCBuffer(CameraData & camData, DX11Data * dxData, ConstantBuffer * cbuffer) {
 	//Simple translation followed by the camera view and projection
 	//Note(Fran): Camera world now is identity but maybe we should multiply it aswell for the future
 	//transpose?
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity() * DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(mWorld * camData.mWorld * camData.mView * camData.mProj);
 	*cbuffer = { 
-		mWorld, 
-		mWVP 
+		mWorld,
+		mWVP
 	};
+
+	
 }
 
+// TODO(Fran): Check why this is not updating the constant buffer
 void UpdateCBuffer(CameraData & camData,float rotVelocity, float rotaxis[3], ConstantBuffer * cbuffer) {
 	
 	float anim = DirectX::XMConvertToRadians(rotVelocity);
 	
 	// triangle transformations/ world matrix basically rotate around arbitrary axis with arbitrary speed
-	DirectX::XMMATRIX currWorld = cbuffer->mWorld * DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, anim);
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, anim);
 
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose( currWorld * camData.mWorld * camData.mView * camData.mProj);
+	DirectX::XMMATRIX currentWorld = rotationMatrix * translation;
+
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
 
 	*cbuffer = {
-		currWorld,
+		currentWorld,
 		mWVP
 	};
 }
@@ -259,11 +265,9 @@ void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer,
 	
 
 	//CBUFFER
-	// Construct constant buffer
-	// Todo(Fran): This needs to be moved out and then updated each frame.
-	// UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
-	
-	
+	// Update constant buffer
+	UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
+	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 
 	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
@@ -345,12 +349,13 @@ INT WINAPI wWinMain(
 	CameraData camData{};
 	InitializeCamera({ 0.0f, 0.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
 	ConstantBuffer cbuffer{};
-	InitializeCBuffer(camData, &cbuffer);
+	InitializeCBuffer(camData, &dxData, &cbuffer);
 
+	// try to move this somewhere else.
 	D3D11_BUFFER_DESC cbdesc{ 0 };
 	cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbdesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbdesc.Usage = D3D11_USAGE_DEFAULT;// D3D11_USAGE_DYNAMIC;
+	cbdesc.CPUAccessFlags = 0;//D3D11_CPU_ACCESS_WRITE;
 	cbdesc.ByteWidth = sizeof(cbuffer);
 	D3D11_SUBRESOURCE_DATA csd{};
 	csd.pSysMem = &cbuffer;
