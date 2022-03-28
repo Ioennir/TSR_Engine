@@ -31,21 +31,21 @@ struct TimeData
 	double totalTime {0.0};
 };
 
-void CalculateFrameStats(HWND hWnd, float totalTime)
+void CalculateFrameStats(HWND hWnd, double totalTime)
 {
 	// avg frames per second
 	// avg time in ms per frame
 	// append stats to window caption bar
 
-	static int frameCount = 0;
-	static float elapsedTime = 0.0f;
+	static uint64_t frameCount = 0;
+	static double elapsedTime = 0.0f;
 
 	++frameCount;
 
 	if (totalTime - elapsedTime >= 1.0f)
 	{
-		float fps = (float)frameCount;
-		float mspf = 1000.0f / fps;
+		double fps = static_cast<double>(frameCount);
+		double mspf = 1000.0f / fps;
 
 		//build the caption string
 		std::wostringstream outstream;
@@ -212,7 +212,7 @@ void InitializeCBuffer(CameraData & camData, DX11Data * dxData, ConstantBuffer *
 	//Simple translation followed by the camera view and projection
 	//Note(Fran): Camera world now is identity but maybe we should multiply it aswell for the future
 	//transpose?
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity() * DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(mWorld * camData.mWorld * camData.mView * camData.mProj);
 	*cbuffer = { 
 		mWorld,
@@ -223,15 +223,15 @@ void InitializeCBuffer(CameraData & camData, DX11Data * dxData, ConstantBuffer *
 }
 
 // TODO(Fran): Check why this is not updating the constant buffer
-void UpdateCBuffer(CameraData & camData,float rotVelocity, float rotaxis[3], ConstantBuffer * cbuffer) {
+void UpdateCBuffer(const CameraData & camData,float deltarot, float rotaxis[3], ConstantBuffer * cbuffer) {
 	
-	float anim = DirectX::XMConvertToRadians(rotVelocity);
+	float anim = DirectX::XMConvertToRadians(deltarot);
 	
 	// triangle transformations/ world matrix basically rotate around arbitrary axis with arbitrary speed
-	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+	//DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, anim);
 
-	DirectX::XMMATRIX currentWorld = rotationMatrix * translation;
+	DirectX::XMMATRIX currentWorld = rotationMatrix;// *translation;
 
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
 
@@ -387,7 +387,7 @@ INT WINAPI wWinMain(
 			UpdateScene(dt);
 
 			rotVelocity += imData.rotSpeed * dt;
-			rotVelocity = rotVelocity > 360.0f ? rotVelocity - 360.0f : rotVelocity;
+
 			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
 			
 		}
