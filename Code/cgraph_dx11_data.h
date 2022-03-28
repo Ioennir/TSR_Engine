@@ -36,6 +36,7 @@ struct DX11Data
 	ID3D11RasterizerState* currentRasterizerState{};
 	D3D11_VIEWPORT windowViewport{};
 	DX11ScnData scnData{};
+	ID3D11Buffer* dx11_cbuffer{};
 };
 
 struct DX11VertexShaderData
@@ -70,4 +71,20 @@ struct IMData
 {
 	float rot[3]{ 0.0f, 1.0f, 0.0f };
 	float rotSpeed{ 60.0f };
+};
+
+
+//These structs are as simple as possible for now to perform
+// a basic 3D projection and get things going.
+struct CameraData
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mView;
+	DirectX::XMMATRIX mProj;
+};
+
+struct ConstantBuffer
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mVWP;
 };

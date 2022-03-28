@@ -184,7 +184,58 @@ void DrawGUI(DX11Data & dxData, IMData * imData)
 	
 }
 
-void DrawScene(float rotVelocity, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
+void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, DirectX::XMFLOAT3 up, float fov, float aspectRatio, CameraData* camData)
+{
+	// camera position, target and up vector in 3D world
+	DirectX::XMVECTOR cEye = DirectX::XMVectorSet(position.x, position.y, position.z, 0.0f);
+	DirectX::XMVECTOR cFocus = DirectX::XMVectorSet(target.x, target.y, target.z, 0.0f);
+	DirectX::XMVECTOR cUp = DirectX::XMVectorSet(up.x, up.y, up.z, 0.0f);
+	
+	// build view matrix
+	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(cEye, cFocus, cUp);
+
+	// frustum data
+	float yFov = DirectX::XMConvertToRadians(fov);
+	float nearZ = 0.1f;
+	float farZ = 1000.0f;
+	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(yFov, aspectRatio, nearZ, farZ);
+
+	// world mat
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
+
+	camData->mWorld = mWorld;
+	camData->mView = mView;
+	camData->mProj = mProj;
+}
+
+void InitializeCBuffer(CameraData & camData, ConstantBuffer * cbuffer) {
+	//Simple translation followed by the camera view and projection
+	//Note(Fran): Camera world now is identity but maybe we should multiply it aswell for the future
+	//transpose?
+	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(mWorld * camData.mWorld * camData.mView * camData.mProj);
+	*cbuffer = { 
+		mWorld, 
+		mWVP 
+	};
+}
+
+void UpdateCBuffer(CameraData & camData,float rotVelocity, float rotaxis[3], ConstantBuffer * cbuffer) {
+	
+	float anim = DirectX::XMConvertToRadians(rotVelocity);
+	
+	// triangle transformations/ world matrix basically rotate around arbitrary axis with arbitrary speed
+	DirectX::XMMATRIX currWorld = cbuffer->mWorld * DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, anim);
+
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose( currWorld * camData.mWorld * camData.mView * camData.mProj);
+
+	*cbuffer = {
+		currWorld,
+		mWVP
+	};
+}
+
+void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -208,66 +259,12 @@ void DrawScene(float rotVelocity, IMData * imData, DX11Data & dxData, DX11Vertex
 	
 
 	//CBUFFER
-
-	// camera important data
-	DirectX::XMVECTOR cEye = DirectX::XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);
-	DirectX::XMVECTOR cFocus = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	DirectX::XMVECTOR cUp = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	// Construct constant buffer
+	// Todo(Fran): This needs to be moved out and then updated each frame.
+	// UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
 	
-	// build view matrix
-	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(cEye, cFocus, cUp);
 	
-	// frustum data
-	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
-	float constexpr yFov = DirectX::XMConvertToRadians(65.0f);
-	float nearZ = 0.1f;
-	float farZ = 1000.0f;
-	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(yFov, aspectRatio, nearZ, farZ);
-
-
-	// world mat
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
-	
-	float anim = DirectX::XMConvertToRadians(rotVelocity);
-
-	// triangle transformations
-	DirectX::XMMATRIX transform =
-		DirectX::XMMatrixRotationAxis({imData->rot[0], imData->rot[1], imData->rot[2], 0.0f}, anim) *
-		DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
-
-	struct ConstantBuffer
-	{
-		DirectX::XMMATRIX transform;
-
-		DirectX::XMMATRIX mWorld;
-		DirectX::XMMATRIX mView;
-		DirectX::XMMATRIX mProj;
-	};
-
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(
-		transform *
-		mWorld *
-		mView *
-		mProj
-	);
-
-	struct ConstantBuffer cb {
-		mWVP,
-		mWorld,
-		mView,
-		mProj
-	};
-
-	ID3D11Buffer* dx11_cbuffer;
-	D3D11_BUFFER_DESC cbdesc{ 0 };
-	cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbdesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbdesc.ByteWidth = sizeof(cb);
-	D3D11_SUBRESOURCE_DATA csd{};
-	csd.pSysMem = &cb;
-	dxData.device->CreateBuffer(&cbdesc, &csd, &dx11_cbuffer);
-	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dx11_cbuffer);
+	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 
 	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 
@@ -344,8 +341,20 @@ INT WINAPI wWinMain(
 		return -1;
 	}
 
+	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
+	CameraData camData{};
+	InitializeCamera({ 0.0f, 0.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
+	ConstantBuffer cbuffer{};
+	InitializeCBuffer(camData, &cbuffer);
 
-	
+	D3D11_BUFFER_DESC cbdesc{ 0 };
+	cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbdesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbdesc.ByteWidth = sizeof(cbuffer);
+	D3D11_SUBRESOURCE_DATA csd{};
+	csd.pSysMem = &cbuffer;
+	dxData.device->CreateBuffer(&cbdesc, &csd, &dxData.dx11_cbuffer);
 
 	IMData imData{};
 	//this is for testing purposes;
@@ -374,7 +383,7 @@ INT WINAPI wWinMain(
 
 			rotVelocity += imData.rotSpeed * dt;
 			rotVelocity = rotVelocity > 360.0f ? rotVelocity - 360.0f : rotVelocity;
-			DrawScene(rotVelocity, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
+			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
 			
 		}
 	}

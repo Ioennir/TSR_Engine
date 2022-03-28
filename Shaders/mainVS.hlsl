@@ -1,8 +1,6 @@
 cbuffer cb {
+    matrix mWorld;
     matrix mWVP;
-    matrix w;
-    matrix v;
-    matrix p;
 };
 
 void main(
