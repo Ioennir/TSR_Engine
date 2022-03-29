@@ -312,6 +312,9 @@ INT WINAPI wWinMain(
 	_In_ LPWSTR lpCmdLine, 
 	_In_ int nCmdShow)
 {
+#ifdef _DEBUG 
+	printf("::\tCGraph console log!\n");
+#endif
 	// Initialize and reset the time information for the application
 	TimeData Time;
 	ResetTimeInformation(&Time);
@@ -392,4 +395,10 @@ INT WINAPI wWinMain(
 	}
 
 	return 0;
+}
+
+// Note(Fran): Dummy main to attach to console when subsystem:console is specified.
+int main()
+{
+	return wWinMain(GetModuleHandle(NULL), NULL, GetCommandLineW(), SW_SHOWNORMAL);
 }
