@@ -3,6 +3,8 @@
 .vs/*
 x64/*
 
+# imgui config produced file
+imgui.ini
 
 # Prerequisites
 *.d

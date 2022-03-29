@@ -219,6 +219,14 @@ void InitializeCBuffer(CameraData & camData, DX11Data * dxData, ConstantBuffer *
 		mWVP
 	};
 
+	D3D11_BUFFER_DESC cbdesc{ 0 };
+	cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbdesc.Usage = D3D11_USAGE_DEFAULT;// D3D11_USAGE_DYNAMIC;
+	cbdesc.CPUAccessFlags = 0;//D3D11_CPU_ACCESS_WRITE;
+	cbdesc.ByteWidth = sizeof(*cbuffer);
+	D3D11_SUBRESOURCE_DATA csd{};
+	csd.pSysMem = cbuffer;
+	dxData->device->CreateBuffer(&cbdesc, &csd, &dxData->dx11_cbuffer);
 	
 }
 
@@ -350,16 +358,6 @@ INT WINAPI wWinMain(
 	InitializeCamera({ 0.0f, 0.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
 	ConstantBuffer cbuffer{};
 	InitializeCBuffer(camData, &dxData, &cbuffer);
-
-	// try to move this somewhere else.
-	D3D11_BUFFER_DESC cbdesc{ 0 };
-	cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbdesc.Usage = D3D11_USAGE_DEFAULT;// D3D11_USAGE_DYNAMIC;
-	cbdesc.CPUAccessFlags = 0;//D3D11_CPU_ACCESS_WRITE;
-	cbdesc.ByteWidth = sizeof(cbuffer);
-	D3D11_SUBRESOURCE_DATA csd{};
-	csd.pSysMem = &cbuffer;
-	dxData.device->CreateBuffer(&cbdesc, &csd, &dxData.dx11_cbuffer);
 
 	IMData imData{};
 	//this is for testing purposes;
