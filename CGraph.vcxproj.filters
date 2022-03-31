@@ -45,12 +45,15 @@
     <ClCompile Include="Code\imgui\imgui_widgets.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Code\tsr_time.cpp">
+      <Filter>Source Files\Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Code\cgraph_dx11_data.h">
+    <ClInclude Include="Code\tsr_dx11_data.h">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
-    <ClInclude Include="Code\cgraph_dx11.cpp">
+    <ClInclude Include="Code\tsr_dx11.cpp">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
     <ClInclude Include="Code\imgui\imconfig.h">

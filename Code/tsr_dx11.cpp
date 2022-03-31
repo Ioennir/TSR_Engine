@@ -1,7 +1,7 @@
 /*
 	This .cpp contains all functions to interact with D3D11.
 */
-#include "cgraph_dx11_data.h"
+#include "tsr_dx11_data.h"
 
 //TODO(Fran): Do the debug implementation with dxtrace etc.
 //TODO(Fran): Check MSAA thingy.

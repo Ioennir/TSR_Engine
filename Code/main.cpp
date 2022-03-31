@@ -10,10 +10,10 @@
 
 // std includes
 #include <iostream>
-#include <sstream>
 
 // DX11 layer
-#include "cgraph_dx11.cpp"
+#include "tsr_dx11.cpp"
+#include "tsr_time.cpp"
 
 //TODO(Fran): start sort of a profiling layer and add the time thing into that.
 //TODO(Fran): https://stackoverflow.com/questions/431470/window-border-width-and-height-in-win32-how-do-i-get-it
@@ -22,42 +22,48 @@
 
 struct TimeData
 {
-	__int64 baseTime {0};
-	__int64 currTime {0};
-	__int64 prevTime {0};
-	__int64 countsPerSec {0};
-	double secondsPerCount {0.0};
-	double deltaTime {0.0};
-	double totalTime {0.0};
+	__int64 baseTime{ 0 };
+	__int64 currTime{ 0 };
+	__int64 prevTime{ 0 };
+	__int64 countsPerSec{ 0 };
+	double secondsPerCount{ 0.0 };
+	double deltaTime{ 0.0 };
+	double totalTime{ 0.0 };
 };
 
-void CalculateFrameStats(HWND hWnd, double totalTime)
+struct FrameStats
+{
+	float fps;
+	float ms_per_frame;
+	
+	float avgfps;
+	float avgmspf;
+};
+
+void CalculateFrameStats(TimeData & tData, FrameStats * fStats)
 {
 	// avg frames per second
 	// avg time in ms per frame
-	// append stats to window caption bar
+	// update Frame stats struct
 
 	static uint64_t frameCount = 0;
-	static double elapsedTime = 0.0f;
-
+	static double elapsedTime = 0.0;
 	++frameCount;
-
-	if (totalTime - elapsedTime >= 1.0f)
+	double currTimeInS = tData.currTime * tData.secondsPerCount;
+	double timeDiff = currTimeInS - elapsedTime;
+	// fetch fps 
+	if (timeDiff >= 1.0/30.0)
 	{
-		double fps = static_cast<double>(frameCount);
-		double mspf = 1000.0f / fps;
-
-		//build the caption string
-		std::wostringstream outstream;
-		outstream.precision(6);
-		outstream << L"CGraph Window" << L" "
-			<< L"FPS: " << fps << L" "
-			<< L"Frame Time: " << mspf << L" (ms)";
-		SetWindowText(hWnd, outstream.str().c_str());
-
+		double fps = static_cast<double>((1.0 / timeDiff) * frameCount);
+		double mspf = (timeDiff / frameCount) * 1000.0;
+		//double mspf = 1000.0f / fps;
+	
+		fStats->fps = fps;
+		fStats->ms_per_frame = mspf;
+	
 		//reset
 		frameCount = 0;
-		elapsedTime += 1.0f;
+		elapsedTime = currTimeInS;
 	}
 }
 
@@ -150,7 +156,7 @@ void UpdateScene(float dt)
 
 }
 
-void DrawGUI(DX11Data & dxData, IMData * imData)
+void DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
 {
 	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();
@@ -158,11 +164,16 @@ void DrawGUI(DX11Data & dxData, IMData * imData)
 	ImGui::NewFrame();
 	//ImGui::DockSpaceOverViewport();
 
-	ImGui::Begin("Test Window");
-		ImGui::Text("This is example text.");
+	ImGui::Begin("Cube data");
 		ImGui::SliderFloat3("Rotation axis", imData->rot, -1.0f, 1.0f);
 		ImGui::DragFloat("Rotation speed", &imData->rotSpeed, 60.0f, -1000.0f, 1000.0f);
 	ImGui::End();
+
+	ImGui::Begin("Frame statistics");
+		ImGui::Text("fps: %f", fStats.fps);
+		ImGui::Text("ms per frame: %f", fStats.ms_per_frame);
+	ImGui::End();
+
 	ImGuiWindowFlags rtWindowFlags = 0;// = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 	ImVec2 rtSize{ 640.0f, 360.0f };
 	//ImGui::SetNextWindowSize(rtSize);
@@ -249,7 +260,7 @@ void UpdateCBuffer(const CameraData & camData,float deltarot, float rotaxis[3], 
 	};
 }
 
-void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
+void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib, FrameStats & fStats)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -293,7 +304,7 @@ void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer,
 	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 	
 	// GUI RENDERING
-	DrawGUI(dxData, imData);
+	DrawGUI(dxData, imData, fStats);
 
 	
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -317,6 +328,7 @@ INT WINAPI wWinMain(
 #endif
 	// Initialize and reset the time information for the application
 	TimeData Time;
+	FrameStats frameStats{ 0 };
 	ResetTimeInformation(&Time);
 
 	// create the window and display it.
@@ -381,7 +393,7 @@ INT WINAPI wWinMain(
 			UpdateTimeInformation(&Time);
 			// calculate and show frame stats:
 			// Note(Fran): Currently it averages it every second.
-			CalculateFrameStats(wHandler, (float)Time.totalTime);
+			CalculateFrameStats(Time, &frameStats);
 			
 			dt = (float)Time.deltaTime;
 			//do the update and render
@@ -389,7 +401,7 @@ INT WINAPI wWinMain(
 
 			rotVelocity += imData.rotSpeed * dt;
 
-			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
+			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff, frameStats);
 			
 		}
 	}
