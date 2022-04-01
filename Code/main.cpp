@@ -10,6 +10,7 @@
 
 // std includes
 #include <iostream>
+#include "tsr_types.h"
 
 // DX11 layer
 #include "tsr_dx11.cpp"
@@ -26,18 +27,18 @@ struct TimeData
 	__int64 currTime{ 0 };
 	__int64 prevTime{ 0 };
 	__int64 countsPerSec{ 0 };
-	double secondsPerCount{ 0.0 };
-	double deltaTime{ 0.0 };
-	double totalTime{ 0.0 };
+	r64 secondsPerCount{ 0.0 };
+	r64 deltaTime{ 0.0 };
+	r64 totalTime{ 0.0 };
 };
 
 struct FrameStats
 {
-	float fps;
-	float ms_per_frame;
+	r32 fps;
+	r32 ms_per_frame;
 	
-	float avgfps;
-	float avgmspf;
+	r32 avgfps;
+	r32 avgmspf;
 };
 
 void CalculateFrameStats(TimeData & tData, FrameStats * fStats)
@@ -46,25 +47,36 @@ void CalculateFrameStats(TimeData & tData, FrameStats * fStats)
 	// avg time in ms per frame
 	// update Frame stats struct
 
-	static uint64_t frameCount = 0;
-	static double elapsedTime = 0.0;
+	static ui64 frameCount = 0;
+	static r64 elapsedTime = 0.0;
 	++frameCount;
-	double currTimeInS = tData.currTime * tData.secondsPerCount;
-	double timeDiff = currTimeInS - elapsedTime;
-	// fetch fps 
+	
+	static ui64 frameCountAvg = 0;
+	static r64 elapsedTimeAvg = 0.0;
+	++frameCountAvg;
+
+	//fetches every 1/30 of a second
+	r64 currTimeInS = tData.currTime * tData.secondsPerCount;
+	r64 timeDiff = currTimeInS - elapsedTime;
 	if (timeDiff >= 1.0/30.0)
 	{
-		double fps = static_cast<double>((1.0 / timeDiff) * frameCount);
-		double mspf = (timeDiff / frameCount) * 1000.0;
-		//double mspf = 1000.0f / fps;
+		fStats->fps = static_cast<r64>((1.0 / timeDiff) * frameCount);
+		fStats->ms_per_frame = (timeDiff / frameCount) * 1000.0;
 	
-		fStats->fps = fps;
-		fStats->ms_per_frame = mspf;
-	
-		//reset
 		frameCount = 0;
 		elapsedTime = currTimeInS;
 	}
+
+	//fetches every second
+	double timeDiffAvg = tData.totalTime - elapsedTimeAvg;
+	if (timeDiffAvg >= 1.0) {
+		fStats->avgfps = static_cast<r64>(frameCountAvg);
+		fStats->avgmspf = 1000.0f / fStats->avgfps;
+
+		frameCountAvg = 0;
+		elapsedTimeAvg += 1.0;
+	}
+
 }
 
 void UpdateTimeInformation(TimeData* tData)
@@ -172,6 +184,9 @@ void DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
 	ImGui::Begin("Frame statistics");
 		ImGui::Text("fps: %f", fStats.fps);
 		ImGui::Text("ms per frame: %f", fStats.ms_per_frame);
+		ImGui::Separator();
+		ImGui::Text("avg fps: %f", fStats.avgfps);
+		ImGui::Text("avg ms per frame: %f", fStats.avgmspf);
 	ImGui::End();
 
 	ImGuiWindowFlags rtWindowFlags = 0;// = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;

@@ -39,6 +39,7 @@
     <ClInclude Include="Code\imgui\imstb_rectpack.h" />
     <ClInclude Include="Code\imgui\imstb_textedit.h" />
     <ClInclude Include="Code\imgui\imstb_truetype.h" />
+    <ClInclude Include="Code\tsr_types.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\mainPS.hlsl">
