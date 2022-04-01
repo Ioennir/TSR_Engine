@@ -19,14 +19,14 @@
 //TODO(Fran): start sort of a profiling layer and add the time thing into that.
 //TODO(Fran): https://stackoverflow.com/questions/431470/window-border-width-and-height-in-win32-how-do-i-get-it
 // check the window vs windowclient size thingy
-//TODO(Fran): check the mem leak from the buffer construction.
+//TODO(Fran): Implement a naive input system, maybe winsdk has something
 
 struct TimeData
 {
-	__int64 baseTime{ 0 };
-	__int64 currTime{ 0 };
-	__int64 prevTime{ 0 };
-	__int64 countsPerSec{ 0 };
+	i64 baseTime{ 0 };
+	i64 currTime{ 0 };
+	i64 prevTime{ 0 };
+	i64 countsPerSec{ 0 };
 	r64 secondsPerCount{ 0.0 };
 	r64 deltaTime{ 0.0 };
 	r64 totalTime{ 0.0 };
@@ -34,11 +34,11 @@ struct TimeData
 
 struct FrameStats
 {
-	r32 fps;
-	r32 ms_per_frame;
+	r64 fps;
+	r64 ms_per_frame;
 	
-	r32 avgfps;
-	r32 avgmspf;
+	r64 avgfps;
+	r64 avgmspf;
 };
 
 void CalculateFrameStats(TimeData & tData, FrameStats * fStats)
@@ -100,17 +100,14 @@ void ResetTimeInformation(TimeData* tData)
 	tData->currTime = tData->baseTime;
 	tData->prevTime = tData->baseTime;
 	QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&tData->countsPerSec));
-	tData->secondsPerCount = 1.0 / static_cast<double>(tData->countsPerSec);
+	tData->secondsPerCount = 1.0 / static_cast<r64>(tData->countsPerSec);
 	tData->deltaTime = 0.0;
 	tData->totalTime = 0.0;
 }
 
+//Hook up imgui to the window proc
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI WndProc(
-	HWND hWnd,
-	UINT message,
-	WPARAM wParam,
-	LPARAM lParam)
+LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
@@ -163,10 +160,7 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 	return wHandler;
 }
 
-void UpdateScene(float dt)
-{
 
-}
 
 void DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
 {
@@ -208,6 +202,11 @@ void DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
 	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.textureRTView, dxData.depthStencilView);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
 }
 
 void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, DirectX::XMFLOAT3 up, float fov, float aspectRatio, CameraData* camData)
@@ -256,7 +255,6 @@ void InitializeCBuffer(CameraData & camData, DX11Data * dxData, ConstantBuffer *
 	
 }
 
-// TODO(Fran): Check why this is not updating the constant buffer
 void UpdateCBuffer(const CameraData & camData,float deltarot, float rotaxis[3], ConstantBuffer * cbuffer) {
 	
 	float anim = DirectX::XMConvertToRadians(deltarot);
@@ -275,7 +273,12 @@ void UpdateCBuffer(const CameraData & camData,float deltarot, float rotaxis[3], 
 	};
 }
 
-void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib, FrameStats & fStats)
+void UpdateScene(float dt)
+{
+
+}
+
+void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -299,7 +302,6 @@ void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer,
 	
 
 	//CBUFFER
-	// Update constant buffer
 	UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
@@ -318,18 +320,7 @@ void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer,
 
 	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 	
-	// GUI RENDERING
-	DrawGUI(dxData, imData, fStats);
-
 	
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-	}
-	
-
-	dxData.swapChain->Present(NO_VSYNC, 0);
 }
 
 INT WINAPI wWinMain(
@@ -411,13 +402,17 @@ INT WINAPI wWinMain(
 			CalculateFrameStats(Time, &frameStats);
 			
 			dt = (float)Time.deltaTime;
-			//do the update and render
+			//SCENE UPDATE
 			UpdateScene(dt);
 
 			rotVelocity += imData.rotSpeed * dt;
 
-			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff, frameStats);
-			
+			// SCENE RENDERING
+			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
+			// GUI RENDERING
+			DrawGUI(dxData, &imData, frameStats);
+
+			dxData.swapChain->Present(NO_VSYNC, 0);
 		}
 	}
 
