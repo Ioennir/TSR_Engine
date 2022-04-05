@@ -80,10 +80,10 @@
     <ClInclude Include="Code\imgui\imstb_truetype.h">
       <Filter>Source Files\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="Code\tsr_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Code\tsr_macros.h">
+      <Filter>Source Files\Code</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_types.h">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
   </ItemGroup>
