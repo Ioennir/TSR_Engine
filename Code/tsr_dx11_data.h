@@ -3,7 +3,9 @@
 	Additionally, it will also contain data structures that will be in use to configure DX11 and/or interact with it.
 */
 
-#pragma once
+#ifndef TSR_DX11_DATA
+#define TSR_DX11_DATA
+
 #include <Windows.h>
 #include <d3d11.h>
 #include <dxgi.h>
@@ -88,3 +90,5 @@ struct ConstantBuffer
 	DirectX::XMMATRIX mWorld;
 	DirectX::XMMATRIX mVWP;
 };
+
+#endif
