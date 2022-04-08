@@ -1,23 +1,24 @@
-//todo check this
 #include "tsr_platform.h"
 
 #include "tsr_gui.h"
 
 // std includes
+// TODO(Fran): check the EA std implementation.
 #include <iostream>
 #include "tsr_types.h"
+
+//MACROS
+#include "tsr_macros.h"
 
 // DX11 layer
 #include "tsr_dx11.cpp"
 
+
 // profiling layer
 #include "tsr_profiling.h"
 
-//TODO(Fran): https://stackoverflow.com/questions/431470/window-border-width-and-height-in-win32-how-do-i-get-it
-// check the window vs windowclient size thingy
 //TODO(Fran): Implement a naive input system, maybe winsdk has something
 
-//Hook up imgui to the window proc
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -74,13 +75,13 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 
 
 
-void DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
+void TSR_DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
 {
 	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	//ImGui::DockSpaceOverViewport();
+	ImGui::DockSpaceOverViewport();
 
 	ImGui::Begin("Cube data");
 		ImGui::SliderFloat3("Rotation axis", imData->rot, -1.0f, 1.0f);
@@ -185,25 +186,24 @@ void UpdateCBuffer(const CameraData & camData,float deltarot, float rotaxis[3], 
 	};
 }
 
-void UpdateScene(float dt)
+void TSR_Update(float dt)
 {
 
 }
 
-void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
+void TSR_Draw(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
 {
 	//clear backbuffer
-	DirectX::XMVECTORF32 clearColor_mw{ 1.0f, 0.5f, 0.0f, 1.0f };
-	DirectX::XMVECTORF32 clearColor_sw{ 0.0f, 0.5f, 0.5f, 1.0f };
+	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
 
 	// VIEWPORT RENDERING
 	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.scnData.renderTargetView, dxData.scnData.depthStencilView);
 	dxData.imDeviceContext->RSSetViewports(1, &dxData.scnData.viewport);
 
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.scnData.renderTargetView, reinterpret_cast<const float*>(&clearColor_sw));
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.scnData.renderTargetView, reinterpret_cast<const float*>(&clearColor_orange));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.scnData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// TRIANGLE RENDERING
+	// CUBE
 	// Bind shaders and buffers
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -214,6 +214,7 @@ void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer,
 	
 
 	//CBUFFER
+	// TODO(Fran): Move this to the update, check the issues 
 	UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
@@ -222,15 +223,15 @@ void DrawScene(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer,
 
 
 	// MAIN WINDOW RENDERING
-	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
-	dxData.imDeviceContext->RSSetViewports(1, &dxData.windowViewport);
+	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
+	//dxData.imDeviceContext->RSSetViewports(1, &dxData.windowViewport);
 
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&clearColor_mw));
-	dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	//dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&black));
+	//dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//// TRIANGLE RENDERING
 
-	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
+	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 	
 	
 }
@@ -242,7 +243,7 @@ INT WINAPI wWinMain(
 	_In_ int nCmdShow)
 {
 #ifdef _DEBUG 
-	printf("::\tCGraph console log!\n");
+	printf("::\tTSR engine console log!\n");
 #endif
 	// Initialize and reset the time information for the application
 	TimeData Time;
@@ -251,7 +252,7 @@ INT WINAPI wWinMain(
 
 	// create the window and display it.
 	RECT wRect { 0, 0, 1280, 720 };
-	HWND wHandler = CreateAndSpawnWindow(L"CGraph Window", wRect, hInstance, nCmdShow);
+	HWND wHandler = CreateAndSpawnWindow(L"TSR Engine", wRect, hInstance, nCmdShow);
 	
 	// Initialize DX11 and get all the information needed
 	DX11Data dxData;
@@ -315,14 +316,14 @@ INT WINAPI wWinMain(
 			
 			dt = (float)Time.deltaTime;
 			//SCENE UPDATE
-			UpdateScene(dt);
+			TSR_Update(dt);
 
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			DrawScene(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
+			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
 			// GUI RENDERING
-			DrawGUI(dxData, &imData, frameStats);
+			TSR_DrawGUI(dxData, &imData, frameStats);
 
 			dxData.swapChain->Present(NO_VSYNC, 0);
 		}

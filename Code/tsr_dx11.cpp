@@ -251,15 +251,6 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 
 bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
 {
-	//testing purposes now
-	DirectX::XMFLOAT4 green { 0.0f, 1.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT4 red { 1.0f, 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT4 blue { 0.0f, 0.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT4 purple{ 1.0f, 0.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT4 cyan{ 0.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT4 yell{ 1.0f, 1.0f, 0.0f, 1.0f };
-
-
 	// Triangle vertex buffer
 	// now cube
 	Vertex triangleVertices []=
@@ -283,13 +274,13 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), red},
 
 		// right face
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), purple},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), purple},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), purple},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), magenta},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), magenta},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), magenta},
 
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), purple},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), purple},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), purple},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), magenta},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), magenta},
+		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), magenta},
 
 		// back face
 		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), blue},
@@ -310,13 +301,13 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), cyan},
 
 		// bottom face
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yell},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), yell},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yell},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yellow},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), yellow},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yellow},
 
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yell},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), yell},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yell},
+		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yellow},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), yellow},
+		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yellow},
 
 		//{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
 		//{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},
