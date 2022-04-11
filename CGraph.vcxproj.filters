@@ -48,6 +48,9 @@
     <ClCompile Include="Code\tsr_profiling.cpp">
       <Filter>Source Files\Code</Filter>
     </ClCompile>
+    <ClCompile Include="Code\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\tsr_dx11_data.h">

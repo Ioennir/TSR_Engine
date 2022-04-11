@@ -242,7 +242,7 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	dxData->scnData.viewport.TopLeftY = 0.0f;
 	dxData->scnData.viewport.Width = static_cast<float>(rtWidth);
 	dxData->scnData.viewport.Height = static_cast<float>(rtHeight);
-
+	dxData->scnData.viewportSize = { static_cast<float>(rtWidth), static_cast<float>(rtHeight)};
 
 	dxData->imDeviceContext->RSSetViewports(1, &dxData->windowViewport);
 	

@@ -24,6 +24,7 @@ struct DX11ScnData
 	ID3D11DepthStencilView* depthStencilView{};
 	ID3D11ShaderResourceView* shaderResourceView{};
 	D3D11_VIEWPORT viewport{};
+	DirectX::XMFLOAT2 viewportSize{ 1.0f, 1.0f};
 };
 
 struct DX11Data
