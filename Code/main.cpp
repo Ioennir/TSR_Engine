@@ -30,6 +30,15 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_DESTROY:
 		PostQuitMessage(0); break;
+	case WM_SIZING:
+		// prevent the white thing from happening.
+		break;
+	case WM_SIZE:
+		// Get window size
+		// Rebuild framebuffer
+		// commit framebuffer
+		break;
+
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -49,12 +58,7 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 	RegisterClassEx(&wclass);
 
 	DWORD wStyle;
-
-#ifdef BORDERLESS
-	wStyle = WS_POPUPWINDOW; //borderless window
-#else
-	wStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX; // style for the window
-#endif 
+	wStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME;
 
 
 	AdjustWindowRect(&wRect, WS_OVERLAPPEDWINDOW, FALSE);
