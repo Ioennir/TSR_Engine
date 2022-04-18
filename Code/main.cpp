@@ -31,7 +31,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0); break;
 	case WM_SIZING:
-		// prevent the white thing from happening.
+		// prevent the white thing from happening. done
 		break;
 	case WM_SIZE:
 		// Get window size
@@ -53,15 +53,15 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 	wclass.lpfnWndProc = WndProc;
 	wclass.hInstance = hInstance;
 	wclass.hCursor = LoadCursor(0, IDC_ARROW);
-	wclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wclass.lpszClassName = wcName;
 	RegisterClassEx(&wclass);
 
 	DWORD wStyle;
 	wStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME;
 
-
-	AdjustWindowRect(&wRect, WS_OVERLAPPEDWINDOW, FALSE);
+	// this calculates the window rect given the client rect
+	AdjustWindowRect(&wRect, wStyle, FALSE);
+	
 	HWND wHandler = CreateWindow(
 		wcName,
 		winName, // window name
