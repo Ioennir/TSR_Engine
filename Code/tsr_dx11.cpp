@@ -381,6 +381,8 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	return true;
 }
 
+
+//TODO(Fran): set the shaderpaths properly using the environment variables.
 bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
 	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =
@@ -391,7 +393,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 
 	//BUILD VERTEX SHADER
 	//TODO(Fran): establish a shader folder path for debug and release
-	HRESULT hr = D3DReadFileToBlob(L"./x64/Debug/mainVS.cso", &vsData->shaderBuffer);
+	HRESULT hr = D3DReadFileToBlob(L"./Build/x64/Debug/mainVS.cso", &vsData->shaderBuffer);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed loading vertex shader", 0, 0);
@@ -422,7 +424,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 	}
 
 	//BUILD PIXEL SHADER
-	hr = D3DReadFileToBlob(L"./x64/Debug/mainPS.cso", &psData->shaderBuffer);
+	hr = D3DReadFileToBlob(L"./Build/x64/Debug/mainPS.cso", &psData->shaderBuffer);
 	if (FAILED(hr))
 	{
 		MessageBox(0, L"Failed loading pixel shader", 0, 0);

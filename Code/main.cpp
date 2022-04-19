@@ -12,7 +12,6 @@
 // DX11 layer
 #include "tsr_dx11.cpp"
 
-
 // profiling layer
 #include "tsr_profiling.h"
 
@@ -181,6 +180,7 @@ void TSR_Draw(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, 
 	
 }
 
+#if (defined(_WIN64) && _WIN64)
 INT WINAPI wWinMain(
 	_In_ HINSTANCE hInstance, 
 	_In_opt_ HINSTANCE hPrevInstance, 
@@ -198,9 +198,9 @@ INT WINAPI wWinMain(
 	// create the window and display it.
 	RECT wRect { 0, 0, 1280, 720 };
 
-#if (defined(_WIN64) && _WIN64)
+
 	HWND wHandler = CreateAndSpawnWindow(L"TSR Engine", wRect, hInstance, nCmdShow);
-#endif
+
 
 	// Initialize DX11 and get all the information needed
 	DX11Data dxData;
@@ -279,9 +279,12 @@ INT WINAPI wWinMain(
 
 	return 0;
 }
+#endif
 
 // Note(Fran): Dummy main to attach to console when subsystem:console is specified.
 int main()
 {
+#if (defined(_WIN64) && _WIN64)
 	return wWinMain(GetModuleHandle(NULL), NULL, GetCommandLineW(), SW_SHOWNORMAL);
+#endif
 }

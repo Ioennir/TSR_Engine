@@ -1,6 +1,9 @@
 #ifndef TSR_PLATFORM
 #define TSR_PLATFORM
 
+void FetchPerformanceCounter(long long* performanceCounter);
+void FetchPerformanceFreq(long long* performanceFreq);
+
 #if (defined(_WIN64) && _WIN64)
 // target Windows 7 or later
 #define _WIN32_WINNT 0x0601
@@ -48,9 +51,7 @@
 // Imgui bindings
 #include "imgui/imgui_impl_win32.h"
 
-LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int nCmdShow);
-
 
 #endif
 

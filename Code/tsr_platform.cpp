@@ -60,4 +60,14 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 	return wHandler;
 }
 
+void FetchPerformanceCounter(long long* performanceCounter)
+{
+	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(performanceCounter));
+}
+
+void FetchPerformanceFreq(long long* performanceFreq)
+{
+	QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(performanceFreq));
+}
+
 #endif
