@@ -45,9 +45,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-//TODO(Fran): include here the tsr_win64_management file.
-//NOTE(Fran):	this file might include aswell the message handling etc. Move all the platform dependant code to these guards
-//				because we dont want it to be included by mistake into other platform.
+// Imgui bindings
+#include "imgui/imgui_impl_win32.h"
+
+LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int nCmdShow);
+
 
 #endif
 

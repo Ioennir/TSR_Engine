@@ -38,10 +38,14 @@ void CalculateFrameStats(TimeData& tData, FrameStats* fStats)
 
 }
 
+//TODO(Fran): try to move the queryperformancecounter and frequency to the platform code.
+
 void UpdateTimeInformation(TimeData* tData)
 {
 	// get current time
+#if (defined(_WIN64) && _WIN64)
 	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tData->currTime));
+#endif
 	tData->deltaTime = (tData->currTime - tData->prevTime) * tData->secondsPerCount;
 	tData->prevTime = tData->currTime;
 
@@ -55,10 +59,14 @@ void UpdateTimeInformation(TimeData* tData)
 
 void ResetTimeInformation(TimeData* tData)
 {
+#if (defined(_WIN64) && _WIN64)
 	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tData->baseTime));
+#endif
 	tData->currTime = tData->baseTime;
 	tData->prevTime = tData->baseTime;
+#if (defined(_WIN64) && _WIN64)
 	QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&tData->countsPerSec));
+#endif
 	tData->secondsPerCount = 1.0 / static_cast<r64>(tData->countsPerSec);
 	tData->deltaTime = 0.0;
 	tData->totalTime = 0.0;
