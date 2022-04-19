@@ -1,7 +1,7 @@
 # vs thingies
 .vs/
 .vs/*
-x64/*
+Build/*
 
 # imgui config produced file
 imgui.ini
