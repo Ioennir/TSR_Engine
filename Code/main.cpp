@@ -3,15 +3,20 @@
 
 #include "tsr_types.h"
 
-/*
+
 // NOTE(Fran): this goes here for now, EASTL requires this overload to behave properly
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+{
+	return new uint8_t[size];
+}
 void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
 {
 	return new uint8_t[size];
 }
-*/
+
 
 #include "EASTL/string.h"
+#include "EASTL/vector.h"
 
 //MACROS
 #include "tsr_macros.h"
@@ -196,6 +201,9 @@ INT WINAPI wWinMain(
 {
 #ifdef _DEBUG 
 	printf("::\tTSR engine console log!\n");
+	//check this works
+	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
+	
 #endif
 	// Initialize and reset the time information for the application
 	TimeData Time;
