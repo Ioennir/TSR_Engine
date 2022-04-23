@@ -111,6 +111,6 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\THIRD_PARTY\EASTL\doc\EASTL.natvis" />
+    <Natvis Include="Config\EASTL.natvis" />
   </ItemGroup>
 </Project>

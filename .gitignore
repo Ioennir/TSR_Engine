@@ -38,6 +38,3 @@ imgui.ini
 *.exe
 *.out
 *.app
-
-# Extra
-EASTL.natvis
