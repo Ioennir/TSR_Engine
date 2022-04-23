@@ -1,10 +1,17 @@
 #include "tsr_platform.h"
 #include "tsr_gui.h"
 
-// std includes
-// TODO(Fran): check the EA std implementation.
-#include <iostream>
 #include "tsr_types.h"
+
+/*
+// NOTE(Fran): this goes here for now, EASTL requires this overload to behave properly
+void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
+{
+	return new uint8_t[size];
+}
+*/
+
+#include "EASTL/string.h"
 
 //MACROS
 #include "tsr_macros.h"
@@ -38,7 +45,7 @@ void TSR_DrawGUI(DX11Data & dxData, IMData * imData, FrameStats & fStats)
 		ImGui::Text("avg ms per frame: %f", fStats.avgmspf);
 	ImGui::End();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 	ImGuiWindowFlags rtWindowFlags = 0;// = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 	ImVec2 rtSize{ 640.0f, 360.0f };
 	//ImGui::SetNextWindowSize(rtSize);
