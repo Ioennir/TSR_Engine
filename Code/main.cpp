@@ -3,6 +3,9 @@
 
 #include "tsr_types.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 // NOTE(Fran): this goes here for now, EASTL requires this overload to behave properly
 void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -205,6 +208,10 @@ INT WINAPI wWinMain(
 	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
 	
 #endif
+	const char* path = "D:\\Development\\TESTS\\MODELS\\car.obj";
+	Assimp::Importer imp;
+	auto model = imp.ReadFile(path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+
 	// Initialize and reset the time information for the application
 	TimeData Time;
 	FrameStats frameStats{ 0 };

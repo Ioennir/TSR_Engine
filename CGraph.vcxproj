@@ -223,13 +223,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include);$(EASTL_ROOT_DIR)/test/packages/EAStdC/include);$(EASTL_ROOT_DIR)/test/packages/EATest/include);$(EASTL_ROOT_DIR)/test/packages/EAThread/include)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include;$(EASTL_ROOT_DIR)/test/packages/EAStdC/include;$(EASTL_ROOT_DIR)/test/packages/EATest/include;$(EASTL_ROOT_DIR)/test/packages/EAThread/include;$(ASSIMP_ROOT_DIR)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration);$(ASSIMP_ROOT_DIR)/project/lib/$(Configuration)</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(OutDir)CompiledShaders\%(Filename).cso</ObjectFileOutput>
@@ -243,15 +243,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include);$(EASTL_ROOT_DIR)/test/packages/EAStdC/include);$(EASTL_ROOT_DIR)/test/packages/EATest/include);$(EASTL_ROOT_DIR)/test/packages/EAThread/include)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include;$(EASTL_ROOT_DIR)/test/packages/EAStdC/include;$(EASTL_ROOT_DIR)/test/packages/EATest/include;$(EASTL_ROOT_DIR)/test/packages/EAThread/include;$(ASSIMP_ROOT_DIR)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration);$(ASSIMP_ROOT_DIR)/project/lib/$(Configuration)</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(OutDir)CompiledShaders\%(Filename).cso</ObjectFileOutput>
@@ -263,13 +263,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include);$(EASTL_ROOT_DIR)/test/packages/EAStdC/include);$(EASTL_ROOT_DIR)/test/packages/EATest/include);$(EASTL_ROOT_DIR)/test/packages/EAThread/include)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include;$(EASTL_ROOT_DIR)/test/packages/EAStdC/include;$(EASTL_ROOT_DIR)/test/packages/EATest/include;$(EASTL_ROOT_DIR)/test/packages/EAThread/include;$(ASSIMP_ROOT_DIR)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration);$(ASSIMP_ROOT_DIR)/project/lib/$(Configuration)</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(OutDir)CompiledShaders\%(Filename).cso</ObjectFileOutput>
@@ -283,15 +283,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include);$(EASTL_ROOT_DIR)/test/packages/EAStdC/include);$(EASTL_ROOT_DIR)/test/packages/EATest/include);$(EASTL_ROOT_DIR)/test/packages/EAThread/include)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EASTL_ROOT_DIR)/include;$(EASTL_ROOT_DIR)/test/packages/EAAssert/include;$(EASTL_ROOT_DIR)/test/packages/EABase/include/Common;$(EASTL_ROOT_DIR)/test/packages/EAMain/include;$(EASTL_ROOT_DIR)/test/packages/EAStdC/include;$(EASTL_ROOT_DIR)/test/packages/EATest/include;$(EASTL_ROOT_DIR)/test/packages/EAThread/include;$(ASSIMP_ROOT_DIR)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3dcompiler.lib;d3d11.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;EASTL.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(EASTL_ROOT_DIR)/lib/$(Configuration);$(ASSIMP_ROOT_DIR)/project/lib/$(Configuration)</AdditionalLibraryDirectories>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(OutDir)CompiledShaders\%(Filename).cso</ObjectFileOutput>
