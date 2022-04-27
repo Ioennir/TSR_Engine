@@ -54,6 +54,9 @@
     <ClCompile Include="Code\tsr_platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Code\tsr_eastl.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\tsr_dx11_data.h">
