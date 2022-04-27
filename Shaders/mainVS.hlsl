@@ -12,5 +12,5 @@ void main(
 {
     oPos = mul(float4(iPos, 1.0f), mWVP);
 
-    oCol = iCol;
+    oCol = float4(1,1,1,1);
 }

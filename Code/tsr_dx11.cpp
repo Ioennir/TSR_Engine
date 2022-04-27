@@ -249,6 +249,31 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	return true;
 }
 
+bool BuildGeometryBuffer(ID3D11Device & device, eastl::vector<DirectX::XMFLOAT3> vertices, BufferData * vBuffer)
+{
+	vBuffer->stride = sizeof(DirectX::XMFLOAT3);
+	vBuffer->offset = 0;
+	ui32 memberCount = vertices.size() / vBuffer->stride;
+
+	D3D11_BUFFER_DESC tvbd{ 0 };
+	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
+	tvbd.ByteWidth = vBuffer->stride * memberCount; //num of members in vertex array
+	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA tvInitData{ 0 };
+	tvInitData.pSysMem = vertices.data();
+
+	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
+	if (FAILED(hr)) {
+		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
+		return false;
+	}
+
+	//no index for now
+
+	return true;
+}
+
 bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
 {
 	// Triangle vertex buffer

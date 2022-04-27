@@ -126,7 +126,7 @@ void UpdateCBuffer(const CameraData & camData,float deltarot, float rotaxis[3], 
 	//DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, anim);
 
-	DirectX::XMMATRIX currentWorld = rotationMatrix;// *translation;
+	DirectX::XMMATRIX currentWorld = DirectX::XMMatrixScaling(0.005f, 0.005f, 0.005f);// *translation;
 
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
 
@@ -141,7 +141,13 @@ void TSR_Update(float dt)
 
 }
 
-void TSR_Draw(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib)
+struct RenderData
+{
+	eastl::vector<DirectX::XMFLOAT3> vertices;
+	eastl::vector<ui32> indices;
+};
+
+void TSR_Draw(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, IMData * imData, DX11Data & dxData, DX11VertexShaderData & vsData, DX11PixelShaderData & psData, BufferData & vb, BufferData & ib, RenderData * renderData)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -169,7 +175,8 @@ void TSR_Draw(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, 
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 
-	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
+	dxData.imDeviceContext->Draw(renderData->vertices.size(), 0);
+	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 
 
 	// MAIN WINDOW RENDERING
@@ -186,6 +193,23 @@ void TSR_Draw(float rotVelocity,CameraData * camData, ConstantBuffer * cbuffer, 
 	
 }
 
+//For some reason vivi don't get loaded fully, check this out
+void LoadSimpleMesh(eastl::string path, RenderData * renderData) {
+	Assimp::Importer imp;
+	auto model = imp.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+
+	ui32 meshCount = model->mNumMeshes;
+	ui32 totalVertices = 0; 
+	for (i32 i = 0; i < meshCount; ++i)
+	{
+		totalVertices += model->mMeshes[i]->mNumVertices;
+		DirectX::XMFLOAT3* verts = reinterpret_cast<DirectX::XMFLOAT3*>(model->mMeshes[i]->mVertices);
+		//copy all the vertices into the vector
+		renderData->vertices.insert(renderData->vertices.end(), verts, verts + model->mMeshes[i]->mNumVertices);
+	}
+	printf("Vivi loaded, total number of vertices: %i", totalVertices);
+}
+
 #if (defined(_WIN64) && _WIN64)
 INT WINAPI wWinMain(
 	_In_ HINSTANCE hInstance, 
@@ -197,13 +221,16 @@ INT WINAPI wWinMain(
 	printf("::\tTSR engine console log!\n");
 	//check this works
 	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
-	eastl::string s = "EASTL GOING!";
+	eastl::string s = "EASTL GOING!\n";
 	printf("%s", s.c_str());
 	
 #endif
-	const char* path = "D:\\Development\\TESTS\\MODELS\\car.obj";
-	Assimp::Importer imp;
-	auto model = imp.ReadFile(path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	// Load vivi
+	RenderData renderData;
+	eastl::string path = "D:\\Development\\TESTS\\MODELS\\vivi.fbx";
+	LoadSimpleMesh(path, &renderData);
+	
+
 
 	// Initialize and reset the time information for the application
 	TimeData Time;
@@ -245,14 +272,20 @@ INT WINAPI wWinMain(
 		return -1;
 	}
 
+	if(!BuildGeometryBuffer(*dxData.device, renderData.vertices, &vertexBuff))
+	{
+		return -1;
+	}
+	/*
 	if (!BuildTriangleGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
 	{
 		return -1;
 	}
+	*/
 
 	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
 	CameraData camData{};
-	InitializeCamera({ 0.0f, 0.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
+	InitializeCamera({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
 	ConstantBuffer cbuffer{};
 	InitializeCBuffer(camData, &dxData, &cbuffer);
 
@@ -284,7 +317,7 @@ INT WINAPI wWinMain(
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff);
+			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff, &renderData);
 			// GUI RENDERING
 			TSR_DrawGUI(dxData, &imData, frameStats);
 
