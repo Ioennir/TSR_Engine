@@ -9,8 +9,8 @@
 
 #include "tsr_eastl.h"
 
-#include "EASTL/string.h"
-#include "EASTL/vector.h"
+#include <EASTL/string.h>
+#include <EASTL/vector.h>
 
 //MACROS
 #include "tsr_macros.h"
@@ -197,6 +197,8 @@ INT WINAPI wWinMain(
 	printf("::\tTSR engine console log!\n");
 	//check this works
 	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
+	eastl::string s = "EASTL GOING!";
+	printf("%s", s.c_str());
 	
 #endif
 	const char* path = "D:\\Development\\TESTS\\MODELS\\car.obj";
