@@ -167,6 +167,31 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		}
 	}
 
+	//TODO(Frna): depth stencil for the viewport
+	D3D11_DEPTH_STENCIL_DESC dsDesc;
+	// Depth test parameters
+	dsDesc.DepthEnable = true;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	// Stencil test parameters
+	dsDesc.StencilEnable = false;
+	dsDesc.StencilReadMask = 0xFF;
+	dsDesc.StencilWriteMask = 0xFF;
+	// Stencil operations if pixel is front-facing
+	dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	// Stencil operations if pixel is back-facing
+	dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+	dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	// Create depth stencil state
+	dxData->device->CreateDepthStencilState(&dsDesc, &dxData->scnData.depthStencilState);
+	dxData->imDeviceContext->OMSetDepthStencilState(dxData->scnData.depthStencilState, 1);
+
+
 	// RENDER TARGET VIEW DESCRIPTION FOR THE RENDER TEXTURE
 	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -222,9 +247,6 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 		dxData->imDeviceContext->OMSetRenderTargets(1, &dxData->renderTargetView, dxData->depthStencilView);
 	}
 
-	//TODO(Frna): do this!!
-	//dxData->device->CreateDepthStencilState(, );
-
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.
 	dxData->windowViewport = { 0 };
@@ -249,19 +271,19 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	return true;
 }
 
-bool BuildGeometryBuffer(ID3D11Device & device, eastl::vector<DirectX::XMFLOAT3> vertices, BufferData * vBuffer)
+bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferData * vBuffer, BufferData* iBuffer)
 {
 	vBuffer->stride = sizeof(DirectX::XMFLOAT3);
 	vBuffer->offset = 0;
-	ui32 memberCount = vertices.size() / vBuffer->stride;
 
 	D3D11_BUFFER_DESC tvbd{ 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
-	tvbd.ByteWidth = vBuffer->stride * memberCount; //num of members in vertex array
+	//tvbd.ByteWidth = vBuffer->stride * renderData.meshes[0].vertices.size();//vBuffer->stride * memberCount; //num of members in vertex array
+	tvbd.ByteWidth = vBuffer->stride * renderData.totalVertices.size();
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tvInitData{ 0 };
-	tvInitData.pSysMem = vertices.data();
+	tvInitData.pSysMem = renderData.totalVertices.data();//renderData.meshes[0].vertices.data();
 
 	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
 	if (FAILED(hr)) {
@@ -269,7 +291,24 @@ bool BuildGeometryBuffer(ID3D11Device & device, eastl::vector<DirectX::XMFLOAT3>
 		return false;
 	}
 
-	//no index for now
+	iBuffer->stride = sizeof(ui32);
+	iBuffer->offset = 0;
+
+	D3D11_BUFFER_DESC tibd{ 0 };
+	tibd.Usage = D3D11_USAGE_IMMUTABLE;
+
+	//tibd.ByteWidth = iBuffer->stride * renderData.meshes[0].indices.size();//iBuffer->stride * memberCount;
+	tibd.ByteWidth = iBuffer->stride * renderData.totalIndices.size();
+	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA tiInitData{ 0 };
+	tiInitData.pSysMem = renderData.totalIndices.data();//renderData.meshes[0].indices.data();
+
+	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
+	if (FAILED(hr)) {
+		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
+		return false;
+	}
 
 	return true;
 }

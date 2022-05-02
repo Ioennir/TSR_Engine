@@ -57,6 +57,12 @@
     <ClCompile Include="Code\tsr_eastl.h">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Code\tsr_assets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\tsr_rendering.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\tsr_dx11_data.h">
@@ -103,6 +109,12 @@
     </ClInclude>
     <ClInclude Include="Code\tsr_gui.h">
       <Filter>Source Files\Code</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_assets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_rendering.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

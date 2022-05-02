@@ -6,10 +6,10 @@
 #ifndef TSR_DX11_DATA
 #define TSR_DX11_DATA
 
+#include "tsr_types.h"
 #include <d3d11.h>
 #include <dxgi.h>
 #include <d3dcompiler.h>
-#include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 
 #define NO_VSYNC 0
@@ -21,6 +21,7 @@ struct DX11ScnData
 	ID3D11Texture2D* renderTexture{};
 	ID3D11RenderTargetView* renderTargetView{};
 	ID3D11DepthStencilView* depthStencilView{};
+	ID3D11DepthStencilState* depthStencilState{};
 	ID3D11ShaderResourceView* shaderResourceView{};
 	D3D11_VIEWPORT viewport{};
 	DirectX::XMFLOAT2 viewportSize{ 1.0f, 1.0f};
@@ -73,22 +74,6 @@ struct IMData
 {
 	r32 rot[3]{ 0.0f, 1.0f, 0.0f };
 	r32 rotSpeed{ 60.0f };
-};
-
-
-//These structs are as simple as possible for now to perform
-// a basic 3D projection and get things going.
-struct CameraData
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mView;
-	DirectX::XMMATRIX mProj;
-};
-
-struct ConstantBuffer
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mVWP;
 };
 
 #endif
