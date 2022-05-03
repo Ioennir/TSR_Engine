@@ -45,30 +45,24 @@
     <ClCompile Include="Code\imgui\imgui_widgets.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Code\tsr_profiling.cpp">
-      <Filter>Source Files\Code</Filter>
-    </ClCompile>
     <ClCompile Include="Code\imgui\imgui_demo.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Code\tsr_platform.cpp">
+    <ClCompile Include="Code\tsr_eastl.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Code\tsr_eastl.h">
+    <ClCompile Include="Code\tsr_profiling.cpp">
+      <Filter>Source Files\Code</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\tsr_platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Code\tsr_assets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Code\tsr_rendering.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\tsr_dx11_data.h">
-      <Filter>Source Files\Code</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\tsr_dx11.cpp">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
     <ClInclude Include="Code\imgui\imconfig.h">
@@ -115,6 +109,12 @@
     </ClInclude>
     <ClInclude Include="Code\tsr_rendering.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_dx11.cpp">
+      <Filter>Source Files\Code</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_rendering.cpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

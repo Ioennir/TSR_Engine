@@ -13,7 +13,7 @@
 // profiling layer
 #include "tsr_profiling.h"
 #include "tsr_assets.h"
-#include "tsr_rendering.h"
+#include "tsr_rendering.cpp"
 
 //TODO(Fran): Implement a naive input system, maybe winsdk has something
 
@@ -73,6 +73,9 @@ INT WINAPI wWinMain(
 	DX11VertexShaderData vsData;
 	DX11PixelShaderData psData;
 
+	BufferData primitiveVertexBuff;
+	BufferData primitiveIndexBuff;
+
 	
 	if (!BuildTriangleShaders(*dxData.device, &vsData, &psData))
 	{
@@ -83,6 +86,9 @@ INT WINAPI wWinMain(
 	{
 		return -1;
 	}
+
+	BuildPrimitiveBuffers(Primitive::Cube, *dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
+	
 	/*
 	if (!BuildTriangleGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
 	{
@@ -124,7 +130,7 @@ INT WINAPI wWinMain(
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff, &renderData);
+			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff, &renderData, primitiveVertexBuff, primitiveIndexBuff);
 			// GUI RENDERING
 			TSR_DrawGUI(dxData, &imData, frameStats);
 

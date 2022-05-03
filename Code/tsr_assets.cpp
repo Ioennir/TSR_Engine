@@ -26,7 +26,7 @@ void LoadSimpleMesh(eastl::string path, RenderData* renderData) {
 		renderData->totalVertices.insert(renderData->totalVertices.end(), vertices, vertices + mesh->mNumVertices);
 
 		// Fetch total number of faces and reserve index amount
-		const ui32 faceCount = mesh->mNumFaces;
+		const eastl_size_t faceCount = static_cast<eastl_size_t>(mesh->mNumFaces);
 		m.indices.reserve(faceCount * 3);
 		// Get indices and insert them
 		//TODO(Fran): Add the correct offset to the indices.

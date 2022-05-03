@@ -22,6 +22,7 @@ typedef double		r64;
 typedef intptr_t	iptr;
 typedef uintptr_t	uiptr;
 
+
 //These structs are as simple as possible for now to perform
 // a basic 3D projection and get things going.
 struct CameraData

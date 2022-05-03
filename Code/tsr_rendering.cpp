@@ -113,12 +113,28 @@ void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], 
 	};
 }
 
+void TestUpdate(const CameraData& camData, float deltarot, float rotaxis[3], ConstantBuffer* cbuffer)
+{
+	float anim = DirectX::XMConvertToRadians(deltarot);
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(-3.0f, -3.0f, 4.0f);
+	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, -anim);
+
+	DirectX::XMMATRIX currentWorld = rotationMatrix * translation;
+
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
+
+	*cbuffer = {
+		currentWorld,
+		mWVP
+	};
+}
+
 void TSR_Update(float dt)
 {
 
 }
 
-void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, BufferData& vb, BufferData& ib, RenderData* renderData)
+void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, BufferData& vb, BufferData& ib, RenderData* renderData, BufferData& pvb, BufferData& pib)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -146,8 +162,17 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 
-	dxData.imDeviceContext->DrawIndexed(renderData->totalIndices.size(), 0, 0);
+	dxData.imDeviceContext->DrawIndexed(static_cast<ui32>(renderData->totalIndices.size()), 0, 0);
 
+	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &pvb.buffer, &pvb.stride, &pvb.offset);
+	dxData.imDeviceContext->IASetIndexBuffer(pib.buffer, DXGI_FORMAT_R32_UINT, pib.offset);
+	
+	TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
+	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
+
+	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
+	//dxData.imDeviceContext->DrawIndexedInstanced(36, 10, 0, 0, 0);
 	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 
 
@@ -163,4 +188,160 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
 
 
+}
+
+void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData* vBuffer, BufferData* iBuffer)
+{
+	HRESULT hr;
+	eastl::vector<Vertex> vertices;
+	eastl::vector<ui32> indices;
+	switch (primitive)
+	{
+	case Primitive::Triangle:
+	{
+		// Vertices of a triangle with center in 0,0,0
+		vertices.insert(vertices.end(),
+			{
+				{DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), white},
+				{DirectX::XMFLOAT3(0.5f, 0.0f, 0.0f), white},
+				{DirectX::XMFLOAT3(-0.5f, 0.0f, 0.0f), white}
+			});
+		indices.insert(indices.end(),
+			{
+				0, 1, 2
+			});
+	}break;
+	case Primitive::Plane:
+	{
+		// Vertices of a plane with center in 0,0,0
+		vertices.insert(vertices.end(),
+			{
+				{DirectX::XMFLOAT3(-0.5f, 0.0f, 0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, 0.0f, 0.5f), white},
+				{DirectX::XMFLOAT3(-0.5f, 0.0f, -0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, 0.0f, -0.5f), white}
+			});
+		indices.insert(indices.end(),
+			{
+				0, 1, 2,
+				1, 2, 3
+			});
+	}break;
+	case Primitive::Cube:
+	{
+		// Vertices of a cube with center in 0,0,0
+		vertices.insert(vertices.end(),
+			{
+				{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), white},
+				{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), white},
+				
+				{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), white},
+				{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), white},
+			});
+		indices.insert(indices.end(),
+			{
+				// front face
+				0, 4, 5,
+				5, 1, 0,
+				// left face
+				2, 6, 4,
+				4, 0, 2,
+				// right face
+				1, 5, 7,
+				7, 3, 1,
+				// back face
+				3, 7, 6,
+				6, 2, 3,
+				// top face
+				4, 6, 7,
+				7, 5, 4,
+				// bottom face
+				0, 1, 3,
+				3, 2, 0
+			});
+	}break;
+	case Primitive::Sphere:
+	{
+		
+	}break;
+	case Primitive::Icosphere: {}break;
+	case Primitive::Pyramid:
+	{
+		// vertices for a pyramid with center 0,0,0
+		vertices.insert(vertices.end(),
+			{
+				// base
+				{{-0.5f, 0.0f, -0.5f}, white},
+				{{0.5f, 0.0f, -0.5f}, white},
+				{{-0.5f, 0.0f, 0.5f}, white},
+				{{0.5f, 0.0f, 0.5f}, white},
+				// pinacle
+				{{0.0f, 1.0f, 0.0f}, white}
+			});
+		indices.insert(indices.end(),
+			{
+				//base
+				0, 1, 2,
+				1, 3, 2,
+				//sides
+				1, 4, 3,
+				1, 0, 4,
+				0, 2, 4,
+				2, 3, 4
+			});
+	}break;
+	case Primitive::Cilinder: {}break;
+	case Primitive::Cone: {}break;
+	case Primitive::Torus: {}break;
+	case Primitive::Capsule: {}break;
+	default:
+	{
+		printf("Wrong primitive value.\n");
+	}
+	}
+
+	// Build the vertex buffer
+	vBuffer->stride = sizeof(Vertex);
+	vBuffer->offset = 0;
+	ui32 vertMemberCount = static_cast<ui32>(vertices.size());
+	D3D11_BUFFER_DESC vBuffDesc{ 0 };
+	vBuffDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	vBuffDesc.ByteWidth = vertMemberCount * vBuffer->stride;
+	vBuffDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	D3D11_SUBRESOURCE_DATA vBuffData{ 0 };
+	vBuffData.pSysMem = vertices.data();
+
+	// Build the index buffer
+	iBuffer->stride = sizeof(ui32);
+	iBuffer->offset = 0;
+	ui32 indMemberCount = static_cast<ui32>(indices.size());
+	D3D11_BUFFER_DESC iBuffDesc{ 0 };
+	iBuffDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	iBuffDesc.ByteWidth = indMemberCount * iBuffer->stride;
+	iBuffDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	D3D11_SUBRESOURCE_DATA iBuffData{ 0 };
+	iBuffData.pSysMem = indices.data();
+
+	// Create the buffers
+	hr = device.CreateBuffer(
+		&vBuffDesc, &vBuffData, &vBuffer->buffer
+	);
+
+	if (FAILED(hr)) 
+	{
+		printf("Failed to create vertex buffer for a primitive.\n");
+	}
+
+	hr = device.CreateBuffer(
+		&iBuffDesc, &iBuffData, &iBuffer->buffer
+	);
+
+	if (FAILED(hr))
+	{
+		printf("Failed to create indexbuffer for a primitive.\n");
+	}
 }

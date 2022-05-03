@@ -279,7 +279,7 @@ bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferD
 	D3D11_BUFFER_DESC tvbd{ 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
 	//tvbd.ByteWidth = vBuffer->stride * renderData.meshes[0].vertices.size();//vBuffer->stride * memberCount; //num of members in vertex array
-	tvbd.ByteWidth = vBuffer->stride * renderData.totalVertices.size();
+	tvbd.ByteWidth = vBuffer->stride * static_cast<UINT>(renderData.totalVertices.size());
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tvInitData{ 0 };
@@ -298,7 +298,7 @@ bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferD
 	tibd.Usage = D3D11_USAGE_IMMUTABLE;
 
 	//tibd.ByteWidth = iBuffer->stride * renderData.meshes[0].indices.size();//iBuffer->stride * memberCount;
-	tibd.ByteWidth = iBuffer->stride * renderData.totalIndices.size();
+	tibd.ByteWidth = iBuffer->stride * static_cast<UINT>(renderData.totalIndices.size());
 	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tiInitData{ 0 };

@@ -52,7 +52,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Code\tsr_rendering.cpp" />
+    <ClInclude Include="Code\tsr_rendering.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\tsr_assets.h" />
