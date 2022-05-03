@@ -34,7 +34,7 @@ INT WINAPI wWinMain(
 #endif
 	// Load vivi
 	RenderData renderData;
-	eastl::string path = "D:\\Development\\TESTS\\MODELS\\vivi.obj";
+	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
 	LoadSimpleMesh(path, &renderData);
 	
 

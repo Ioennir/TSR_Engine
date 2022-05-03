@@ -2,6 +2,7 @@
 .vs/
 .vs/*
 Build/*
+MODELS/*
 
 # imgui config produced file
 imgui.ini
