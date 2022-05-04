@@ -1,8 +1,9 @@
-#include "tsr_platform.h"
+#include "tsr_platform.cpp"
 #include "tsr_gui.h"
 #include "tsr_eastl.h"
-
-#include "tsr_types.h"
+#include <EASTL/string.h>
+#include <EASTL/vector.h>
+#include "tsr_types.cpp"
 
 //MACROS
 #include "tsr_macros.h"
@@ -11,8 +12,8 @@
 #include "tsr_dx11.cpp"
 
 // profiling layer
-#include "tsr_profiling.h"
-#include "tsr_assets.h"
+#include "tsr_profiling.cpp"
+#include "tsr_assets.cpp"
 #include "tsr_rendering.cpp"
 
 //TODO(Fran): Implement a naive input system, maybe winsdk has something

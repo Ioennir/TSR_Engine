@@ -1,9 +1,4 @@
-#ifndef TSR_TYPES
-#define TSR_TYPES
-
 #include <stdint.h>
-#include <EASTL/string.h>
-#include <EASTL/vector.h>
 #include <DirectXMath.h>
 
 typedef int8_t		i8;
@@ -50,5 +45,3 @@ struct RenderData
 	eastl::vector<DirectX::XMFLOAT3> totalVertices;
 	eastl::vector<ui32> totalIndices;
 };
-
-#endif

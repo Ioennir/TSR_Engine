@@ -45,22 +45,18 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Code\main.cpp" />
-    <ClCompile Include="Code\tsr_assets.cpp" />
-    <ClCompile Include="Code\tsr_eastl.h" />
-    <ClCompile Include="Code\tsr_platform.cpp" />
-    <ClCompile Include="Code\tsr_profiling.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClInclude Include="Code\tsr_rendering.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Code\tsr_assets.h" />
-    <ClInclude Include="Code\tsr_dx11.cpp">
+    <ClInclude Include="Code\platform\tsr_win32.cpp" />
+    <ClInclude Include="Code\tsr_assets.cpp" />
+    <ClInclude Include="Code\tsr_eastl.h" />
+    <ClInclude Include="Code\tsr_platform.h" />
+    <ClInclude Include="Code\tsr_profiling.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Code\tsr_dx11_data.h">
+    <ClInclude Include="Code\tsr_rendering.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Code\tsr_dx11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -101,7 +97,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Code\tsr_platform.h">
+    <ClInclude Include="Code\tsr_platform.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -110,7 +106,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Code\tsr_rendering.h" />
-    <ClInclude Include="Code\tsr_types.h">
+    <ClInclude Include="Code\tsr_types.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>

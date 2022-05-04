@@ -1,8 +1,4 @@
-#include "tsr_platform.h"
 #include "tsr_gui.h"
-#include "tsr_types.h"
-#include "tsr_dx11_data.h"
-#include "tsr_profiling.h"
 #include "tsr_macros.h"
 
 enum class Primitive : ui32 {Triangle, Plane, Cube, Sphere, Icosphere, Pyramid, Cilinder, Cone, Torus, Capsule, Count};

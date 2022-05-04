@@ -48,23 +48,8 @@
     <ClCompile Include="Code\imgui\imgui_demo.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Code\tsr_eastl.h">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\tsr_profiling.cpp">
-      <Filter>Source Files\Code</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\tsr_platform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\tsr_assets.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Code\tsr_dx11_data.h">
-      <Filter>Source Files\Code</Filter>
-    </ClInclude>
     <ClInclude Include="Code\imgui\imconfig.h">
       <Filter>Source Files\imgui</Filter>
     </ClInclude>
@@ -92,20 +77,17 @@
     <ClInclude Include="Code\tsr_macros.h">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
-    <ClInclude Include="Code\tsr_types.h">
+    <ClInclude Include="Code\tsr_types.cpp">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
     <ClInclude Include="Code\tsr_profiling.h">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
-    <ClInclude Include="Code\tsr_platform.h">
+    <ClInclude Include="Code\tsr_platform.cpp">
       <Filter>Source Files\Code</Filter>
     </ClInclude>
     <ClInclude Include="Code\tsr_gui.h">
       <Filter>Source Files\Code</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\tsr_assets.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Code\tsr_rendering.h">
       <Filter>Header Files</Filter>
@@ -114,6 +96,21 @@
       <Filter>Source Files\Code</Filter>
     </ClInclude>
     <ClInclude Include="Code\tsr_rendering.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\platform\tsr_win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_profiling.cpp">
+      <Filter>Source Files\Code</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_assets.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_eastl.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

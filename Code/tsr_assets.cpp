@@ -1,4 +1,6 @@
-#include "tsr_assets.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 void LoadSimpleMesh(eastl::string path, RenderData* renderData) {
 	Assimp::Importer imp;
@@ -43,6 +45,6 @@ void LoadSimpleMesh(eastl::string path, RenderData* renderData) {
 		}
 		//renderData->totalIndices.insert(renderData->totalIndices.end(), m.indices.data(), m.indices.data() + m.indices.size());
 		renderData->meshes.push_back(m);
-		indexOffset += m.vertices.size();
+		indexOffset += static_cast<ui32>(m.vertices.size());
 	}
 }
