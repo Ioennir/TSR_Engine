@@ -1,4 +1,4 @@
-#include "tsr_rendering.h"
+enum class Primitive : ui32 { Triangle, Plane, Cube, Sphere, Icosphere, Pyramid, Cilinder, Cone, Torus, Capsule, Count };
 
 void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 {

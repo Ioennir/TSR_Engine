@@ -48,7 +48,10 @@ void FetchPerformanceFreq(long long* performanceFreq);
 #include <Windows.h>
 
 // Imgui bindings
+// NOTE(Fran): Imgui only has win32 bindings, it shouldnt be a problem
 #include "../imgui/imgui_impl_win32.h"
 
+// WIN64 Platform implementation
 #include "tsr_win32.cpp"
+
 #endif

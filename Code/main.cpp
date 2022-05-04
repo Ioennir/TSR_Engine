@@ -35,7 +35,7 @@
 
 #include "tsr_rendering.cpp"
 
-//TODO(Fran): Implement a naive input system, maybe winsdk has something
+//TODO(Fran): Implement a naive input system, maybe winsdk has something or the Imgui input system itself.
 
 #if (defined(_WIN64) && _WIN64)
 INT WINAPI wWinMain(
