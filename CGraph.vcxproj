@@ -48,7 +48,6 @@
     <ClInclude Include="Code\platform\tsr_win32.cpp" />
     <ClInclude Include="Code\tsr_assets.cpp" />
     <ClInclude Include="Code\tsr_eastl.h" />
-    <ClInclude Include="Code\tsr_platform.h" />
     <ClInclude Include="Code\tsr_profiling.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -97,7 +96,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Code\tsr_platform.cpp">
+    <ClInclude Include="Code\platform\tsr_platform.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>

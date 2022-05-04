@@ -1,8 +1,7 @@
 
 // These are supossed to be functions that are present on each platform
-//void FetchPerformanceCounter(long long* performanceCounter);
-//void FetchPerformanceFreq(long long* performanceFreq);
-#include "tsr_platform.h"
+void FetchPerformanceCounter(long long* performanceCounter);
+void FetchPerformanceFreq(long long* performanceFreq);
 
 #if (defined(_WIN64) && _WIN64)
 // target Windows 7 or later
@@ -49,7 +48,7 @@
 #include <Windows.h>
 
 // Imgui bindings
-#include "imgui/imgui_impl_win32.h"
+#include "../imgui/imgui_impl_win32.h"
 
-#include "platform/tsr_win32.cpp"
+#include "tsr_win32.cpp"
 #endif

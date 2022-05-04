@@ -1,8 +1,15 @@
-#include "tsr_platform.cpp"
+#include "platform/tsr_platform.cpp"
 #include "tsr_gui.h"
 #include "tsr_eastl.h"
+
+// Eastl
+// TODO(Fran): Maybe check in the future to fix these warnings myself and recompile eastl.
+#pragma warning(push)
+#pragma warning(disable:26495)
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
+#pragma warning(pop)
+
 #include "tsr_types.cpp"
 
 //MACROS
@@ -13,7 +20,19 @@
 
 // profiling layer
 #include "tsr_profiling.cpp"
+
+// assimp
+// TODO(Fran): Maybe check in the future to fix these warnings myself and recompile assimp.
+#pragma warning(push)
+#pragma warning(disable:26451)
+#pragma warning(disable:26812)
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#pragma warning(pop)
+
 #include "tsr_assets.cpp"
+
 #include "tsr_rendering.cpp"
 
 //TODO(Fran): Implement a naive input system, maybe winsdk has something
