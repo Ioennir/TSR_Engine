@@ -190,6 +190,22 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 
 }
 
+// stacks: horizontal quads, slices: vertical quads ex: stacks: 1 = cilinder 
+void GenerateSphereGeometry(eastl::vector<Vertex> vertices, eastl::vector<ui32> indices, r32 radius, ui32 slices, ui32 stacks)
+{
+	const r32 Pi = DirectX::XM_PI;
+	r32 sliceStep = 2.0f * Pi / static_cast<r32>(slices);
+	r32 stackStep = Pi / static_cast<r32>(stacks);
+	ui32 vertexCount = slices * (stacks - 1) + 2;
+	ui32 trisCount = slices * (stacks - 1) * 2;
+	ui32 indexCount = trisCount * 3;
+
+	vertices.reserve(vertexCount);
+	indices.reserve(indexCount);
+
+
+}
+
 void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData* vBuffer, BufferData* iBuffer)
 {
 	HRESULT hr;
@@ -266,7 +282,7 @@ void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData*
 	}break;
 	case Primitive::Sphere:
 	{
-		
+		GenerateSphereGeometry(vertices, indices, 0.5f, 20, 10);
 	}break;
 	case Primitive::Icosphere: {}break;
 	case Primitive::Pyramid:
@@ -294,7 +310,10 @@ void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData*
 				2, 3, 4
 			});
 	}break;
-	case Primitive::Cilinder: {}break;
+	case Primitive::Cilinder: 
+	{
+		GenerateSphereGeometry(vertices, indices, 0.5f, 16, 1);
+	}break;
 	case Primitive::Cone: {}break;
 	case Primitive::Torus: {}break;
 	case Primitive::Capsule: {}break;
