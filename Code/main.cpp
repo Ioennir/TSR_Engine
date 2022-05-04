@@ -107,7 +107,7 @@ INT WINAPI wWinMain(
 		return -1;
 	}
 
-	BuildPrimitiveBuffers(Primitive::Cube, *dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
+	BuildPrimitiveBuffers(Primitive::Cilinder, *dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
 	
 	/*
 	if (!BuildTriangleGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))

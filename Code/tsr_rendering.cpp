@@ -170,10 +170,11 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
-
-	dxData.imDeviceContext->DrawIndexed(36, 0, 0);
+	
+	//dxData.imDeviceContext->DrawIndexed(1080, 0, 0);
 	//dxData.imDeviceContext->DrawIndexedInstanced(36, 10, 0, 0, 0);
 	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
+	dxData.imDeviceContext->DrawIndexed(240, 0, 0);
 
 
 	// MAIN WINDOW RENDERING
@@ -190,8 +191,8 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 
 }
 
-// stacks: horizontal quads, slices: vertical quads ex: stacks: 1 = cilinder 
-void GenerateSphereGeometry(eastl::vector<Vertex> vertices, eastl::vector<ui32> indices, r32 radius, ui32 slices, ui32 stacks)
+// stacks: vertical quads, slices: horizontal quads ex: stacks: 1 = cilinder 
+void GenerateSphereGeometry(eastl::vector<Vertex>& vertices, eastl::vector<ui32>& indices, r32 radius, ui32 slices, ui32 stacks)
 {
 	const r32 Pi = DirectX::XM_PI;
 	r32 sliceStep = 2.0f * Pi / static_cast<r32>(slices);
@@ -203,6 +204,114 @@ void GenerateSphereGeometry(eastl::vector<Vertex> vertices, eastl::vector<ui32> 
 	vertices.reserve(vertexCount);
 	indices.reserve(indexCount);
 
+	//Vertices
+	vertices.push_back({ {0.0f, -radius, 0.0f}, white });
+	r32 stackAngle = Pi - stackStep;
+	for (ui32 v = 0; v < stacks - 1; ++v)
+	{
+		r32 sliceAngle = 0.0f;
+		for (ui32 h = 0; h < slices; ++h) {
+			r32 x = radius*sin(stackAngle)*cos(sliceAngle);
+			r32 y = radius*cos(stackAngle);
+			r32 z = radius*sin(stackAngle)*sin(sliceAngle);
+			vertices.push_back({ {x, y, z}, white });
+			sliceAngle += sliceStep;
+		}
+		stackAngle -= stackStep;
+	}
+	vertices.push_back({ {0.0f, radius, 0.0f}, white });
+
+	//TODO(Fran): check this out
+	//Indices
+	for (ui32 i = 1; i <= slices; ++i)
+	{
+		indices.push_back(i);
+		indices.push_back(0);
+		indices.push_back((i - 1 == 0 ? i + slices - 1 : i - 1));
+	}
+
+	for (ui32 i = 1; i < vertexCount - slices - 1; ++i)
+	{
+		indices.push_back(i + slices);
+		indices.push_back(i);
+		indices.push_back(((i - 1) % slices == 0 ? i + slices + slices - 1 : i + slices - 1));
+		
+		indices.push_back(i);
+		indices.push_back(((i - 1) % slices == 0 ? i + slices - 1: i - 1));
+		indices.push_back(((i - 1) % slices == 0 ? i + slices + slices - 1 : i + slices - 1));
+	}
+
+	for (ui32 i = vertexCount - slices - 1; i < vertexCount - 1; ++i)
+	{
+		indices.push_back(i);
+		indices.push_back(((i - 1) % slices == 0 ? i + slices - 1 : i - 1));
+		indices.push_back(vertexCount - 1);
+	}
+
+}
+
+void GenerateCilinderGeometry(eastl::vector<Vertex>& vertices, eastl::vector<ui32>& indices, r32 radius, ui32 slices)
+{
+	const r32 Pi = DirectX::XM_PI;
+	r32 sliceStep = 2.0f * Pi / static_cast<r32>(slices);
+	ui32 vertexCount = (slices * 2) + 2;
+	ui32 trisCount = (slices * 4);
+	ui32 indexCount = trisCount * 3;
+
+	vertices.reserve(vertexCount);
+	indices.reserve(indexCount);
+
+	//bot
+	vertices.push_back({ {0.0f, -radius, 0.0f}, white });
+
+	//middle
+	r32 sliceAngle = 0.0f;
+	for (ui32 i = 0; i < slices; ++i)
+	{
+		r32 x = 0.0f;
+		r32 z = 0.0f;
+		vertices.push_back({ {x, -radius, z},white });
+		sliceAngle += sliceStep;
+	}
+
+	sliceAngle = 0.0f;
+	for (ui32 i = 0; i < slices; ++i)
+	{
+		r32 x = radius*cos(sliceAngle);
+		r32 z = radius*sin(sliceAngle);
+		vertices.push_back({ {x, radius, z},white });
+		sliceAngle += sliceStep;
+	}
+
+	//top
+	vertices.push_back({{ 0.0f, radius, 0.0f }, white});
+	
+
+	//Indices
+	for (ui32 i = 1; i <= slices; ++i)
+	{
+		indices.push_back(i);
+		indices.push_back(0);
+		indices.push_back((i - 1 == 0 ? i + slices - 1 : i - 1));
+	}
+
+	for (ui32 i = 1; i < vertexCount - slices - 1; ++i)
+	{
+		indices.push_back(i + slices);
+		indices.push_back(i);
+		indices.push_back(((i - 1) % slices == 0 ? i + slices + slices - 1 : i + slices - 1));
+
+		indices.push_back(i);
+		indices.push_back(((i - 1) % slices == 0 ? i + slices - 1 : i - 1));
+		indices.push_back(((i - 1) % slices == 0 ? i + slices + slices - 1 : i + slices - 1));
+	}
+
+	for (ui32 i = vertexCount - slices - 1; i < vertexCount - 1; ++i)
+	{
+		indices.push_back(i);
+		indices.push_back(((i - 1) % slices == 0 ? i + slices - 1 : i - 1));
+		indices.push_back(vertexCount - 1);
+	}
 
 }
 
@@ -248,40 +357,28 @@ void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData*
 		// Vertices of a cube with center in 0,0,0
 		vertices.insert(vertices.end(),
 			{
-				{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), white},
-				{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), white},
+				{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), white},
 				{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), white},
 				{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), white},
 				
 				{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), white},
 				{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), white},
-				{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), white},
-				{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), white},
+				{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), white},
+				{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), white},
 			});
 		indices.insert(indices.end(),
 			{
-				// front face
-				0, 4, 5,
-				5, 1, 0,
-				// left face
-				2, 6, 4,
-				4, 0, 2,
-				// right face
-				1, 5, 7,
-				7, 3, 1,
-				// back face
-				3, 7, 6,
-				6, 2, 3,
-				// top face
-				4, 6, 7,
-				7, 5, 4,
-				// bottom face
-				0, 1, 3,
-				3, 2, 0
+				2, 0, 3, 3, 0, 1,
+				0, 4, 1, 1, 4, 6,
+				0, 2, 4, 4, 2, 5,
+				4, 5, 6, 6, 5, 7,
+				5, 2, 7, 7, 2, 3
 			});
 	}break;
 	case Primitive::Sphere:
 	{
+		// has 1080 indices
 		GenerateSphereGeometry(vertices, indices, 0.5f, 20, 10);
 	}break;
 	case Primitive::Icosphere: {}break;
@@ -312,7 +409,7 @@ void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData*
 	}break;
 	case Primitive::Cilinder: 
 	{
-		GenerateSphereGeometry(vertices, indices, 0.5f, 16, 1);
+		GenerateCilinderGeometry(vertices, indices, 0.5f, 20);
 	}break;
 	case Primitive::Cone: {}break;
 	case Primitive::Torus: {}break;
