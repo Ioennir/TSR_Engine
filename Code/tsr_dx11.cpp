@@ -52,11 +52,7 @@ struct DX11PixelShaderData
 };
 
 //Simple vertex implementation
-struct Vertex
-{
-	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
-};
+
 
 struct BufferData
 {
@@ -341,17 +337,17 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 
 bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferData * vBuffer, BufferData* iBuffer)
 {
-	vBuffer->stride = sizeof(DirectX::XMFLOAT3);
+	vBuffer->stride = sizeof(Vertex);
 	vBuffer->offset = 0;
 
 	D3D11_BUFFER_DESC tvbd{ 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
 	//tvbd.ByteWidth = vBuffer->stride * renderData.meshes[0].vertices.size();//vBuffer->stride * memberCount; //num of members in vertex array
-	tvbd.ByteWidth = vBuffer->stride * static_cast<UINT>(renderData.totalVertices.size());
+	tvbd.ByteWidth = vBuffer->stride * static_cast<UINT>(renderData.vertexData.size());
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tvInitData{ 0 };
-	tvInitData.pSysMem = renderData.totalVertices.data();//renderData.meshes[0].vertices.data();
+	tvInitData.pSysMem = renderData.vertexData.data();//renderData.meshes[0].vertices.data();
 
 	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
 	if (FAILED(hr)) {
@@ -519,9 +515,12 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 {
 	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =
 	{
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,								D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
+
+	ui32 elementCount = sizeof(vsInputLayoutDescriptor) / sizeof(vsInputLayoutDescriptor[0]);
 
 	//BUILD VERTEX SHADER
 
@@ -545,7 +544,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 
 	hr = device.CreateInputLayout(
 		vsInputLayoutDescriptor, 
-		2, 
+		elementCount, 
 		vsData->shaderBuffer->GetBufferPointer(), 
 		vsData->shaderBuffer->GetBufferSize(), 
 		&vsData->inputLayout);

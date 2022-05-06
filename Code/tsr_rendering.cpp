@@ -79,9 +79,11 @@ void InitializeCBuffer(CameraData& camData, DX11Data* dxData, ConstantBuffer* cb
 	//transpose?
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(mWorld * camData.mWorld * camData.mView * camData.mProj);
+	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixIdentity();
 	*cbuffer = {
 		mWorld,
-		mWVP
+		mWVP,
+		normalMatrix
 	};
 
 	D3D11_BUFFER_DESC cbdesc{ 0 };
@@ -91,8 +93,7 @@ void InitializeCBuffer(CameraData& camData, DX11Data* dxData, ConstantBuffer* cb
 	cbdesc.ByteWidth = sizeof(*cbuffer);
 	D3D11_SUBRESOURCE_DATA csd{};
 	csd.pSysMem = cbuffer;
-	dxData->device->CreateBuffer(&cbdesc, &csd, &dxData->dx11_cbuffer);
-
+	HRESULT hr = dxData->device->CreateBuffer(&cbdesc, &csd, &dxData->dx11_cbuffer);
 }
 
 void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], ConstantBuffer* cbuffer) {
@@ -107,9 +108,12 @@ void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], 
 
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
 
+	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(currentWorld.r, currentWorld));
+
 	*cbuffer = {
 		currentWorld,
-		mWVP
+		mWVP,
+		normalMatrix
 	};
 }
 
@@ -164,17 +168,17 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 
 	dxData.imDeviceContext->DrawIndexed(static_cast<ui32>(renderData->totalIndices.size()), 0, 0);
 
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &pvb.buffer, &pvb.stride, &pvb.offset);
-	dxData.imDeviceContext->IASetIndexBuffer(pib.buffer, DXGI_FORMAT_R32_UINT, pib.offset);
+	//dxData.imDeviceContext->IASetVertexBuffers(0, 1, &pvb.buffer, &pvb.stride, &pvb.offset);
+	//dxData.imDeviceContext->IASetIndexBuffer(pib.buffer, DXGI_FORMAT_R32_UINT, pib.offset);
 	
-	TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
-	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
-	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
+	//TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
+	//dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	//dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	
 	//dxData.imDeviceContext->DrawIndexed(1080, 0, 0);
 	//dxData.imDeviceContext->DrawIndexedInstanced(36, 10, 0, 0, 0);
 	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
-	dxData.imDeviceContext->DrawIndexed(240, 0, 0);
+	//dxData.imDeviceContext->DrawIndexed(240, 0, 0);
 
 
 	// MAIN WINDOW RENDERING

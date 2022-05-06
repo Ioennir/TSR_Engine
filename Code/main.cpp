@@ -55,8 +55,8 @@ INT WINAPI wWinMain(
 	// Load vivi
 	RenderData renderData;
 	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
-	LoadSimpleMesh(path, &renderData);
-	
+	//LoadSimpleMesh(path, &renderData);
+	LoadMeshToVertex(path, renderData.vertexData, renderData.totalIndices);
 
 
 	// Initialize and reset the time information for the application

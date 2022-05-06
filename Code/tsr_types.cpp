@@ -31,6 +31,7 @@ struct ConstantBuffer
 {
 	DirectX::XMMATRIX mWorld;
 	DirectX::XMMATRIX mVWP;
+	DirectX::XMMATRIX normalMatrix;
 };
 
 struct Mesh
@@ -39,9 +40,16 @@ struct Mesh
 	eastl::vector<ui32> indices;
 };
 
+struct Vertex
+{
+	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
+};
+
 struct RenderData
 {
 	eastl::vector<Mesh> meshes;
-	eastl::vector<DirectX::XMFLOAT3> totalVertices;
+	eastl::vector<Vertex> vertexData;
 	eastl::vector<ui32> totalIndices;
 };
