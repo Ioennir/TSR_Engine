@@ -10,6 +10,7 @@
 #define NO_VSYNC 0
 #define VSYNC 1
 
+//quit this
 struct DX11ScnData
 {
 	ID3D11Texture2D* depthStencilBuffer{};
@@ -20,6 +21,18 @@ struct DX11ScnData
 	ID3D11ShaderResourceView* shaderResourceView{};
 	D3D11_VIEWPORT viewport{};
 	DirectX::XMFLOAT2 viewportSize{ 1.0f, 1.0f };
+};
+
+struct DX11ViewportData 
+{
+	ID3D11Texture2D* RenderTargetTexture;
+	ID3D11Texture2D* DepthStencilTexture;
+	ID3D11RenderTargetView* RenderTargetView;
+	ID3D11DepthStencilView* DepthStencilView;
+	ID3D11DepthStencilState* DepthStencilState;
+	ID3D11ShaderResourceView* ShaderResourceView;
+	D3D11_VIEWPORT Viewport{};
+	DirectX::XMFLOAT2 ViewportDimensions{1.0f, 1.0f};
 };
 
 struct DX11Data
@@ -34,6 +47,7 @@ struct DX11Data
 	ID3D11RasterizerState* currentRasterizerState{};
 	D3D11_VIEWPORT windowViewport{};
 	DX11ScnData scnData{};
+	DX11ViewportData VP;
 	ID3D11Buffer* dx11_cbuffer{};
 };
 
@@ -52,7 +66,6 @@ struct DX11PixelShaderData
 };
 
 //Simple vertex implementation
-
 
 struct BufferData
 {
@@ -145,7 +158,7 @@ struct TextureInfo
 	ui32 bindFlags;
 };
 
-HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, DX11Data * dxData, ID3D11Texture2D * textureHandle)
+HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, ID3D11Device * device, ID3D11Texture2D * textureHandle)
 {
 	HRESULT hr;
 	D3D11_TEXTURE2D_DESC tDesc{ 0 };
@@ -161,27 +174,34 @@ HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, DX11Data * dxData, ID3D11T
 	tDesc.Format = tInfo.format;
 	tDesc.Usage = tInfo.usage;
 	tDesc.BindFlags = tInfo.bindFlags;
-	hr = dxData->device->CreateTexture2D(&tDesc, 0, &textureHandle);
+	hr = device->CreateTexture2D(&tDesc, 0, &textureHandle);
 	return hr;
 }
 
-void TSR_DX11_InitRenderTargetTexture(ui32 rtWidth, ui32 rtHeight, DX11Data * dxData)
+void TSR_DX11_InitRenderTargetTexture(ui32 tWidth, ui32 tHeight, ID3D11Device * device, ID3D11Texture2D * targetTextureHandle)
 {
 	HRESULT hr;
 	TextureInfo tInfo{};
-	tInfo.width = rtWidth;
-	tInfo.height = rtHeight;
+	tInfo.width = tWidth;
+	tInfo.height = tHeight;
 	tInfo.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	tInfo.usage = D3D11_USAGE_DEFAULT;
 	tInfo.bindFlags = (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	hr = TSR_DX11_CreateTexture2D(tInfo, dxData, dxData->scnData.renderTexture);
+	hr = TSR_DX11_CreateTexture2D(tInfo, device, targetTextureHandle);
 	LOGASSERT(LOGSYSTEM_DX11, "Failed initializing RT Texture", !FAILED(hr));
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "RT Texture created!");
 }
 
-void TSR_DX11_InitDepthBuffer()
+void TSR_DX11_InitDepthBuffer(ui32 tWidth, ui32 tHeight, DX11Data* dxData)
 {
-
+	HRESULT hr;
+	TextureInfo tInfo{};
+	tInfo.width = tWidth;
+	tInfo.height = tHeight;
+	tInfo.format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	tInfo.usage = D3D11_USAGE_DEFAULT;
+	tInfo.bindFlags = (D3D11_BIND_DEPTH_STENCIL);
+	hr = TSR_DX11_CreateTexture2D(tInfo, dxData->device, dxData->scnData.renderTexture);
 }
 
 //TODO(Fran): check MSAA support later.
@@ -196,17 +216,22 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	UINT rtHeight = 360;
 	bool msaaOn = false;
 
+	//issue with the textures
 	TSR_DX11_CreateDeviceAndSwapChain(winData, msaaOn, dxData);
 	TSR_DX11_CreateBackBufferAndRTView(dxData);
 
 	//we've got 2 render targets, the main window and the viewport
+	// Viewport render target initialization
+	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData->device, (&dxData->VP)->RenderTargetTexture);
+	
+	//TSR_DX11_InitRenderTargetTexture();
 
-	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData);
-	TSR_DX11_InitDepthBuffer();
+	//TSR_DX11_InitDepthBuffer();
 
 	//do we only care about the depth buffer of the viewport?
 
-
+	
+	// viewport rt
 	D3D11_TEXTURE2D_DESC rtDescriptor{ 0 };
 	rtDescriptor.Width = rtWidth;
 	rtDescriptor.Height = rtHeight;
@@ -223,8 +248,9 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 		MessageBox(0, L"Failed creating render texture", 0, 0);
 		return false;
 	}
+	
 
-	// RENDER TEXTURE DEPTH BUFFER
+	// RENDER TEXTURE DEPTH BUFFER viewport
 	D3D11_TEXTURE2D_DESC rtdbDescriptor{ 0 };
 	rtdbDescriptor.Width = rtWidth;
 	rtdbDescriptor.Height = rtHeight;
@@ -290,7 +316,7 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	srDesc.Texture2D.MipLevels = 1;
 	dxData->device->CreateShaderResourceView(dxData->scnData.renderTexture, &srDesc, &dxData->scnData.shaderResourceView);
 
-
+	/*
 	// Depth buffer
 	D3D11_TEXTURE2D_DESC dsDescriptor{ 0 };
 	dsDescriptor.Width = wWidth;
@@ -329,6 +355,7 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 		// we can bind multiple render target views.
 		dxData->imDeviceContext->OMSetRenderTargets(1, &dxData->renderTargetView, dxData->depthStencilView);
 	}
+	*/
 
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.

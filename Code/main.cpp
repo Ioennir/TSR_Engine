@@ -72,7 +72,7 @@ INT WINAPI wWinMain(
 
 
 	// Initialize DX11 and get all the information needed
-	DX11Data dxData;
+	DX11Data dxData{};
 	if (!TSR_DX11_Init(winData, &dxData))
 	{
 		return -1;
