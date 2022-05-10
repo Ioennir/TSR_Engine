@@ -67,48 +67,28 @@ struct IMData
 	r32 rotSpeed{ 60.0f };
 };
 
-//TODO(Fran): Do the debug implementation with dxtrace etc.
-//TODO(Fran): Check MSAA thingy.
-bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
+//TODO(Fran): use this to pass on window data.
+struct WindowData
+{
+	HWND handle;
+	ui32 width;
+	ui32 height;
+};
+
+// TODO(Fran): update this to do all the checks we need.
+// Fetch displays and create the DX11 device
+HRESULT TSR_DX11_CreateDeviceAndSwapChain(HWND hWnd, ui32 wWidth, ui32 wHeight, bool msaaOn, DX11Data * dxData)
 {
 	HRESULT hr;
-	UINT wWidth = wRect.right - wRect.left;
-	UINT wHeight = wRect.bottom - wRect.top;
-
-	UINT rtWidth = 640;
-	UINT rtHeight = 360;
-
 	// Desired Feature level
 	D3D_FEATURE_LEVEL fLevel = { D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0 };
 	// Device Flags
 	UINT createDeviceFlags = 0;
-
+	
 #ifdef _DEBUG
 	createDeviceFlags = D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-	hr = D3D11CreateDevice(
-		0, // uses primary display
-		D3D_DRIVER_TYPE_HARDWARE, // hardware rendering acceleration
-		0, // we are rendering with hardware
-		createDeviceFlags, // enable debug layer
-		&fLevel,
-		1,
-		D3D11_SDK_VERSION,
-		&dxData->device,
-		dxData->featureLevel,
-		&dxData->imDeviceContext
-	);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"D3D11CreateDevice Failed", 0, 0);
-		return false;
-	}
-
-	//NOTE(Fran): check MSAA support later.
-	bool msaaOn = false;
-
-	//Describe Swap Chain
 	DXGI_SWAP_CHAIN_DESC scDescriptor;
 	scDescriptor.BufferDesc.Width = wWidth;
 	scDescriptor.BufferDesc.Height = wHeight;
@@ -133,44 +113,42 @@ bool InitD3D11(HWND hWnd, RECT wRect, DX11Data* dxData)
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-	//Create Swap chain
-	//Get the factory
-	IDXGIDevice* dxgiDevice;
-	hr = dxData->device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
-	if (FAILED(hr))
+	hr = D3D11CreateDeviceAndSwapChain(
+		0,
+		D3D_DRIVER_TYPE_HARDWARE,
+		0,
+		createDeviceFlags,
+		&fLevel,
+		1,
+		D3D11_SDK_VERSION,
+		&scDescriptor,
+		&dxData->swapChain,
+		&dxData->device,
+		dxData->featureLevel,
+		&dxData->imDeviceContext
+	);
+	
+	return hr;
+}
+
+//TODO(Fran): check MSAA support later.
+//TODO(Fran): Do the debug implementation with dxtrace etc.
+//TODO(Fran): Check MSAA thingy.
+bool TSR_DX11_Init(HWND hWnd, RECT wRect, DX11Data* dxData)
+{
+	HRESULT hr;
+	UINT wWidth = wRect.right - wRect.left;
+	UINT wHeight = wRect.bottom - wRect.top;
+	UINT rtWidth = 640;
+	UINT rtHeight = 360;
+	bool msaaOn = false;
+
+	if (FAILED(TSR_DX11_CreateDeviceAndSwapChain(hWnd, wWidth, wHeight, msaaOn, dxData)))
 	{
-		MessageBox(0, L"Failed to get the DXGIDevice", 0, 0);
+		MessageBox(0, L"D3D11CreateDevice Failed", 0, 0);
 		return false;
 	}
-
-	IDXGIAdapter* dxgiAdapter;
-	hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed to get the DXGIAdapter", 0, 0);
-		return false;
-	}
-
-	IDXGIFactory* dxgiFactory;
-	hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed to get the DXGIFactory", 0, 0);
-		return false;
-	}
-
-	// finally create the swapchain ...
-	hr = dxgiFactory->CreateSwapChain(dxData->device, &scDescriptor, &dxData->swapChain);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed to create the SwapChain for the window", 0, 0);
-		return false;
-	}
-
-	//Release the COM interfaces (decrement references)
-	dxgiDevice->Release();
-	dxgiAdapter->Release();
-	dxgiFactory->Release();
+	LOG(LOGTYPE_DX11, "Device & Swapchain created!");
 
 	// Create main window Render Target view
 	ID3D11Texture2D* backBuffer;
@@ -509,8 +487,6 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	return true;
 }
 
-
-//TODO(Fran): set the shaderpaths properly using the environment variables.
 bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
 	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =

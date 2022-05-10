@@ -45,11 +45,11 @@ INT WINAPI wWinMain(
 	_In_ int nCmdShow)
 {
 #ifdef _DEBUG 
-	printf("::\tTSR engine console log!\n");
+	LOG(LOGTYPE_TSR, "TSR engine log!");
 	//check this works
 	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
-	eastl::string s = "EASTL GOING!\n";
-	printf("%s", s.c_str());
+	
+	LOG(LOGTYPE_EASTL, "Eastl working!");
 	
 #endif
 	// Load vivi
@@ -73,7 +73,7 @@ INT WINAPI wWinMain(
 
 	// Initialize DX11 and get all the information needed
 	DX11Data dxData;
-	if (!InitD3D11(wHandler, wRect, &dxData))
+	if (!TSR_DX11_Init(wHandler, wRect, &dxData))
 	{
 		return -1;
 	}
