@@ -67,17 +67,9 @@ struct IMData
 	r32 rotSpeed{ 60.0f };
 };
 
-//TODO(Fran): use this to pass on window data.
-struct WindowData
-{
-	HWND handle;
-	ui32 width;
-	ui32 height;
-};
-
 // TODO(Fran): update this to do all the checks we need.
 // Fetch displays and create the DX11 device
-HRESULT TSR_DX11_CreateDeviceAndSwapChain(HWND hWnd, ui32 wWidth, ui32 wHeight, bool msaaOn, DX11Data * dxData)
+void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Data * dxData)
 {
 	HRESULT hr;
 	// Desired Feature level
@@ -90,8 +82,8 @@ HRESULT TSR_DX11_CreateDeviceAndSwapChain(HWND hWnd, ui32 wWidth, ui32 wHeight, 
 #endif
 
 	DXGI_SWAP_CHAIN_DESC scDescriptor;
-	scDescriptor.BufferDesc.Width = wWidth;
-	scDescriptor.BufferDesc.Height = wHeight;
+	scDescriptor.BufferDesc.Width = winData.width;
+	scDescriptor.BufferDesc.Height = winData.height;
 	// TODO(Fran): maybe pool displays and query refresh rate to get this exact
 	scDescriptor.BufferDesc.RefreshRate.Numerator = 60;
 	scDescriptor.BufferDesc.RefreshRate.Denominator = 1;
@@ -108,7 +100,7 @@ HRESULT TSR_DX11_CreateDeviceAndSwapChain(HWND hWnd, ui32 wWidth, ui32 wHeight, 
 	}
 	scDescriptor.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	scDescriptor.BufferCount = 1;
-	scDescriptor.OutputWindow = hWnd;
+	scDescriptor.OutputWindow = winData.handle;
 	scDescriptor.Windowed = true;
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -127,45 +119,94 @@ HRESULT TSR_DX11_CreateDeviceAndSwapChain(HWND hWnd, ui32 wWidth, ui32 wHeight, 
 		dxData->featureLevel,
 		&dxData->imDeviceContext
 	);
-	
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Device and/or SwapChain.", !FAILED(hr));
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Device & Swapchain created!");
+}
+
+//DESCRIPTION: Acquires the DX11 BackBuffer and RT View
+void TSR_DX11_CreateBackBufferAndRTView(DX11Data * dxData)
+{
+	HRESULT hr;
+	ID3D11Texture2D* bBuffer;
+	hr = dxData->swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&bBuffer));
+	LOGASSERT(LOGSYSTEM_DX11,"Failed acquiring the backbuffer",!FAILED(hr));
+	hr = dxData->device->CreateRenderTargetView(bBuffer, 0, &dxData->renderTargetView);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating the RT View",!FAILED(hr));
+	bBuffer->Release();
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Backbuffer & RT View created!");
+}
+
+struct TextureInfo
+{
+	ui32 width;
+	ui32 height;
+	DXGI_FORMAT format;
+	D3D11_USAGE usage;
+	ui32 bindFlags;
+};
+
+HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, DX11Data * dxData, ID3D11Texture2D * textureHandle)
+{
+	HRESULT hr;
+	D3D11_TEXTURE2D_DESC tDesc{ 0 };
+	tDesc.Width = tInfo.width;
+	tDesc.Height = tInfo.height;
+
+	//NOTE(Fran): check this.
+	tDesc.MipLevels = 1;
+	tDesc.ArraySize = 1;
+	tDesc.SampleDesc.Count = 1;
+	tDesc.SampleDesc.Quality = 0;
+
+	tDesc.Format = tInfo.format;
+	tDesc.Usage = tInfo.usage;
+	tDesc.BindFlags = tInfo.bindFlags;
+	hr = dxData->device->CreateTexture2D(&tDesc, 0, &textureHandle);
 	return hr;
+}
+
+void TSR_DX11_InitRenderTargetTexture(ui32 rtWidth, ui32 rtHeight, DX11Data * dxData)
+{
+	HRESULT hr;
+	TextureInfo tInfo{};
+	tInfo.width = rtWidth;
+	tInfo.height = rtHeight;
+	tInfo.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	tInfo.usage = D3D11_USAGE_DEFAULT;
+	tInfo.bindFlags = (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	hr = TSR_DX11_CreateTexture2D(tInfo, dxData, dxData->scnData.renderTexture);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed initializing RT Texture", !FAILED(hr));
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "RT Texture created!");
+}
+
+void TSR_DX11_InitDepthBuffer()
+{
+
 }
 
 //TODO(Fran): check MSAA support later.
 //TODO(Fran): Do the debug implementation with dxtrace etc.
 //TODO(Fran): Check MSAA thingy.
-bool TSR_DX11_Init(HWND hWnd, RECT wRect, DX11Data* dxData)
+bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 {
 	HRESULT hr;
-	UINT wWidth = wRect.right - wRect.left;
-	UINT wHeight = wRect.bottom - wRect.top;
+	UINT wWidth = winData.width;
+	UINT wHeight = winData.height;
 	UINT rtWidth = 640;
 	UINT rtHeight = 360;
 	bool msaaOn = false;
 
-	if (FAILED(TSR_DX11_CreateDeviceAndSwapChain(hWnd, wWidth, wHeight, msaaOn, dxData)))
-	{
-		MessageBox(0, L"D3D11CreateDevice Failed", 0, 0);
-		return false;
-	}
-	LOG(LOGTYPE_DX11, "Device & Swapchain created!");
+	TSR_DX11_CreateDeviceAndSwapChain(winData, msaaOn, dxData);
+	TSR_DX11_CreateBackBufferAndRTView(dxData);
 
-	// Create main window Render Target view
-	ID3D11Texture2D* backBuffer;
-	hr = dxData->swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed acquiring back buffer", 0, 0);
-		return false;
-	}
-	else
-	{
-		dxData->device->CreateRenderTargetView(backBuffer, 0, &dxData->renderTargetView);
-	}
-	//Release COM interface
-	backBuffer->Release();
+	//we've got 2 render targets, the main window and the viewport
 
-	// RENDER TEXTURE
+	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData);
+	TSR_DX11_InitDepthBuffer();
+
+	//do we only care about the depth buffer of the viewport?
+
+
 	D3D11_TEXTURE2D_DESC rtDescriptor{ 0 };
 	rtDescriptor.Width = rtWidth;
 	rtDescriptor.Height = rtHeight;

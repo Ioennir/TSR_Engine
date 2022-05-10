@@ -1,6 +1,14 @@
 
 #if (defined(_WIN64) && _WIN64)
 
+// TODO(Fran): HWND is a windows only type.
+struct WindowData
+{
+	HWND handle;
+	UINT width;
+	UINT height;
+};
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -25,8 +33,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int nCmdShow)
+void CreateAndSpawnWindow(LPCWSTR winName, WindowData & winData, HINSTANCE hInstance, int nCmdShow)
 {
+	RECT wRect{ 0, 0, 1280, 720 };
 	// create and register the class to spawn the window
 	LPCWSTR wcName = L"CGraphWindowClass";
 	WNDCLASSEX wclass{ 0 };
@@ -55,8 +64,10 @@ HWND CreateAndSpawnWindow(LPCWSTR winName, RECT wRect, HINSTANCE hInstance, int 
 
 	// Show the window
 	ShowWindow(wHandler, nCmdShow);
-
-	return wHandler;
+	winData.handle = wHandler;
+	//NOTE(Fran): check this out
+	winData.width = 1280;//wRect.right - wRect.left;
+	winData.height = 720;//wRect.bottom - wRect.top;
 }
 
 void FetchPerformanceCounter(long long* performanceCounter)

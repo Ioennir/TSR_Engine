@@ -11,12 +11,31 @@ DirectX::XMFLOAT4 cyan{ 0.0f, 1.0f, 1.0f, 1.0f };
 DirectX::XMFLOAT4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
 DirectX::XMFLOAT4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
 
+enum class LOGTYPE {
+	LOG_DEBUG,
+	LOG_ERROR,
+	LOG_WARNING,
+	COUNT
+};
 #define LOGTYPE_ERROR		"[ERROR]"
 #define LOGTYPE_WARNING		"[WARNING]"
 #define LOGTYPE_DEBUG		"[DEBUG]"
-#define LOGTYPE_TSR			"[TSR Engine]"
-#define LOGTYPE_EASTL		"[EASTL]"
-#define LOGTYPE_DX11		"[DX11]"
-#define LOG(TYPE, MESSAGE)	printf("%s: %s\n",TYPE,MESSAGE)
+
+#define LOGSYSTEM_TSR		"[TSR Engine]"
+#define LOGSYSTEM_EASTL		"[EASTL]"
+#define LOGSYSTEM_DX11		"[DX11]"
+
+#define LOGERROR(SYSTEM, MESSAGE) printf("\033[0;31m%s\t\t%s:\t\t%s\033[0m\n",LOGTYPE_ERROR,SYSTEM,MESSAGE)
+#define LOGWARNING(SYSTEM, MESSAGE) printf("\033[0;33m%s\t\t%s:\t\t%s\033[0m\n",LOGTYPE_WARNING,SYSTEM,MESSAGE)
+#define LOGDEBUG(SYSTEM, MESSAGE) printf("%s\t\t%s:\t\t%s\n",LOGTYPE_DEBUG,SYSTEM,MESSAGE)
+
+#define LOG(TYPE, SYSTEM, MESSAGE)	switch(TYPE){\
+case LOGTYPE::LOG_ERROR: LOGERROR(SYSTEM, MESSAGE);break;\
+case LOGTYPE::LOG_DEBUG: LOGDEBUG(SYSTEM, MESSAGE);break;\
+case LOGTYPE::LOG_WARNING: LOGWARNING(SYSTEM, MESSAGE);break;\
+default: LOGDEBUG(SYSTEM,MESSAGE);break;}
+
+//NOTE(Fran): see if the if can be removed
+#define LOGASSERT(SYSTEM, MESSAGE, EXPRESSION) if(!EXPRESSION){ LOGERROR(SYSTEM, MESSAGE); assert(EXPRESSION);}
 
 #endif

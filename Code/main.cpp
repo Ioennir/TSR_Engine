@@ -45,11 +45,13 @@ INT WINAPI wWinMain(
 	_In_ int nCmdShow)
 {
 #ifdef _DEBUG 
-	LOG(LOGTYPE_TSR, "TSR engine log!");
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_TSR, "TSR engine log!");
 	//check this works
 	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
-	
-	LOG(LOGTYPE_EASTL, "Eastl working!");
+	LOG(LOGTYPE::LOG_WARNING, LOGSYSTEM_TSR, "This is a warning!");
+	LOG(LOGTYPE::LOG_ERROR, LOGSYSTEM_TSR, "This is an error!");
+
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_EASTL, "Eastl working!");
 	
 #endif
 	// Load vivi
@@ -65,15 +67,13 @@ INT WINAPI wWinMain(
 	ResetTimeInformation(&Time);
 
 	// create the window and display it.
-	RECT wRect { 0, 0, 1280, 720 };
-
-
-	HWND wHandler = CreateAndSpawnWindow(L"TSR Engine", wRect, hInstance, nCmdShow);
+	WindowData winData{};
+	CreateAndSpawnWindow(L"TSR Engine", winData, hInstance, nCmdShow);
 
 
 	// Initialize DX11 and get all the information needed
 	DX11Data dxData;
-	if (!TSR_DX11_Init(wHandler, wRect, &dxData))
+	if (!TSR_DX11_Init(winData, &dxData))
 	{
 		return -1;
 	}
@@ -83,7 +83,7 @@ INT WINAPI wWinMain(
 	ImGui::CreateContext();
 	ImGuiIO& imIO = ImGui::GetIO();
 	imIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-	ImGui_ImplWin32_Init(wHandler);
+	ImGui_ImplWin32_Init(winData.handle);
 	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
 	ImGui::StyleColorsDark();
 
