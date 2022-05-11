@@ -10,31 +10,31 @@
 #define NO_VSYNC 0
 #define VSYNC 1
 
+//TODO(Fran): recreate swapchain when window resizes...
+
 struct DX11ViewportData 
 {
-	ID3D11Texture2D* RenderTargetTexture;
-	ID3D11Texture2D* DepthStencilTexture;
-	ID3D11RenderTargetView* RenderTargetView;
-	ID3D11DepthStencilView* DepthStencilView;
-	ID3D11DepthStencilState* DepthStencilState;
-	ID3D11ShaderResourceView* ShaderResourceView;
-	D3D11_VIEWPORT Viewport{};
-	DirectX::XMFLOAT2 ViewportDimensions{1.0f, 1.0f};
+	ID3D11Texture2D*			RenderTargetTexture;
+	ID3D11Texture2D*			DepthStencilTexture;
+	ID3D11RenderTargetView*		RenderTargetView;
+	ID3D11DepthStencilView*		DepthStencilView;
+	ID3D11DepthStencilState*	DepthStencilState;
+	ID3D11ShaderResourceView*	ShaderResourceView;
+	D3D11_VIEWPORT				Viewport{};
 };
 
 struct DX11Data
 {
-	ID3D11Device* device{};
-	ID3D11DeviceContext* imDeviceContext{};
-	D3D_FEATURE_LEVEL* featureLevel{};
-	IDXGISwapChain* swapChain{};
-	ID3D11Texture2D* depthStencilBuffer{};
-	ID3D11RenderTargetView* renderTargetView{};
-	ID3D11DepthStencilView* depthStencilView{};
-	ID3D11RasterizerState* currentRasterizerState{};
-	D3D11_VIEWPORT windowViewport{};
-	DX11ViewportData VP;
-	ID3D11Buffer* dx11_cbuffer{};
+	ID3D11Device*				device{};
+	ID3D11DeviceContext*		imDeviceContext{};
+	D3D_FEATURE_LEVEL*			featureLevel{};
+	IDXGISwapChain*				swapChain{};
+	ID3D11Texture2D*			depthStencilBuffer{};
+	ID3D11RenderTargetView*		renderTargetView{};
+	ID3D11DepthStencilView*		depthStencilView{};
+	ID3D11RasterizerState*		currentRasterizerState{};
+	DX11ViewportData			VP;
+	ID3D11Buffer*				dx11_cbuffer{}; // this will be moved elsewhere
 };
 
 struct DX11VertexShaderData
@@ -256,6 +256,17 @@ void TSR_DX11_InitViewport(ID3D11Device * device, ID3D11DeviceContext* deviceCtx
 	LOGASSERT(LOGSYSTEM_DX11, "Failed Creating the Shader Resource view for the viewport.", !FAILED(hr));
 }
 
+void TSR_DX11_SetGameViewport(ui32 vpWidth, ui32 vpHeight, DX11ViewportData * VP)
+{
+	VP->Viewport = { 0 };
+	VP->Viewport.MinDepth = 0.0f;
+	VP->Viewport.MaxDepth = 1.0f;
+	VP->Viewport.TopLeftX = 0.0f;
+	VP->Viewport.TopLeftY = 0.0f;
+	VP->Viewport.Width = static_cast<float>(vpWidth);
+	VP->Viewport.Height = static_cast<float>(vpHeight);
+}
+
 //TODO(Fran): check MSAA support later.
 //TODO(Fran): Do the debug implementation with dxtrace etc.
 //TODO(Fran): Check MSAA thingy.
@@ -276,28 +287,12 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	// Viewport depth buffer initialization
 	TSR_DX11_InitDepthBuffer(rtWidth, rtHeight, dxData->device, &dxData->VP.DepthStencilTexture);
 	TSR_DX11_InitViewport(dxData->device, dxData->imDeviceContext, &dxData->VP);
+	TSR_DX11_SetGameViewport(rtWidth, rtHeight, &dxData->VP);
 
-	// create viewport and set it
-	// maybe split screen or stuff could be done with several viewports.
-	dxData->windowViewport = { 0 };
-	dxData->windowViewport.MinDepth = 0.0f;
-	dxData->windowViewport.MaxDepth = 1.0f;
-	dxData->windowViewport.TopLeftX = 0.0f;
-	dxData->windowViewport.TopLeftY = 0.0f;
-	dxData->windowViewport.Width = static_cast<float>(wWidth);
-	dxData->windowViewport.Height = static_cast<float>(wHeight);
-
-	dxData->VP.Viewport = { 0 };
-	dxData->VP.Viewport.MinDepth = 0.0f;
-	dxData->VP.Viewport.MaxDepth = 1.0f;
-	dxData->VP.Viewport.TopLeftX = 0.0f;
-	dxData->VP.Viewport.TopLeftY = 0.0f;
-	dxData->VP.Viewport.Width = static_cast<float>(rtWidth);
-	dxData->VP.Viewport.Height = static_cast<float>(rtHeight);
-	dxData->VP.ViewportDimensions = { static_cast<float>(rtWidth), static_cast<float>(rtHeight)};
 	return true;
 }
 
+//TODO(Fran): clean and refactor this
 bool BuildGeometryBuffer(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData* iBuffer)
 {
 	vBuffer->stride = sizeof(Vertex);
