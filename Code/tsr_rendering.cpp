@@ -30,7 +30,7 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	{
 		//https://github.com/ocornut/imgui/issues/1287 handling window resize
 		//https://github.com/ocornut/imgui/issues/2987
-		ImGui::Image(reinterpret_cast<void*>(dxData.scnData.shaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
+		ImGui::Image(reinterpret_cast<void*>(dxData.VP.ShaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
 	}
 	ImGui::End();
 	ImGui::Render();
@@ -144,11 +144,11 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
 
 	// VIEWPORT RENDERING
-	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.scnData.renderTargetView, dxData.scnData.depthStencilView);
-	dxData.imDeviceContext->RSSetViewports(1, &dxData.scnData.viewport);
+	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.VP.RenderTargetView, dxData.VP.DepthStencilView);
+	dxData.imDeviceContext->RSSetViewports(1, &dxData.VP.Viewport);
 
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.scnData.renderTargetView, reinterpret_cast<const float*>(&clearColor_orange));
-	dxData.imDeviceContext->ClearDepthStencilView(dxData.scnData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	dxData.imDeviceContext->ClearRenderTargetView(dxData.VP.RenderTargetView, reinterpret_cast<const float*>(&clearColor_orange));
+	dxData.imDeviceContext->ClearDepthStencilView(dxData.VP.DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// CUBE
 	// Bind shaders and buffers
@@ -319,7 +319,7 @@ void GenerateCilinderGeometry(eastl::vector<Vertex>& vertices, eastl::vector<ui3
 
 }
 
-void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData* vBuffer, BufferData* iBuffer)
+void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device* device, BufferData* vBuffer, BufferData* iBuffer)
 {
 	HRESULT hr;
 	eastl::vector<Vertex> vertices;
@@ -447,7 +447,7 @@ void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData*
 	iBuffData.pSysMem = indices.data();
 
 	// Create the buffers
-	hr = device.CreateBuffer(
+	hr = device->CreateBuffer(
 		&vBuffDesc, &vBuffData, &vBuffer->buffer
 	);
 
@@ -456,7 +456,7 @@ void BuildPrimitiveBuffers(Primitive primitive,ID3D11Device& device, BufferData*
 		printf("Failed to create vertex buffer for a primitive.\n");
 	}
 
-	hr = device.CreateBuffer(
+	hr = device->CreateBuffer(
 		&iBuffDesc, &iBuffData, &iBuffer->buffer
 	);
 

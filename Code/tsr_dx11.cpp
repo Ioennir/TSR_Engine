@@ -10,19 +10,6 @@
 #define NO_VSYNC 0
 #define VSYNC 1
 
-//quit this
-struct DX11ScnData
-{
-	ID3D11Texture2D* depthStencilBuffer{};
-	ID3D11Texture2D* renderTexture{};
-	ID3D11RenderTargetView* renderTargetView{};
-	ID3D11DepthStencilView* depthStencilView{};
-	ID3D11DepthStencilState* depthStencilState{};
-	ID3D11ShaderResourceView* shaderResourceView{};
-	D3D11_VIEWPORT viewport{};
-	DirectX::XMFLOAT2 viewportSize{ 1.0f, 1.0f };
-};
-
 struct DX11ViewportData 
 {
 	ID3D11Texture2D* RenderTargetTexture;
@@ -46,7 +33,6 @@ struct DX11Data
 	ID3D11DepthStencilView* depthStencilView{};
 	ID3D11RasterizerState* currentRasterizerState{};
 	D3D11_VIEWPORT windowViewport{};
-	DX11ScnData scnData{};
 	DX11ViewportData VP;
 	ID3D11Buffer* dx11_cbuffer{};
 };
@@ -64,8 +50,6 @@ struct DX11PixelShaderData
 	ID3D11PixelShader* shader{};
 
 };
-
-//Simple vertex implementation
 
 struct BufferData
 {
@@ -158,7 +142,7 @@ struct TextureInfo
 	ui32 bindFlags;
 };
 
-HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, ID3D11Device * device, ID3D11Texture2D * textureHandle)
+HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, ID3D11Device * device, ID3D11Texture2D ** textureHandle)
 {
 	HRESULT hr;
 	D3D11_TEXTURE2D_DESC tDesc{ 0 };
@@ -174,11 +158,12 @@ HRESULT TSR_DX11_CreateTexture2D(TextureInfo & tInfo, ID3D11Device * device, ID3
 	tDesc.Format = tInfo.format;
 	tDesc.Usage = tInfo.usage;
 	tDesc.BindFlags = tInfo.bindFlags;
-	hr = device->CreateTexture2D(&tDesc, 0, &textureHandle);
+	hr = device->CreateTexture2D(&tDesc, 0, textureHandle);
+	LOGASSERT(LOGSYSTEM_DX11, "TextureHandle is nullptr.", (*textureHandle != nullptr));
 	return hr;
 }
 
-void TSR_DX11_InitRenderTargetTexture(ui32 tWidth, ui32 tHeight, ID3D11Device * device, ID3D11Texture2D * targetTextureHandle)
+void TSR_DX11_InitRenderTargetTexture(ui32 tWidth, ui32 tHeight, ID3D11Device * device, ID3D11Texture2D ** textureHandle)
 {
 	HRESULT hr;
 	TextureInfo tInfo{};
@@ -187,12 +172,12 @@ void TSR_DX11_InitRenderTargetTexture(ui32 tWidth, ui32 tHeight, ID3D11Device * 
 	tInfo.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	tInfo.usage = D3D11_USAGE_DEFAULT;
 	tInfo.bindFlags = (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	hr = TSR_DX11_CreateTexture2D(tInfo, device, targetTextureHandle);
+	hr = TSR_DX11_CreateTexture2D(tInfo, device, textureHandle);
 	LOGASSERT(LOGSYSTEM_DX11, "Failed initializing RT Texture", !FAILED(hr));
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "RT Texture created!");
 }
 
-void TSR_DX11_InitDepthBuffer(ui32 tWidth, ui32 tHeight, DX11Data* dxData)
+void TSR_DX11_InitDepthBuffer(ui32 tWidth, ui32 tHeight, ID3D11Device * device, ID3D11Texture2D ** textureHandle)
 {
 	HRESULT hr;
 	TextureInfo tInfo{};
@@ -201,82 +186,14 @@ void TSR_DX11_InitDepthBuffer(ui32 tWidth, ui32 tHeight, DX11Data* dxData)
 	tInfo.format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	tInfo.usage = D3D11_USAGE_DEFAULT;
 	tInfo.bindFlags = (D3D11_BIND_DEPTH_STENCIL);
-	hr = TSR_DX11_CreateTexture2D(tInfo, dxData->device, dxData->scnData.renderTexture);
+	hr = TSR_DX11_CreateTexture2D(tInfo, device, textureHandle);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed initializing Depth-Stencil Buffer Texture", !FAILED(hr));
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Depth Stencil Texture created!");
 }
 
-//TODO(Fran): check MSAA support later.
-//TODO(Fran): Do the debug implementation with dxtrace etc.
-//TODO(Fran): Check MSAA thingy.
-bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
+HRESULT TSR_DX11_SetDepthBufferState(ID3D11Device* device, ID3D11DeviceContext* deviceCtx, DX11ViewportData* VP)
 {
 	HRESULT hr;
-	UINT wWidth = winData.width;
-	UINT wHeight = winData.height;
-	UINT rtWidth = 640;
-	UINT rtHeight = 360;
-	bool msaaOn = false;
-
-	//issue with the textures
-	TSR_DX11_CreateDeviceAndSwapChain(winData, msaaOn, dxData);
-	TSR_DX11_CreateBackBufferAndRTView(dxData);
-
-	//we've got 2 render targets, the main window and the viewport
-	// Viewport render target initialization
-	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData->device, (&dxData->VP)->RenderTargetTexture);
-	
-	//TSR_DX11_InitRenderTargetTexture();
-
-	//TSR_DX11_InitDepthBuffer();
-
-	//do we only care about the depth buffer of the viewport?
-
-	
-	// viewport rt
-	D3D11_TEXTURE2D_DESC rtDescriptor{ 0 };
-	rtDescriptor.Width = rtWidth;
-	rtDescriptor.Height = rtHeight;
-	rtDescriptor.MipLevels = 1;
-	rtDescriptor.ArraySize = 1;
-	rtDescriptor.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	rtDescriptor.SampleDesc.Count = 1;
-	rtDescriptor.SampleDesc.Quality = 0;
-	rtDescriptor.Usage = D3D11_USAGE_DEFAULT;
-	rtDescriptor.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	hr = dxData->device->CreateTexture2D(&rtDescriptor, 0, &dxData->scnData.renderTexture);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed creating render texture", 0, 0);
-		return false;
-	}
-	
-
-	// RENDER TEXTURE DEPTH BUFFER viewport
-	D3D11_TEXTURE2D_DESC rtdbDescriptor{ 0 };
-	rtdbDescriptor.Width = rtWidth;
-	rtdbDescriptor.Height = rtHeight;
-	rtdbDescriptor.MipLevels = 1;
-	rtdbDescriptor.ArraySize = 1;
-	rtdbDescriptor.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	rtdbDescriptor.SampleDesc.Count = 1;
-	rtdbDescriptor.SampleDesc.Quality = 0;
-	rtdbDescriptor.Usage = D3D11_USAGE_DEFAULT;
-	rtdbDescriptor.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	hr = dxData->device->CreateTexture2D(&rtdbDescriptor, 0, &dxData->scnData.depthStencilBuffer);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed creating depth stencil texture", 0, 0);
-		return false;
-	}
-	else
-	{
-		hr = dxData->device->CreateDepthStencilView(dxData->scnData.depthStencilBuffer, 0, &dxData->scnData.depthStencilView);
-		if (FAILED(hr)) {
-			MessageBox(0, L"Failed creating depth view from depth stencil texture", 0, 0);
-			return false;
-		}
-	}
-
-	//TODO(Frna): depth stencil for the viewport
 	D3D11_DEPTH_STENCIL_DESC dsDesc;
 	// Depth test parameters
 	dsDesc.DepthEnable = true;
@@ -297,65 +214,68 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
 	dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 	// Create depth stencil state
-	dxData->device->CreateDepthStencilState(&dsDesc, &dxData->scnData.depthStencilState);
-	dxData->imDeviceContext->OMSetDepthStencilState(dxData->scnData.depthStencilState, 1);
+	hr = device->CreateDepthStencilState(&dsDesc, &VP->DepthStencilState);
+	deviceCtx->OMSetDepthStencilState(VP->DepthStencilState, 1);
+	return hr;
+}
 
-
-	// RENDER TARGET VIEW DESCRIPTION FOR THE RENDER TEXTURE
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
-	rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	rtvDesc.Texture2D.MipSlice = 0;
-	dxData->device->CreateRenderTargetView(dxData->scnData.renderTexture, &rtvDesc, &dxData->scnData.renderTargetView);
-
+//TODO(Fran): now the format and dimension is fixed, this might change in the future, as well as the miplevels.
+HRESULT TSR_DX11_CreateShaderResourceView(ID3D11Device* device, ID3D11Texture2D * texture, ID3D11ShaderResourceView ** shaderResourceView)
+{
+	HRESULT hr;
 	// SHADER RESOURCE VIEW FOR THE RENDER TEXTURE
 	D3D11_SHADER_RESOURCE_VIEW_DESC srDesc{};
 	srDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	srDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srDesc.Texture2D.MostDetailedMip = 0;
 	srDesc.Texture2D.MipLevels = 1;
-	dxData->device->CreateShaderResourceView(dxData->scnData.renderTexture, &srDesc, &dxData->scnData.shaderResourceView);
+	hr = device->CreateShaderResourceView(texture, &srDesc, shaderResourceView);
+	return hr;
+}
+HRESULT TSR_DX11_CreateRenderTargetView(ID3D11Device* device, ID3D11Texture2D* texture, ID3D11RenderTargetView** renderTargetView)
+{
+	HRESULT hr;
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
+	rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+	hr = device->CreateRenderTargetView(texture, &rtvDesc, renderTargetView);
+	return hr;
+}
 
-	/*
-	// Depth buffer
-	D3D11_TEXTURE2D_DESC dsDescriptor{ 0 };
-	dsDescriptor.Width = wWidth;
-	dsDescriptor.Height = wHeight;
-	dsDescriptor.MipLevels = 1;
-	dsDescriptor.ArraySize = 1;
-	dsDescriptor.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	if (msaaOn)
-	{
+void TSR_DX11_InitViewport(ID3D11Device * device, ID3D11DeviceContext* deviceCtx, DX11ViewportData * VP)
+{
+	HRESULT hr;
+	hr = device->CreateDepthStencilView(VP->DepthStencilTexture, 0, &VP->DepthStencilView);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Depth View from Depth Stencil texture.", !FAILED(hr));
+	hr = TSR_DX11_SetDepthBufferState(device, deviceCtx, VP);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating and setting the Depth Stencil State.", !FAILED(hr));
+	hr = TSR_DX11_CreateRenderTargetView(device, VP->RenderTargetTexture, &VP->RenderTargetView);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed Creating the Render Target view.", !FAILED(hr));
+	hr = TSR_DX11_CreateShaderResourceView(device, VP->RenderTargetTexture, &VP->ShaderResourceView);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed Creating the Shader Resource view for the viewport.", !FAILED(hr));
+}
 
-	}
-	else
-	{
-		dsDescriptor.SampleDesc.Count = 1;
-		dsDescriptor.SampleDesc.Quality = 0;
-	}
-	dsDescriptor.Usage = D3D11_USAGE_DEFAULT;
-	dsDescriptor.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	//dsDescriptor.CPUAccessFlags = 0; no cpu access
-	//dsDescriptor.MiscFlags = 0; optional flags
+//TODO(Fran): check MSAA support later.
+//TODO(Fran): Do the debug implementation with dxtrace etc.
+//TODO(Fran): Check MSAA thingy.
+bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
+{
+	UINT wWidth = winData.width;
+	UINT wHeight = winData.height;
+	UINT rtWidth = 640;
+	UINT rtHeight = 360;
+	bool msaaOn = false;
 
-	// set depth buffer and view
-	hr = dxData->device->CreateTexture2D(&dsDescriptor, 0, &dxData->depthStencilBuffer);
-	if (FAILED(hr)) {
-		MessageBox(0, L"Failed creating depth buffer", 0, 0);
-		return false;
-	}
-	else
-	{
-		hr = dxData->device->CreateDepthStencilView(dxData->depthStencilBuffer, 0, &dxData->depthStencilView);
-		if (FAILED(hr)) {
-			MessageBox(0, L"Failed creating depth view", 0, 0);
-			return false;
-		}
-		//bind views to output merger stage
-		// we can bind multiple render target views.
-		dxData->imDeviceContext->OMSetRenderTargets(1, &dxData->renderTargetView, dxData->depthStencilView);
-	}
-	*/
+	//issue with the textures
+	TSR_DX11_CreateDeviceAndSwapChain(winData, msaaOn, dxData);
+	TSR_DX11_CreateBackBufferAndRTView(dxData);
+
+	// Viewport render target initialization
+	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData->device, &dxData->VP.RenderTargetTexture);
+	// Viewport depth buffer initialization
+	TSR_DX11_InitDepthBuffer(rtWidth, rtHeight, dxData->device, &dxData->VP.DepthStencilTexture);
+	TSR_DX11_InitViewport(dxData->device, dxData->imDeviceContext, &dxData->VP);
 
 	// create viewport and set it
 	// maybe split screen or stuff could be done with several viewports.
@@ -367,21 +287,18 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	dxData->windowViewport.Width = static_cast<float>(wWidth);
 	dxData->windowViewport.Height = static_cast<float>(wHeight);
 
-	dxData->scnData.viewport = { 0 };
-	dxData->scnData.viewport.MinDepth = 0.0f;
-	dxData->scnData.viewport.MaxDepth = 1.0f;
-	dxData->scnData.viewport.TopLeftX = 0.0f;
-	dxData->scnData.viewport.TopLeftY = 0.0f;
-	dxData->scnData.viewport.Width = static_cast<float>(rtWidth);
-	dxData->scnData.viewport.Height = static_cast<float>(rtHeight);
-	dxData->scnData.viewportSize = { static_cast<float>(rtWidth), static_cast<float>(rtHeight)};
-
-	dxData->imDeviceContext->RSSetViewports(1, &dxData->windowViewport);
-	
+	dxData->VP.Viewport = { 0 };
+	dxData->VP.Viewport.MinDepth = 0.0f;
+	dxData->VP.Viewport.MaxDepth = 1.0f;
+	dxData->VP.Viewport.TopLeftX = 0.0f;
+	dxData->VP.Viewport.TopLeftY = 0.0f;
+	dxData->VP.Viewport.Width = static_cast<float>(rtWidth);
+	dxData->VP.Viewport.Height = static_cast<float>(rtHeight);
+	dxData->VP.ViewportDimensions = { static_cast<float>(rtWidth), static_cast<float>(rtHeight)};
 	return true;
 }
 
-bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferData * vBuffer, BufferData* iBuffer)
+bool BuildGeometryBuffer(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData* iBuffer)
 {
 	vBuffer->stride = sizeof(Vertex);
 	vBuffer->offset = 0;
@@ -395,7 +312,7 @@ bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferD
 	D3D11_SUBRESOURCE_DATA tvInitData{ 0 };
 	tvInitData.pSysMem = renderData.vertexData.data();//renderData.meshes[0].vertices.data();
 
-	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
+	HRESULT hr = device->CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
 		return false;
@@ -414,7 +331,7 @@ bool BuildGeometryBuffer(ID3D11Device & device, RenderData & renderData, BufferD
 	D3D11_SUBRESOURCE_DATA tiInitData{ 0 };
 	tiInitData.pSysMem = renderData.totalIndices.data();//renderData.meshes[0].indices.data();
 
-	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
+	hr = device->CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
 		return false;
@@ -555,7 +472,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	return true;
 }
 
-bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
+bool BuildTriangleShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
 	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =
 	{
@@ -575,7 +492,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 		return false;
 	}
 
-	hr = device.CreateVertexShader(
+	hr = device->CreateVertexShader(
 		vsData->shaderBuffer->GetBufferPointer(),
 		vsData->shaderBuffer->GetBufferSize(), 
 		0, 
@@ -586,7 +503,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 		return false;
 	}
 
-	hr = device.CreateInputLayout(
+	hr = device->CreateInputLayout(
 		vsInputLayoutDescriptor, 
 		elementCount, 
 		vsData->shaderBuffer->GetBufferPointer(), 
@@ -606,7 +523,7 @@ bool BuildTriangleShaders(ID3D11Device & device, DX11VertexShaderData * vsData, 
 		return false;
 	}
 
-	hr = device.CreatePixelShader(
+	hr = device->CreatePixelShader(
 		psData->shaderBuffer->GetBufferPointer(),
 		psData->shaderBuffer->GetBufferSize(),
 		0,

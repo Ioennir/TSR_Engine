@@ -97,17 +97,17 @@ INT WINAPI wWinMain(
 	BufferData primitiveIndexBuff;
 
 	
-	if (!BuildTriangleShaders(*dxData.device, &vsData, &psData))
+	if (!BuildTriangleShaders(dxData.device, &vsData, &psData))
 	{
 		return -1;
 	}
 
-	if(!BuildGeometryBuffer(*dxData.device, renderData, &vertexBuff, &indexBuff))
+	if(!BuildGeometryBuffer(dxData.device, renderData, &vertexBuff, &indexBuff))
 	{
 		return -1;
 	}
 
-	BuildPrimitiveBuffers(Primitive::Cilinder, *dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
+	BuildPrimitiveBuffers(Primitive::Cilinder, dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
 	
 	/*
 	if (!BuildTriangleGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
@@ -116,7 +116,7 @@ INT WINAPI wWinMain(
 	}
 	*/
 
-	float aspectRatio = dxData.windowViewport.Width / dxData.windowViewport.Height;
+	float aspectRatio = dxData.VP.Viewport.Width / dxData.VP.Viewport.Height;
 	CameraData camData{};
 	InitializeCamera({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
 	ConstantBuffer cbuffer{};
