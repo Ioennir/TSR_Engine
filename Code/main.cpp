@@ -46,13 +46,8 @@ INT WINAPI wWinMain(
 {
 #ifdef _DEBUG 
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_TSR, "TSR engine log!");
-	//check this works
-	eastl::vector<float> v = {0.0f, 1.0f, 2.0f, 3.0f};
 	LOG(LOGTYPE::LOG_WARNING, LOGSYSTEM_TSR, "This is a warning!");
 	LOG(LOGTYPE::LOG_ERROR, LOGSYSTEM_TSR, "This is an error!");
-
-	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_EASTL, "Eastl working!");
-	
 #endif
 	// Load vivi
 	RenderData renderData;
@@ -73,10 +68,8 @@ INT WINAPI wWinMain(
 
 	// Initialize DX11 and get all the information needed
 	DX11Data dxData{};
-	if (!TSR_DX11_Init(winData, &dxData))
-	{
-		return -1;
-	}
+	TSR_DX11_Init(winData, &dxData);
+
 
 	// setup Imgui
 	IMGUI_CHECKVERSION();
@@ -110,7 +103,7 @@ INT WINAPI wWinMain(
 	BuildPrimitiveBuffers(Primitive::Cilinder, dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
 	
 	/*
-	if (!BuildTriangleGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
+	if (!TSR_DX11_ConstructTestGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
 	{
 		return -1;
 	}

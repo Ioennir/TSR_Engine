@@ -39,14 +39,14 @@ struct DX11Data
 
 struct DX11VertexShaderData
 {
-	ID3D10Blob* shaderBuffer{};
+	ID3DBlob* shaderBuffer{};
 	ID3D11VertexShader* shader{};
 	ID3D11InputLayout* inputLayout{};
 };
 
 struct DX11PixelShaderData
 {
-	ID3D10Blob* shaderBuffer{};
+	ID3DBlob* shaderBuffer{};
 	ID3D11PixelShader* shader{};
 
 };
@@ -270,7 +270,7 @@ void TSR_DX11_SetGameViewport(ui32 vpWidth, ui32 vpHeight, DX11ViewportData * VP
 //TODO(Fran): check MSAA support later.
 //TODO(Fran): Do the debug implementation with dxtrace etc.
 //TODO(Fran): Check MSAA thingy.
-bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
+void TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 {
 	UINT wWidth = winData.width;
 	UINT wHeight = winData.height;
@@ -288,8 +288,6 @@ bool TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	TSR_DX11_InitDepthBuffer(rtWidth, rtHeight, dxData->device, &dxData->VP.DepthStencilTexture);
 	TSR_DX11_InitViewport(dxData->device, dxData->imDeviceContext, &dxData->VP);
 	TSR_DX11_SetGameViewport(rtWidth, rtHeight, &dxData->VP);
-
-	return true;
 }
 
 //TODO(Fran): clean and refactor this
@@ -335,11 +333,18 @@ bool BuildGeometryBuffer(ID3D11Device * device, RenderData & renderData, BufferD
 	return true;
 }
 
-bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
+bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
 {
 	// Triangle vertex buffer
 	// now cube
-	Vertex triangleVertices []=
+	/* Triangle
+	Vertex triangleVertices[] = {
+		{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
+		{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},
+		{DirectX::XMFLOAT3(-0.3f, 0.0f, 0.0f), blue}
+	};
+	*/
+	Vertex flatCubeVertices []=
 	{
 		// front face
 		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), green},
@@ -395,15 +400,12 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), yellow},
 		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yellow},
 
-		//{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
-		//{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},
-		//{DirectX::XMFLOAT3(-0.3f, 0.0f, 0.0f), blue}
 	};
 
 	vBuffer->stride = sizeof(Vertex);
 	vBuffer->offset = 0;
 
-	UINT memberCount = sizeof(triangleVertices) / vBuffer->stride;
+	UINT memberCount = sizeof(flatCubeVertices) / vBuffer->stride;
 
 	D3D11_BUFFER_DESC tvbd { 0 };
 	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
@@ -411,7 +413,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	
 	D3D11_SUBRESOURCE_DATA tvInitData { 0 };
-	tvInitData.pSysMem = triangleVertices;
+	tvInitData.pSysMem = flatCubeVertices;
 
 	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
 	if (FAILED(hr)) {
@@ -419,7 +421,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 		return false;
 	}
 
-	UINT indices[] =
+	UINT flatCubeIndices[] =
 	{
 		// front face
 		0, 1, 2,
@@ -456,7 +458,7 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA tiInitData { 0 };
-	tiInitData.pSysMem = indices;
+	tiInitData.pSysMem = flatCubeIndices;
 
 	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
 	if (FAILED(hr)) {
@@ -465,6 +467,42 @@ bool BuildTriangleGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, B
 	}
 
 	return true;
+}
+
+HRESULT TSR_DX11_CreateShaderInputLayout(ID3D11Device* device, ui32 inputElements, D3D11_INPUT_ELEMENT_DESC inputLayoutDescriptor[], ID3DBlob* shaderBuffer, ID3D11InputLayout** inputLayout)
+{
+	HRESULT hr;
+
+	hr = device->CreateInputLayout(
+		inputLayoutDescriptor,
+		inputElements,
+		shaderBuffer->GetBufferPointer(),
+		shaderBuffer->GetBufferSize(),
+		inputLayout);
+
+	return hr;
+}
+
+//TODO(Fran): Maybe include shader information such as shadername etc
+void TSR_DX11_BuildVertexShader(ID3D11Device* device, eastl::wstring csoPath, ui32 inputElements, D3D11_INPUT_ELEMENT_DESC inputLayoutDescriptor[], DX11VertexShaderData* vsData)
+{
+	HRESULT hr;
+
+	hr = D3DReadFileToBlob(csoPath.begin(), &vsData->shaderBuffer);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed loading Vertex Shader.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Vertex Shader successfully loaded.");
+
+	hr = device->CreateVertexShader(vsData->shaderBuffer->GetBufferPointer(), 
+									vsData->shaderBuffer->GetBufferSize(), 
+									0, 
+									&vsData->shader
+									);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Vertex Shader.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Vertex Shader successfully created.");
+
+	hr = TSR_DX11_CreateShaderInputLayout(device, inputElements, inputLayoutDescriptor, vsData->shaderBuffer, &vsData->inputLayout);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Vertex Shader Input Layout.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Vertex Shader Input Layout successfully created.");
 }
 
 bool BuildTriangleShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
@@ -476,10 +514,13 @@ bool BuildTriangleShaders(ID3D11Device * device, DX11VertexShaderData * vsData, 
 		{"NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 
+	//TODO(Fran): this has to be done better
 	ui32 elementCount = sizeof(vsInputLayoutDescriptor) / sizeof(vsInputLayoutDescriptor[0]);
 
-	//BUILD VERTEX SHADER
+	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), elementCount, vsInputLayoutDescriptor, vsData);
 
+	//BUILD VERTEX SHADER
+	/*
 	HRESULT hr = D3DReadFileToBlob(L"./CompiledShaders/mainVS.cso", &vsData->shaderBuffer);
 	if (FAILED(hr))
 	{
@@ -509,8 +550,9 @@ bool BuildTriangleShaders(ID3D11Device * device, DX11VertexShaderData * vsData, 
 		MessageBox(0, L"Failed creating Input Layout", 0, 0);
 		return false;
 	}
-
+	*/
 	//BUILD PIXEL SHADER
+	HRESULT hr;
 	hr = D3DReadFileToBlob(L"./CompiledShaders/mainPS.cso", &psData->shaderBuffer);
 	if (FAILED(hr))
 	{
