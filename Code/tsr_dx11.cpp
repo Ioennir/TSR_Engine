@@ -64,6 +64,24 @@ struct IMData
 	r32 rotSpeed{ 60.0f };
 };
 
+#define POW(VALUE) (VALUE*VALUE)
+#define VECLEN(X,Y,Z) (sqrt(POW(X) + POW(Y) + POW(Z)))
+//NOTE(Fran): once I've got plenty of math helpers I think it might be wise to move them elsewhere
+// Also, I would like to measure the speed of this, as we have a sqrt over here and when we calculate vector lengths we usually want to calculate them
+// in bulk, so we could take advantage of SIMD instructions, I could have a VECLENBULK and VECLEN to support multiple vector amounts
+DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
+{
+	float vLen = VECLEN(f.x, f.y, f.z);
+	DirectX::XMFLOAT3 helper = { vLen, vLen, vLen };
+	DirectX::XMVECTOR vec = DirectX::XMVectorDivide(DirectX::XMLoadFloat3(&f), DirectX::XMLoadFloat3(&helper));
+	helper = { 
+			DirectX::XMVectorGetX(vec),
+			DirectX::XMVectorGetY(vec),
+			DirectX::XMVectorGetZ(vec)
+			};
+	return helper;
+}
+
 // TODO(Fran): update this to do all the checks we need.
 // Fetch displays and create the DX11 device
 void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Data * dxData)
@@ -290,50 +308,52 @@ void TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	TSR_DX11_SetGameViewport(rtWidth, rtHeight, &dxData->VP);
 }
 
-//TODO(Fran): clean and refactor this
-bool BuildGeometryBuffer(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData* iBuffer)
+//TODO(Fran): Maybe implement a template here
+//TODO(Fran): Maybe implement a way of knowing what kind of buffer we are creating to ease debugging if it fails. (maybe with the bindflag)
+void TSR_DX11_BuildBuffer(ID3D11Device * device, ui32 bStride, ui32 bOffset, ui32 bElementCount, D3D11_USAGE bUsage, UINT bBindFlags, void * bMemoryPtr, BufferData * buffer)
 {
-	vBuffer->stride = sizeof(Vertex);
-	vBuffer->offset = 0;
+	buffer->stride = bStride;
+	buffer->offset = bOffset;
+	D3D11_BUFFER_DESC bDesc{ 0 };
+	bDesc.Usage = bUsage;
+	bDesc.BindFlags = bBindFlags;
+	bDesc.ByteWidth = bStride * bElementCount;
 
-	D3D11_BUFFER_DESC tvbd{ 0 };
-	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
-	//tvbd.ByteWidth = vBuffer->stride * renderData.meshes[0].vertices.size();//vBuffer->stride * memberCount; //num of members in vertex array
-	tvbd.ByteWidth = vBuffer->stride * static_cast<UINT>(renderData.vertexData.size());
-	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	D3D11_SUBRESOURCE_DATA bData{ 0 };
+	bData.pSysMem = bMemoryPtr;
 
-	D3D11_SUBRESOURCE_DATA tvInitData{ 0 };
-	tvInitData.pSysMem = renderData.vertexData.data();//renderData.meshes[0].vertices.data();
-
-	HRESULT hr = device->CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
-	if (FAILED(hr)) {
-		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
-		return false;
-	}
-
-	iBuffer->stride = sizeof(ui32);
-	iBuffer->offset = 0;
-
-	D3D11_BUFFER_DESC tibd{ 0 };
-	tibd.Usage = D3D11_USAGE_IMMUTABLE;
-
-	//tibd.ByteWidth = iBuffer->stride * renderData.meshes[0].indices.size();//iBuffer->stride * memberCount;
-	tibd.ByteWidth = iBuffer->stride * static_cast<UINT>(renderData.totalIndices.size());
-	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA tiInitData{ 0 };
-	tiInitData.pSysMem = renderData.totalIndices.data();//renderData.meshes[0].indices.data();
-
-	hr = device->CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
-	if (FAILED(hr)) {
-		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
-		return false;
-	}
-
-	return true;
+	HRESULT hr = device->CreateBuffer(&bDesc, &bData, &buffer->buffer);
+	LOGASSERT(LOGSYSTEM_DX11, "Buffer creation failed.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Buffer creation succeeded.");
 }
 
-bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device & device, BufferData * vBuffer, BufferData * iBuffer)
+//NOTE(Fran): this helps for the test but probably will dissapear in the future
+void TSR_DX11_BuildGeometryBuffersTest(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData * iBuffer)
+{
+	//Build vertex buffer
+	TSR_DX11_BuildBuffer(device,
+						sizeof(Vertex),
+						0,
+						static_cast<ui32>(renderData.vertexData.size()),
+						D3D11_USAGE_IMMUTABLE,
+						D3D11_BIND_VERTEX_BUFFER,
+						renderData.vertexData.data(),
+						vBuffer
+						);
+
+	//Build index buffer
+	TSR_DX11_BuildBuffer(device,
+						sizeof(ui32),
+						0,
+						static_cast<ui32>(renderData.totalIndices.size()),
+						D3D11_USAGE_IMMUTABLE,
+						D3D11_BIND_INDEX_BUFFER,
+						renderData.totalIndices.data(),
+						iBuffer
+						);
+}
+
+bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device * device, BufferData * vBuffer, BufferData * iBuffer)
 {
 	// Triangle vertex buffer
 	// now cube
@@ -415,7 +435,7 @@ bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device & device, BufferData * v
 	D3D11_SUBRESOURCE_DATA tvInitData { 0 };
 	tvInitData.pSysMem = flatCubeVertices;
 
-	HRESULT hr = device.CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
+	HRESULT hr = device->CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
 		return false;
@@ -460,7 +480,7 @@ bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device & device, BufferData * v
 	D3D11_SUBRESOURCE_DATA tiInitData { 0 };
 	tiInitData.pSysMem = flatCubeIndices;
 
-	hr = device.CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
+	hr = device->CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
 	if (FAILED(hr)) {
 		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
 		return false;
@@ -505,7 +525,24 @@ void TSR_DX11_BuildVertexShader(ID3D11Device* device, eastl::wstring csoPath, ui
 	LOGDEBUG(LOGSYSTEM_DX11, "Vertex Shader Input Layout successfully created.");
 }
 
-bool BuildTriangleShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
+void TSR_DX11_BuildPixelShader(ID3D11Device* device, eastl::wstring csoPath, DX11PixelShaderData* psData)
+{
+	HRESULT hr;
+	hr = D3DReadFileToBlob(csoPath.begin(), &psData->shaderBuffer);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed loading Pixel Shader.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Pixel Shader successfully loaded.");
+
+	hr = device->CreatePixelShader( psData->shaderBuffer->GetBufferPointer(),
+									psData->shaderBuffer->GetBufferSize(), 
+									0, 
+									&psData->shader
+									);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Pixel Shader.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Pixel Shader successfully created.");
+
+}
+
+void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
 	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =
 	{
@@ -518,59 +555,5 @@ bool BuildTriangleShaders(ID3D11Device * device, DX11VertexShaderData * vsData, 
 	ui32 elementCount = sizeof(vsInputLayoutDescriptor) / sizeof(vsInputLayoutDescriptor[0]);
 
 	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), elementCount, vsInputLayoutDescriptor, vsData);
-
-	//BUILD VERTEX SHADER
-	/*
-	HRESULT hr = D3DReadFileToBlob(L"./CompiledShaders/mainVS.cso", &vsData->shaderBuffer);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed loading vertex shader", 0, 0);
-		return false;
-	}
-
-	hr = device->CreateVertexShader(
-		vsData->shaderBuffer->GetBufferPointer(),
-		vsData->shaderBuffer->GetBufferSize(), 
-		0, 
-		&vsData->shader);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed creating vertex shader", 0, 0);
-		return false;
-	}
-
-	hr = device->CreateInputLayout(
-		vsInputLayoutDescriptor, 
-		elementCount, 
-		vsData->shaderBuffer->GetBufferPointer(), 
-		vsData->shaderBuffer->GetBufferSize(), 
-		&vsData->inputLayout);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed creating Input Layout", 0, 0);
-		return false;
-	}
-	*/
-	//BUILD PIXEL SHADER
-	HRESULT hr;
-	hr = D3DReadFileToBlob(L"./CompiledShaders/mainPS.cso", &psData->shaderBuffer);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed loading pixel shader", 0, 0);
-		return false;
-	}
-
-	hr = device->CreatePixelShader(
-		psData->shaderBuffer->GetBufferPointer(),
-		psData->shaderBuffer->GetBufferSize(),
-		0,
-		&psData->shader);
-	if (FAILED(hr))
-	{
-		MessageBox(0, L"Failed creating pixel shader", 0, 0);
-		return false;
-	}
-
-
-	return true;
+	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }

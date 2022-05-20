@@ -34,6 +34,7 @@
 #include "tsr_assets.cpp"
 
 #include "tsr_rendering.cpp"
+#include "tsr_primitives.cpp"
 
 //TODO(Fran): Implement a naive input system, maybe winsdk has something or the Imgui input system itself.
 
@@ -90,17 +91,11 @@ INT WINAPI wWinMain(
 	BufferData primitiveIndexBuff;
 
 	
-	if (!BuildTriangleShaders(dxData.device, &vsData, &psData))
-	{
-		return -1;
-	}
+	TSR_DX11_BuildShaders(dxData.device, &vsData, &psData);
+	TSR_DX11_BuildGeometryBuffersTest(dxData.device, renderData, &vertexBuff, &indexBuff);
 
-	if(!BuildGeometryBuffer(dxData.device, renderData, &vertexBuff, &indexBuff))
-	{
-		return -1;
-	}
-
-	BuildPrimitiveBuffers(Primitive::Cilinder, dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
+	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
+	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
 	
 	/*
 	if (!TSR_DX11_ConstructTestGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
