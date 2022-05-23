@@ -36,6 +36,8 @@
 #include "tsr_rendering.cpp"
 #include "tsr_primitives.cpp"
 
+#include "tsr_entity.cpp"
+
 //TODO(Fran): Implement a naive input system, maybe winsdk has something or the Imgui input system itself.
 
 #if (defined(_WIN64) && _WIN64)

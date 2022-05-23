@@ -7,7 +7,7 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	ImGui::NewFrame();
 	ImGui::DockSpaceOverViewport();
 
-	ImGui::Begin("Cube data");
+	ImGui::Begin("Entity details");
 	ImGui::SliderFloat3("Rotation axis", imData->rot, -1.0f, 1.0f);
 	ImGui::DragFloat("Rotation speed", &imData->rotSpeed, 60.0f, -1000.0f, 1000.0f);
 	ImGui::End();
