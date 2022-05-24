@@ -1,8 +1,9 @@
-#include "platform/tsr_platform.cpp"
-#include "tsr_gui.h"
-#include "tsr_eastl.h"
+// TYPES & MACROS
+#include "tsr_types.cpp"
+#include "tsr_macros.h"
 
-// Eastl
+// EASTL
+#include "tsr_eastl.h" 
 // TODO(Fran): Maybe check in the future to fix these warnings myself and recompile eastl.
 #pragma warning(push)
 #pragma warning(disable:26495)
@@ -10,10 +11,12 @@
 #include <EASTL/vector.h>
 #pragma warning(pop)
 
-#include "tsr_types.cpp"
+// PLATFORM SPECIFIC
+#include "platform/tsr_platform.cpp"
 
-//MACROS
-#include "tsr_macros.h"
+// GUI INDEPENDENT CODE
+#include "tsr_gui.h"
+
 
 // DX11 layer
 #include "tsr_dx11.cpp"
@@ -47,11 +50,6 @@ INT WINAPI wWinMain(
 	_In_ LPWSTR lpCmdLine, 
 	_In_ int nCmdShow)
 {
-#ifdef _DEBUG 
-	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_TSR, "TSR engine log!");
-	LOG(LOGTYPE::LOG_WARNING, LOGSYSTEM_TSR, "This is a warning!");
-	LOG(LOGTYPE::LOG_ERROR, LOGSYSTEM_TSR, "This is an error!");
-#endif
 	Entities entities{};
 	TSR_InitializeEntities(&entities);
 
@@ -136,7 +134,7 @@ INT WINAPI wWinMain(
 			// Note(Fran): Currently it averages it every second.
 			CalculateFrameStats(Time, &frameStats);
 			
-			dt = (float)Time.deltaTime;
+			dt = TYPECAST(r32, Time.deltaTime);
 			//SCENE UPDATE
 			TSR_Update(dt);
 

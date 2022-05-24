@@ -29,7 +29,7 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	{
 		//https://github.com/ocornut/imgui/issues/1287 handling window resize
 		//https://github.com/ocornut/imgui/issues/2987
-		ImGui::Image(reinterpret_cast<void*>(dxData.VP.ShaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
+		ImGui::Image(PTRCAST(void*, dxData.VP.ShaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
 	}
 	ImGui::End();
 	ImGui::Render();

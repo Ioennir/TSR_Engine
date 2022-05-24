@@ -10,6 +10,42 @@
 #define NO_VSYNC 0
 #define VSYNC 1
 
+//These structs are as simple as possible for now to perform
+// a basic 3D projection and get things going.
+struct CameraData
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mView;
+	DirectX::XMMATRIX mProj;
+};
+
+struct ConstantBuffer
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mVWP;
+	DirectX::XMMATRIX normalMatrix;
+};
+
+struct Mesh
+{
+	eastl::vector<DirectX::XMFLOAT3> vertices;
+	eastl::vector<ui32> indices;
+};
+
+struct Vertex
+{
+	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
+};
+
+struct RenderData
+{
+	eastl::vector<Mesh> meshes;
+	eastl::vector<Vertex> vertexData;
+	eastl::vector<ui32> totalIndices;
+};
+
 //TODO(Fran): recreate swapchain when window resizes...
 
 struct DX11ViewportData 
@@ -71,6 +107,7 @@ struct IMData
 // in bulk, so we could take advantage of SIMD instructions, I could have a VECLENBULK and VECLEN to support multiple vector amounts
 DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
 {
+	//TODO(Fran): check this overflow warnings
 	float vLen = VECLEN(f.x, f.y, f.z);
 	DirectX::XMFLOAT3 helper = { vLen, vLen, vLen };
 	DirectX::XMVECTOR vec = DirectX::XMVectorDivide(DirectX::XMLoadFloat3(&f), DirectX::XMLoadFloat3(&helper));

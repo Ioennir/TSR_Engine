@@ -17,38 +17,3 @@ typedef double		r64;
 typedef intptr_t	iptr;
 typedef uintptr_t	uiptr;
 
-//These structs are as simple as possible for now to perform
-// a basic 3D projection and get things going.
-struct CameraData
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mView;
-	DirectX::XMMATRIX mProj;
-};
-
-struct ConstantBuffer
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mVWP;
-	DirectX::XMMATRIX normalMatrix;
-};
-
-struct Mesh
-{
-	eastl::vector<DirectX::XMFLOAT3> vertices;
-	eastl::vector<ui32> indices;
-};
-
-struct Vertex
-{
-	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
-	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
-};
-
-struct RenderData
-{
-	eastl::vector<Mesh> meshes;
-	eastl::vector<Vertex> vertexData;
-	eastl::vector<ui32> totalIndices;
-};
