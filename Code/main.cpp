@@ -52,6 +52,9 @@ INT WINAPI wWinMain(
 	LOG(LOGTYPE::LOG_WARNING, LOGSYSTEM_TSR, "This is a warning!");
 	LOG(LOGTYPE::LOG_ERROR, LOGSYSTEM_TSR, "This is an error!");
 #endif
+	Entities entities{};
+	TSR_InitializeEntities(&entities);
+
 	// Load vivi
 	RenderData renderData;
 	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
