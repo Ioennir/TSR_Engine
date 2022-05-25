@@ -56,7 +56,10 @@ INT WINAPI wWinMain(
 	// Load vivi
 	RenderData renderData;
 	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
-	//LoadSimpleMesh(path, &renderData);
+
+	ModelData vivi{};
+	TSR_LoadMeshFromPath(&vivi, path);
+
 	LoadMeshToVertex(path, renderData.vertexData, renderData.totalIndices);
 
 

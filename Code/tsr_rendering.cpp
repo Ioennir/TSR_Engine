@@ -140,6 +140,12 @@ void TSR_Update(float dt)
 
 }
 
+//Generates the drawcalls for the model
+void TSR_RenderModel()
+{
+
+}
+
 void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, BufferData& vb, BufferData& ib, RenderData* renderData, BufferData& pvb, BufferData& pib)
 {
 	//clear backbuffer

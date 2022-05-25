@@ -21,7 +21,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
 	const aiScene* scene = Importer.ReadFile(path.c_str(), importFlags);
 	//TODO(Fran): if the model loads incorrectly this just crashes, lets just make another log so it so it drops an error.
-	LOGCHECK(LOGSYSTEM_ASSIMP, Importer.GetErrorString(), !scene);
+	LOGCHECK(LOGSYSTEM_ASSIMP, Importer.GetErrorString(), scene != nullptr);
 	
 	model->name = scene->GetShortFilename(path.c_str());
 	// Set the number of sub meshes and reserve start and end indexes
@@ -37,16 +37,30 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	}
 	model->totalVertices.reserve(totalVertexCount);
 
+	ui32 indexOffset = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
+		
 		//bulk insert vertices
 		model->totalVertices.insert(
 			model->totalVertices.end(),
 			PTRCAST(DirectX::XMFLOAT3*, mesh->mVertices),
 			PTRCAST(DirectX::XMFLOAT3 *, mesh->mVertices + mesh->mNumVertices)
 		);
-
+		const eastl_size_t trisCount = TYPECAST(eastl_size_t, mesh->mNumFaces);
+		model->totalIndices.reserve(trisCount * 3);
+		model->submeshStartIndex.push_back(model->totalIndices.size());
+		for (ui32 j = 0; j < trisCount; ++j)
+		{
+			const aiFace face = mesh->mFaces[j];
+			LOGCHECK(LOGSYSTEM_ASSIMP, "One or more model " + model->name + " faces are not triangles." , face.mNumIndices == 3);
+			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[0] + indexOffset);
+			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[1] + indexOffset);
+			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[2] + indexOffset);
+		}
+		model->submeshEndIndex.push_back(model->totalIndices.size());
+		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
 	}
 
 }
