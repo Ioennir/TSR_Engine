@@ -28,7 +28,6 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	model->submeshCount = scene->mNumMeshes;
 	model->submeshStartIndex.reserve(model->submeshCount);
 	model->submeshEndIndex.reserve(model->submeshCount);
-
 	//Reserve total amount of vertex in the model
 	ui32 totalVertexCount = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
@@ -36,7 +35,6 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		totalVertexCount += scene->mMeshes[i]->mNumVertices;
 	}
 	model->totalVertices.reserve(totalVertexCount);
-
 	ui32 indexOffset = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
@@ -50,7 +48,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		);
 		const eastl_size_t trisCount = TYPECAST(eastl_size_t, mesh->mNumFaces);
 		model->totalIndices.reserve(trisCount * 3);
-		model->submeshStartIndex.push_back(model->totalIndices.size());
+		model->submeshStartIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		for (ui32 j = 0; j < trisCount; ++j)
 		{
 			const aiFace face = mesh->mFaces[j];
@@ -59,7 +57,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[1] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[2] + indexOffset);
 		}
-		model->submeshEndIndex.push_back(model->totalIndices.size());
+		model->submeshEndIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
 	}
 

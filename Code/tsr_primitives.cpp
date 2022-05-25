@@ -147,7 +147,6 @@ void GenerateCilinderGeometry(eastl::vector<Vertex>& vertices, eastl::vector<ui3
 //TODO(Fran): Add normals
 void TSR_DX11_BuildPrimitiveBuffers(Primitive primitive, ID3D11Device* device, BufferData* vBuffer, BufferData* iBuffer)
 {
-	HRESULT hr;
 	eastl::vector<Vertex> vertices;
 	eastl::vector<ui32> indices;
 	switch (primitive)
