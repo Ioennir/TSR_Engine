@@ -17,7 +17,17 @@
 // GUI INDEPENDENT CODE
 #include "tsr_gui.h"
 
-
+struct ModelData
+{
+	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
+	eastl::vector<ui32>					totalIndices;
+	eastl::vector<ui32>					submeshStartIndex;
+	eastl::vector<ui32>					submeshEndIndex;
+	ui32								submeshCount;
+	ui32								vertexCount;
+	ui32								indexCount;
+	eastl::string						name;
+};
 // DX11 layer
 #include "tsr_dx11.cpp"
 
@@ -87,9 +97,11 @@ INT WINAPI wWinMain(
 	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
 	ImGui::StyleColorsDark();
 
+	//TODO(Fran): fix this
 	//now init buffers and shaders
 	BufferData vertexBuff;
 	BufferData indexBuff;
+	ModelBuffers buffers{};
 	DX11VertexShaderData vsData;
 	DX11PixelShaderData psData;
 
@@ -98,7 +110,8 @@ INT WINAPI wWinMain(
 
 	
 	TSR_DX11_BuildShaders(dxData.device, &vsData, &psData);
-	TSR_DX11_BuildGeometryBuffersTest(dxData.device, renderData, &vertexBuff, &indexBuff);
+	TSR_DX11_BuildGeometryBuffersFromModel(dxData.device, &vivi, buffers.vertexBuffer, buffers.indexBuffer);
+	TSR_DX11_BuildGeometryBuffers(dxData.device, renderData, buffers.vertexBuffer, buffers.indexBuffer);
 
 	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
 	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
@@ -144,7 +157,7 @@ INT WINAPI wWinMain(
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, vertexBuff, indexBuff, &renderData, primitiveVertexBuff, primitiveIndexBuff);
+			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, &buffers, &renderData, primitiveVertexBuff, primitiveIndexBuff);
 			// GUI RENDERING
 			TSR_DrawGUI(dxData, &imData, frameStats);
 

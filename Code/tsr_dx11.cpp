@@ -365,7 +365,7 @@ void TSR_DX11_BuildBuffer(ID3D11Device * device, ui32 bStride, ui32 bOffset, ui3
 }
 
 //NOTE(Fran): this helps for the test but probably will dissapear in the future
-void TSR_DX11_BuildGeometryBuffersTest(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData * iBuffer)
+void TSR_DX11_BuildGeometryBuffers(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData * iBuffer)
 {
 	//Build vertex buffer
 	TSR_DX11_BuildBuffer(device,
@@ -390,17 +390,39 @@ void TSR_DX11_BuildGeometryBuffersTest(ID3D11Device * device, RenderData & rende
 						);
 }
 
+//NOTE(Fran): to do the typeof(T) use templates so I can have multiple input layouts, for now vertex
+struct ModelBuffers
+{
+	BufferData * vertexBuffer;
+	BufferData * indexBuffer;
+};
+
+void TSR_DX11_BuildGeometryBuffersFromModel(ID3D11Device * device, ModelData * model, BufferData *vBuffer, BufferData * iBuffer)
+{
+	TSR_DX11_BuildBuffer(device,
+		sizeof(Vertex),
+		0,
+		model->vertexCount,
+		D3D11_USAGE_IMMUTABLE,
+		D3D11_BIND_VERTEX_BUFFER,
+		model->totalVertices.data(),
+		vBuffer
+	);
+	TSR_DX11_BuildBuffer(device,
+		sizeof(ui32),
+		0,
+		model->indexCount,
+		D3D11_USAGE_IMMUTABLE,
+		D3D11_BIND_INDEX_BUFFER,
+		model->totalVertices.data(),
+		iBuffer
+	);
+}
+
+/*
 bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device * device, BufferData * vBuffer, BufferData * iBuffer)
 {
 	// Triangle vertex buffer
-	// now cube
-	/* Triangle
-	Vertex triangleVertices[] = {
-		{DirectX::XMFLOAT3(0.0f, 0.5f, 0.0f), green},
-		{DirectX::XMFLOAT3(0.3f, 0.0f, 0.0f), red},
-		{DirectX::XMFLOAT3(-0.3f, 0.0f, 0.0f), blue}
-	};
-	*/
 	Vertex flatCubeVertices []=
 	{
 		// front face
@@ -525,6 +547,7 @@ bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device * device, BufferData * v
 
 	return true;
 }
+*/
 
 HRESULT TSR_DX11_CreateShaderInputLayout(ID3D11Device* device, ui32 inputElements, D3D11_INPUT_ELEMENT_DESC inputLayoutDescriptor[], ID3DBlob* shaderBuffer, ID3D11InputLayout** inputLayout)
 {
@@ -594,3 +617,4 @@ void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData,
 	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), elementCount, vsInputLayoutDescriptor, vsData);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }
+

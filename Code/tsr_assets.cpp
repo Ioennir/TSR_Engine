@@ -1,12 +1,4 @@
-struct ModelData
-{
-	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
-	eastl::vector<ui32>					totalIndices;
-	eastl::vector<ui32>					submeshStartIndex;
-	eastl::vector<ui32>					submeshEndIndex;
-	ui32								submeshCount;
-	eastl::string						name;
-};
+
 
 //TODO(Fran): doing this at the start might be useful
 void TSR_LoadMeshesToMemory()
@@ -30,11 +22,16 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	model->submeshEndIndex.reserve(model->submeshCount);
 	//Reserve total amount of vertex in the model
 	ui32 totalVertexCount = 0;
+	ui32 totalIndexCount = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
 		totalVertexCount += scene->mMeshes[i]->mNumVertices;
+		totalIndexCount += (scene->mMeshes[i]->mNumFaces * 3);
 	}
-	model->totalVertices.reserve(totalVertexCount);
+	model->vertexCount = totalVertexCount;
+	model->indexCount = totalIndexCount;
+	model->totalVertices.reserve(TYPECAST(eastl_size_t, totalVertexCount));
+	model->totalIndices.reserve(TYPECAST(eastl_size_t, totalIndexCount));
 	ui32 indexOffset = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
@@ -47,7 +44,6 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 			PTRCAST(DirectX::XMFLOAT3 *, mesh->mVertices + mesh->mNumVertices)
 		);
 		const eastl_size_t trisCount = TYPECAST(eastl_size_t, mesh->mNumFaces);
-		model->totalIndices.reserve(trisCount * 3);
 		model->submeshStartIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		for (ui32 j = 0; j < trisCount; ++j)
 		{
@@ -63,6 +59,8 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 
 }
 
+//Note(Fran): This will be outdated soon as I'm refactoring the whole renderizables data layout and 
+// loading
 void LoadMeshToVertex(eastl::string path, eastl::vector<Vertex>& vertexData, eastl::vector<ui32>& indices) {
 	Assimp::Importer imp;
 	// This loads the supplied model into the aiScene structure

@@ -146,7 +146,7 @@ void TSR_RenderModel()
 
 }
 
-void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, BufferData& vb, BufferData& ib, RenderData* renderData, BufferData& pvb, BufferData& pib)
+void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, RenderData* renderData, BufferData& pvb, BufferData& pib)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -164,8 +164,8 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
 	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &vb.buffer, &vb.stride, &vb.offset);
-	dxData.imDeviceContext->IASetIndexBuffer(ib.buffer, DXGI_FORMAT_R32_UINT, ib.offset);
+	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &buffers->vertexBuffer->buffer, &buffers->vertexBuffer->stride, &buffers->vertexBuffer->offset);
+	dxData.imDeviceContext->IASetIndexBuffer(buffers->indexBuffer->buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer->offset);
 
 	//CBUFFER
 	// TODO(Fran): Move this to the update, check the issues 
