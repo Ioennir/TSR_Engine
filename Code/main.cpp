@@ -17,17 +17,7 @@
 // GUI INDEPENDENT CODE
 #include "tsr_gui.h"
 
-struct ModelData
-{
-	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
-	eastl::vector<ui32>					totalIndices;
-	eastl::vector<ui32>					submeshStartIndex;
-	eastl::vector<ui32>					submeshEndIndex;
-	ui32								submeshCount;
-	ui32								vertexCount;
-	ui32								indexCount;
-	eastl::string						name;
-};
+
 // DX11 layer
 #include "tsr_dx11.cpp"
 
@@ -60,19 +50,6 @@ INT WINAPI wWinMain(
 	_In_ LPWSTR lpCmdLine, 
 	_In_ int nCmdShow)
 {
-	Entities entities{};
-	TSR_InitializeEntities(&entities);
-
-	// Load vivi
-	RenderData renderData;
-	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
-
-	ModelData vivi{};
-	TSR_LoadMeshFromPath(&vivi, path);
-
-	LoadMeshToVertex(path, renderData.vertexData, renderData.totalIndices);
-
-
 	// Initialize and reset the time information for the application
 	TimeData Time;
 	FrameStats frameStats{ 0 };
@@ -82,11 +59,9 @@ INT WINAPI wWinMain(
 	WindowData winData{};
 	CreateAndSpawnWindow(L"TSR Engine", winData, hInstance, nCmdShow);
 
-
 	// Initialize DX11 and get all the information needed
 	DX11Data dxData{};
 	TSR_DX11_Init(winData, &dxData);
-
 
 	// setup Imgui
 	IMGUI_CHECKVERSION();
@@ -96,32 +71,28 @@ INT WINAPI wWinMain(
 	ImGui_ImplWin32_Init(winData.handle);
 	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
 	ImGui::StyleColorsDark();
+	
+	Entities entities{};
+	TSR_InitializeEntities(&entities);
 
-	//TODO(Fran): fix this
-	//now init buffers and shaders
-	BufferData vertexBuff;
-	BufferData indexBuff;
+	// Load vivi
+	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
+	DrawComponent drawable{};
+	TSR_LoadMeshFromPath(&drawable.model, path);
+	TSR_FillComponentVertexInput(&drawable);
+
 	ModelBuffers buffers{};
 	DX11VertexShaderData vsData;
 	DX11PixelShaderData psData;
 
-	BufferData primitiveVertexBuff;
-	BufferData primitiveIndexBuff;
-
-	
 	TSR_DX11_BuildShaders(dxData.device, &vsData, &psData);
-	TSR_DX11_BuildGeometryBuffersFromModel(dxData.device, &vivi, buffers.vertexBuffer, buffers.indexBuffer);
-	TSR_DX11_BuildGeometryBuffers(dxData.device, renderData, buffers.vertexBuffer, buffers.indexBuffer);
-
-	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
-	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, dxData.device, &primitiveVertexBuff, &primitiveIndexBuff);
+	TSR_DX11_BuildGeometryBuffersFromComponent(dxData.device, &drawable, &buffers);
 	
-	/*
-	if (!TSR_DX11_ConstructTestGeometryBuffers(*dxData.device, &vertexBuff, &indexBuff))
-	{
-		return -1;
-	}
-	*/
+	//Primitives
+	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
+	ModelBuffers primitiveBuffers{};
+	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, dxData.device, &primitiveBuffers);
+	
 
 	float aspectRatio = dxData.VP.Viewport.Width / dxData.VP.Viewport.Height;
 	CameraData camData{};
@@ -157,7 +128,7 @@ INT WINAPI wWinMain(
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, &buffers, &renderData, primitiveVertexBuff, primitiveIndexBuff);
+			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
 			// GUI RENDERING
 			TSR_DrawGUI(dxData, &imData, frameStats);
 

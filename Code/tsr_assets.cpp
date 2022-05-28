@@ -25,12 +25,14 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	ui32 totalIndexCount = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
+		LOGCHECK(LOGSYSTEM_ASSIMP, eastl::string("Submesh of " + model->name + " doesnt have vertex colors, setting to white instead.").c_str(), scene->mMeshes[i]->HasVertexColors(i));
 		totalVertexCount += scene->mMeshes[i]->mNumVertices;
 		totalIndexCount += (scene->mMeshes[i]->mNumFaces * 3);
 	}
 	model->vertexCount = totalVertexCount;
 	model->indexCount = totalIndexCount;
 	model->totalVertices.reserve(TYPECAST(eastl_size_t, totalVertexCount));
+	model->normals.reserve(TYPECAST(eastl_size_t, totalVertexCount));
 	model->totalIndices.reserve(TYPECAST(eastl_size_t, totalIndexCount));
 	ui32 indexOffset = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
@@ -43,12 +45,18 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 			PTRCAST(DirectX::XMFLOAT3*, mesh->mVertices),
 			PTRCAST(DirectX::XMFLOAT3 *, mesh->mVertices + mesh->mNumVertices)
 		);
+		//bulk insert normals
+		model->normals.insert(
+			model->normals.end(),
+			PTRCAST(DirectX::XMFLOAT3*, mesh->mNormals),
+			PTRCAST(DirectX::XMFLOAT3*, mesh->mNormals + mesh->mNumVertices)
+		);
 		const eastl_size_t trisCount = TYPECAST(eastl_size_t, mesh->mNumFaces);
 		model->submeshStartIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		for (ui32 j = 0; j < trisCount; ++j)
 		{
 			const aiFace face = mesh->mFaces[j];
-			LOGCHECK(LOGSYSTEM_ASSIMP, "One or more model " + model->name + " faces are not triangles." , face.mNumIndices == 3);
+			LOGASSERT(LOGSYSTEM_ASSIMP, eastl::string("One or more model " + model->name + " faces are not triangles.").c_str() , face.mNumIndices == 3);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[0] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[1] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[2] + indexOffset);
@@ -56,7 +64,6 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		model->submeshEndIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
 	}
-
 }
 
 //Note(Fran): This will be outdated soon as I'm refactoring the whole renderizables data layout and 

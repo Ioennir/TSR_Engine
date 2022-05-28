@@ -39,12 +39,15 @@ struct Vertex
 	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
 };
 
+// NOTE(Fran): this gonna dissapear soon
 struct RenderData
 {
 	eastl::vector<Mesh> meshes;
 	eastl::vector<Vertex> vertexData;
 	eastl::vector<ui32> totalIndices;
 };
+
+
 
 //TODO(Fran): recreate swapchain when window resizes...
 
@@ -364,8 +367,48 @@ void TSR_DX11_BuildBuffer(ID3D11Device * device, ui32 bStride, ui32 bOffset, ui3
 	LOGDEBUG(LOGSYSTEM_DX11, "Buffer creation succeeded.");
 }
 
+struct ModelData
+{
+	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
+	eastl::vector<DirectX::XMFLOAT3>	normals;
+	eastl::vector<ui32>					totalIndices;
+	eastl::vector<ui32>					submeshStartIndex;
+	eastl::vector<ui32>					submeshEndIndex;
+	ui32								submeshCount;
+	ui32								vertexCount;
+	ui32								indexCount;
+	eastl::string						name;
+};
+
+struct DrawComponent
+{
+	ModelData model;
+	eastl::vector<Vertex> vertexBufferInput;
+};
+
+//Fix these names I dont like them
+void TSR_FillComponentVertexInput(DrawComponent * drawComponent)
+{
+	drawComponent->vertexBufferInput.reserve(TYPECAST(eastl_size_t, drawComponent->model.vertexCount));
+	for (ui32 i = 0; i < drawComponent->model.vertexCount; ++i)
+	{
+		DirectX::XMFLOAT3 position = drawComponent->model.totalVertices[i];
+		DirectX::XMFLOAT3 normal = drawComponent->model.normals[i];
+		Vertex v{position, white, normal};
+		drawComponent->vertexBufferInput.push_back(v);
+	}
+}
+
+//NOTE(Fran): to do the typeof(T) use templates so I can have multiple input layouts, for now vertex
+struct ModelBuffers
+{
+	BufferData vertexBuffer;
+	BufferData indexBuffer;
+};
+
+
 //NOTE(Fran): this helps for the test but probably will dissapear in the future
-void TSR_DX11_BuildGeometryBuffers(ID3D11Device * device, RenderData & renderData, BufferData * vBuffer, BufferData * iBuffer)
+void TSR_DX11_BuildGeometryBuffers(ID3D11Device * device, RenderData & renderData, ModelBuffers * buffers)
 {
 	//Build vertex buffer
 	TSR_DX11_BuildBuffer(device,
@@ -375,7 +418,7 @@ void TSR_DX11_BuildGeometryBuffers(ID3D11Device * device, RenderData & renderDat
 						D3D11_USAGE_IMMUTABLE,
 						D3D11_BIND_VERTEX_BUFFER,
 						renderData.vertexData.data(),
-						vBuffer
+						&buffers->vertexBuffer
 						);
 
 	//Build index buffer
@@ -386,36 +429,30 @@ void TSR_DX11_BuildGeometryBuffers(ID3D11Device * device, RenderData & renderDat
 						D3D11_USAGE_IMMUTABLE,
 						D3D11_BIND_INDEX_BUFFER,
 						renderData.totalIndices.data(),
-						iBuffer
+						&buffers->indexBuffer
 						);
 }
 
-//NOTE(Fran): to do the typeof(T) use templates so I can have multiple input layouts, for now vertex
-struct ModelBuffers
-{
-	BufferData * vertexBuffer;
-	BufferData * indexBuffer;
-};
 
-void TSR_DX11_BuildGeometryBuffersFromModel(ID3D11Device * device, ModelData * model, BufferData *vBuffer, BufferData * iBuffer)
+void TSR_DX11_BuildGeometryBuffersFromComponent(ID3D11Device * device, DrawComponent * drawComponent, ModelBuffers * buffers)
 {
 	TSR_DX11_BuildBuffer(device,
 		sizeof(Vertex),
 		0,
-		model->vertexCount,
+		drawComponent->model.vertexCount,
 		D3D11_USAGE_IMMUTABLE,
 		D3D11_BIND_VERTEX_BUFFER,
-		model->totalVertices.data(),
-		vBuffer
+		drawComponent->vertexBufferInput.data(),
+		&buffers->vertexBuffer
 	);
 	TSR_DX11_BuildBuffer(device,
 		sizeof(ui32),
 		0,
-		model->indexCount,
+		drawComponent->model.indexCount,
 		D3D11_USAGE_IMMUTABLE,
 		D3D11_BIND_INDEX_BUFFER,
-		model->totalVertices.data(),
-		iBuffer
+		drawComponent->model.totalIndices.data(),
+		&buffers->indexBuffer
 	);
 }
 

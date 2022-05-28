@@ -145,7 +145,7 @@ void GenerateCilinderGeometry(eastl::vector<Vertex>& vertices, eastl::vector<ui3
 }
 
 //TODO(Fran): Add normals
-void TSR_DX11_BuildPrimitiveBuffers(Primitive primitive, ID3D11Device* device, BufferData* vBuffer, BufferData* iBuffer)
+void TSR_DX11_BuildPrimitiveBuffers(Primitive primitive, ID3D11Device* device, ModelBuffers * buffers)
 {
 	eastl::vector<Vertex> vertices;
 	eastl::vector<ui32> indices;
@@ -258,7 +258,7 @@ void TSR_DX11_BuildPrimitiveBuffers(Primitive primitive, ID3D11Device* device, B
 						D3D11_USAGE_IMMUTABLE, 
 						D3D11_BIND_VERTEX_BUFFER, 
 						vertices.data(), 
-						vBuffer
+						&buffers->vertexBuffer
 						);
 	
 	//Build Index Buffer
@@ -269,6 +269,6 @@ void TSR_DX11_BuildPrimitiveBuffers(Primitive primitive, ID3D11Device* device, B
 						D3D11_USAGE_IMMUTABLE,
 						D3D11_BIND_INDEX_BUFFER,
 						indices.data(),
-						iBuffer
+						&buffers->indexBuffer
 						);
 }

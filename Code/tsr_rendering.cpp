@@ -141,12 +141,13 @@ void TSR_Update(float dt)
 }
 
 //Generates the drawcalls for the model
-void TSR_RenderModel()
+void TSR_RenderEntity(ID3D11DeviceContext * context, DrawComponent * drawable)
 {
-
+	// for now, one drawcall.
+	context->DrawIndexed(drawable->model.indexCount, 0, 0);
 }
 
-void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, RenderData* renderData, BufferData& pvb, BufferData& pib)
+void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
 {
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
@@ -158,14 +159,14 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.imDeviceContext->ClearRenderTargetView(dxData.VP.RenderTargetView, reinterpret_cast<const float*>(&clearColor_orange));
 	dxData.imDeviceContext->ClearDepthStencilView(dxData.VP.DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// CUBE
 	// Bind shaders and buffers
 	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
 	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
 	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &buffers->vertexBuffer->buffer, &buffers->vertexBuffer->stride, &buffers->vertexBuffer->offset);
-	dxData.imDeviceContext->IASetIndexBuffer(buffers->indexBuffer->buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer->offset);
+
+	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &buffers->vertexBuffer.buffer, &buffers->vertexBuffer.stride, &buffers->vertexBuffer.offset);
+	dxData.imDeviceContext->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
 
 	//CBUFFER
 	// TODO(Fran): Move this to the update, check the issues 
@@ -173,31 +174,17 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 
-	dxData.imDeviceContext->DrawIndexed(static_cast<ui32>(renderData->totalIndices.size()), 0, 0);
+	TSR_RenderEntity(dxData.imDeviceContext, drawable);
 
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &pvb.buffer, &pvb.stride, &pvb.offset);
-	dxData.imDeviceContext->IASetIndexBuffer(pib.buffer, DXGI_FORMAT_R32_UINT, pib.offset);
+	//Primitive Rendering
+
+	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &primitiveBuffers->vertexBuffer.buffer, &primitiveBuffers->vertexBuffer.stride, &primitiveBuffers->vertexBuffer.offset);
+	dxData.imDeviceContext->IASetIndexBuffer(primitiveBuffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, primitiveBuffers->indexBuffer.offset);
 	
 	TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
 	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	
 	dxData.imDeviceContext->DrawIndexed(1080, 0, 0);
-	//dxData.imDeviceContext->DrawIndexedInstanced(36, 10, 0, 0, 0);
-	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
-	//dxData.imDeviceContext->DrawIndexed(240, 0, 0);
-
-
-	// MAIN WINDOW RENDERING
-	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.renderTargetView, dxData.depthStencilView);
-	//dxData.imDeviceContext->RSSetViewports(1, &dxData.windowViewport);
-
-	//dxData.imDeviceContext->ClearRenderTargetView(dxData.renderTargetView, reinterpret_cast<const float*>(&black));
-	//dxData.imDeviceContext->ClearDepthStencilView(dxData.depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	//// TRIANGLE RENDERING
-
-	//dxData.imDeviceContext->DrawIndexed(36, 0, 0);
-
 
 }
