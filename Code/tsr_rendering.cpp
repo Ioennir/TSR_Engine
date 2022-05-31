@@ -1,4 +1,3 @@
-
 void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 {
 	// Start the Dear ImGui frame
@@ -8,7 +7,8 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	ImGui::DockSpaceOverViewport();
 
 	ImGui::Begin("Entity details");
-	ImGui::SliderFloat3("Rotation axis", imData->rot, -1.0f, 1.0f);
+	//ImGui::SliderFloat3("Position", );
+	ImGui::SliderFloat3("Rotation", imData->rot, 0.0f, 360.0f);
 	ImGui::DragFloat("Rotation speed", &imData->rotSpeed, 60.0f, -1000.0f, 1000.0f);
 	ImGui::End();
 
@@ -37,8 +37,8 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	ID3D11RenderTargetView* views[1];
 	views[0] = dxData.renderTargetView;
 	//views[1] = dxData.textureRTView;
-	dxData.imDeviceContext->OMSetRenderTargets(1, views, dxData.depthStencilView);
-	//dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.textureRTView, dxData.depthStencilView);
+	dxData.context->OMSetRenderTargets(1, views, dxData.depthStencilView);
+	//dxData.context->OMSetRenderTargets(1, &dxData.textureRTView, dxData.depthStencilView);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -141,10 +141,18 @@ void TSR_Update(float dt)
 }
 
 //Generates the drawcalls for the model
-void TSR_RenderEntity(ID3D11DeviceContext * context, DrawComponent * drawable)
+void TSR_RenderEntity(ID3D11DeviceContext * context, ModelBuffers * buffers, DrawComponent * drawable)
 {
 	// for now, one drawcall.
-	context->DrawIndexed(drawable->model.indexCount, 0, 0);
+	context->IASetVertexBuffers(0, 1, &buffers->vertexBuffer.buffer, &buffers->vertexBuffer.stride, &buffers->vertexBuffer.offset);
+	context->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
+	//context->DrawIndexed(drawable->model.indexCount, 0, 0);
+	for (ui32 i = 0; i < drawable->model.submeshCount; ++i)
+	{
+		ui32 start = drawable->model.submeshStartIndex[i];
+		ui32 indexcount = drawable->model.submeshEndIndex[i] - start;
+		context->DrawIndexed(indexcount, start, 0);
+	}
 }
 
 void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
@@ -152,39 +160,53 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
 
-	// VIEWPORT RENDERING
-	dxData.imDeviceContext->OMSetRenderTargets(1, &dxData.VP.RenderTargetView, dxData.VP.DepthStencilView);
-	dxData.imDeviceContext->RSSetViewports(1, &dxData.VP.Viewport);
+	// VIEWPORT RENDERING - 
+	// NOTE(Fran): should this be called all the time?
+	dxData.context->OMSetRenderTargets(1, &dxData.VP.RenderTargetView, dxData.VP.DepthStencilView);
+	dxData.context->RSSetViewports(1, &dxData.VP.Viewport);
 
-	dxData.imDeviceContext->ClearRenderTargetView(dxData.VP.RenderTargetView, reinterpret_cast<const float*>(&clearColor_orange));
-	dxData.imDeviceContext->ClearDepthStencilView(dxData.VP.DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	dxData.context->ClearRenderTargetView(dxData.VP.RenderTargetView, PTRCAST(const float*, &clearColor_orange));
+	dxData.context->ClearDepthStencilView(dxData.VP.DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Bind shaders and buffers
-	dxData.imDeviceContext->IASetInputLayout(vsData.inputLayout);
-	dxData.imDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	dxData.imDeviceContext->VSSetShader(vsData.shader, 0, 0);
-	dxData.imDeviceContext->PSSetShader(psData.shader, 0, 0);
+	dxData.context->IASetInputLayout(vsData.inputLayout);
+	dxData.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	dxData.context->VSSetShader(vsData.shader, 0, 0);
+	dxData.context->PSSetShader(psData.shader, 0, 0);
 
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &buffers->vertexBuffer.buffer, &buffers->vertexBuffer.stride, &buffers->vertexBuffer.offset);
-	dxData.imDeviceContext->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
-
+	
 	//CBUFFER
 	// TODO(Fran): Move this to the update, check the issues 
 	UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
-	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
-	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
+	dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 
-	TSR_RenderEntity(dxData.imDeviceContext, drawable);
+	TSR_RenderEntity(dxData.context, buffers, drawable);
 
 	//Primitive Rendering
 
-	dxData.imDeviceContext->IASetVertexBuffers(0, 1, &primitiveBuffers->vertexBuffer.buffer, &primitiveBuffers->vertexBuffer.stride, &primitiveBuffers->vertexBuffer.offset);
-	dxData.imDeviceContext->IASetIndexBuffer(primitiveBuffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, primitiveBuffers->indexBuffer.offset);
+	//TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
+	//dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	//dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	
-	TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
-	dxData.imDeviceContext->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
-	dxData.imDeviceContext->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
-	
-	dxData.imDeviceContext->DrawIndexed(1080, 0, 0);
+
+	//dxData.context->IASetVertexBuffers(0, 1, &primitiveBuffers->vertexBuffer.buffer, &primitiveBuffers->vertexBuffer.stride, &primitiveBuffers->vertexBuffer.offset);
+	//dxData.context->IASetIndexBuffer(primitiveBuffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, primitiveBuffers->indexBuffer.offset);
+	//dxData.context->DrawIndexed(1080, 0, 0);
+}
+
+void TSR_UpdateTransformComponents()
+{
+
+}
+
+void TSR_UpdateDrawComponentRelatedBuffers()
+{
+
+}
+
+//Only draws the draw component of the entity
+void TSR_DrawEntities()
+{
 
 }

@@ -39,7 +39,6 @@
 #include "tsr_rendering.cpp"
 #include "tsr_primitives.cpp"
 
-#include "tsr_entity.cpp"
 
 //TODO(Fran): Implement a naive input system, maybe winsdk has something or the Imgui input system itself.
 
@@ -69,12 +68,9 @@ INT WINAPI wWinMain(
 	ImGuiIO& imIO = ImGui::GetIO();
 	imIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 	ImGui_ImplWin32_Init(winData.handle);
-	ImGui_ImplDX11_Init(dxData.device, dxData.imDeviceContext);
+	ImGui_ImplDX11_Init(dxData.device, dxData.context);
 	ImGui::StyleColorsDark();
 	
-	Entities entities{};
-	TSR_InitializeEntities(&entities);
-
 	// Load vivi
 	eastl::string path = "..\\..\\..\\MODELS\\vivi.obj";
 	DrawComponent drawable{};

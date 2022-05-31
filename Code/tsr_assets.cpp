@@ -12,14 +12,15 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	//NOTE(Fran): this flags might change soon, I.E: left handedness etc.
 	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
 	const aiScene* scene = Importer.ReadFile(path.c_str(), importFlags);
-	//TODO(Fran): if the model loads incorrectly this just crashes, lets just make another log so it so it drops an error.
-	LOGCHECK(LOGSYSTEM_ASSIMP, Importer.GetErrorString(), scene != nullptr);
-	
+	LOGCHECK(LOGSYSTEM_ASSIMP, "Invalid path.", scene != nullptr);
+		
 	model->name = scene->GetShortFilename(path.c_str());
 	// Set the number of sub meshes and reserve start and end indexes
 	model->submeshCount = scene->mNumMeshes;
 	model->submeshStartIndex.reserve(model->submeshCount);
 	model->submeshEndIndex.reserve(model->submeshCount);
+	model->submeshTexcoordStart.reserve(model->submeshCount);
+	model->submeshTexcoordEnd.reserve(model->submeshCount);
 	//Reserve total amount of vertex in the model
 	ui32 totalVertexCount = 0;
 	ui32 totalIndexCount = 0;
@@ -32,13 +33,32 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	model->vertexCount = totalVertexCount;
 	model->indexCount = totalIndexCount;
 	model->totalVertices.reserve(TYPECAST(eastl_size_t, totalVertexCount));
+	model->texCoords.reserve(TYPECAST(eastl_size_t, totalVertexCount));
 	model->normals.reserve(TYPECAST(eastl_size_t, totalVertexCount));
 	model->totalIndices.reserve(TYPECAST(eastl_size_t, totalIndexCount));
 	ui32 indexOffset = 0;
+	ui32 texCoordIndex = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
 		
+		// first index of the submesh texcoord
+		model->submeshTexcoordStart.push_back(texCoordIndex);
+		
+		//texture coordinates; check if this can be done better
+		// im assuming things here as I dont fully know the assimp texturecoords member,
+		eastl::vector<DirectX::XMFLOAT2> meshTexCoords;
+		meshTexCoords.reserve(mesh->mNumVertices);
+		for (ui32 j = 0; j < mesh->mNumVertices; ++j)
+		{
+			aiVector3D tc = mesh->mTextureCoords[0][j];
+			DirectX::XMFLOAT2 tcdx{tc.x, tc.y};
+			model->texCoords.push_back(tcdx);
+		}
+
+		texCoordIndex += mesh->mNumVertices;
+		model->submeshTexcoordEnd.push_back(texCoordIndex);
+
 		//bulk insert vertices
 		model->totalVertices.insert(
 			model->totalVertices.end(),
@@ -63,6 +83,26 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		}
 		model->submeshEndIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
+
+		if (scene->HasMaterials())
+		{
+			aiMaterial** const mats = scene->mMaterials;
+			model->submeshMaterialIndex.reserve(model->submeshCount);
+			for (ui32 i = 0; i < model->submeshCount; ++i)
+			{
+				//store the material each mesh uses.
+				model->submeshMaterialIndex.push_back(scene->mMeshes[i]->mMaterialIndex);
+			}
+
+			for (ui32 i = 0; i < scene->mNumMaterials; ++i)
+			{
+				//foreach material fetch it and store its information somewhere.
+				aiMaterial* mat = mats[i];
+				
+			}
+
+		}
+
 	}
 }
 

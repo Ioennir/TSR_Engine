@@ -65,7 +65,7 @@ struct DX11ViewportData
 struct DX11Data
 {
 	ID3D11Device*				device{};
-	ID3D11DeviceContext*		imDeviceContext{};
+	ID3D11DeviceContext*		context{};
 	D3D_FEATURE_LEVEL*			featureLevel{};
 	IDXGISwapChain*				swapChain{};
 	ID3D11Texture2D*			depthStencilBuffer{};
@@ -172,7 +172,7 @@ void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Da
 		&dxData->swapChain,
 		&dxData->device,
 		dxData->featureLevel,
-		&dxData->imDeviceContext
+		&dxData->context
 	);
 	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Device and/or SwapChain.", !FAILED(hr));
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Device & Swapchain created!");
@@ -344,7 +344,7 @@ void TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData->device, &dxData->VP.RenderTargetTexture);
 	// Viewport depth buffer initialization
 	TSR_DX11_InitDepthBuffer(rtWidth, rtHeight, dxData->device, &dxData->VP.DepthStencilTexture);
-	TSR_DX11_InitViewport(dxData->device, dxData->imDeviceContext, &dxData->VP);
+	TSR_DX11_InitViewport(dxData->device, dxData->context, &dxData->VP);
 	TSR_DX11_SetGameViewport(rtWidth, rtHeight, &dxData->VP);
 }
 
@@ -371,9 +371,13 @@ struct ModelData
 {
 	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
 	eastl::vector<DirectX::XMFLOAT3>	normals;
+	eastl::vector<DirectX::XMFLOAT2>	texCoords;
 	eastl::vector<ui32>					totalIndices;
 	eastl::vector<ui32>					submeshStartIndex;
 	eastl::vector<ui32>					submeshEndIndex;
+	eastl::vector<ui32>					submeshTexcoordStart;
+	eastl::vector<ui32>					submeshTexcoordEnd;
+	eastl::vector<ui32>					submeshMaterialIndex;
 	ui32								submeshCount;
 	ui32								vertexCount;
 	ui32								indexCount;
@@ -456,136 +460,6 @@ void TSR_DX11_BuildGeometryBuffersFromComponent(ID3D11Device * device, DrawCompo
 	);
 }
 
-/*
-bool TSR_DX11_ConstructTestGeometryBuffers(ID3D11Device * device, BufferData * vBuffer, BufferData * iBuffer)
-{
-	// Triangle vertex buffer
-	Vertex flatCubeVertices []=
-	{
-		// front face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), green},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), green},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), green},
-
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), green},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), green},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), green},
-
-		// top face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), red},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), red},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), red},
-		
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), red},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), red},
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), red},
-
-		// right face
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), magenta},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), magenta},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), magenta},
-
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), magenta},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), magenta},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), magenta},
-
-		// back face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), blue},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), blue},
-		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), blue},
-
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), blue},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), blue},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), blue},
-
-		// left face
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), cyan},
-
-		{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), cyan},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), cyan},
-
-		// bottom face
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yellow},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), yellow},
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yellow},
-
-		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), yellow},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), yellow},
-		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), yellow},
-
-	};
-
-	vBuffer->stride = sizeof(Vertex);
-	vBuffer->offset = 0;
-
-	UINT memberCount = sizeof(flatCubeVertices) / vBuffer->stride;
-
-	D3D11_BUFFER_DESC tvbd { 0 };
-	tvbd.Usage = D3D11_USAGE_IMMUTABLE;
-	tvbd.ByteWidth = vBuffer->stride * memberCount; //num of members in vertex array
-	tvbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	
-	D3D11_SUBRESOURCE_DATA tvInitData { 0 };
-	tvInitData.pSysMem = flatCubeVertices;
-
-	HRESULT hr = device->CreateBuffer(&tvbd, &tvInitData, &vBuffer->buffer);
-	if (FAILED(hr)) {
-		MessageBox(0, L"Vertex ID3D11Buffer creation failed", 0, 0);
-		return false;
-	}
-
-	UINT flatCubeIndices[] =
-	{
-		// front face
-		0, 1, 2,
-		3, 4, 5,
-
-		// top face
-		6, 7, 8,
-		9, 10, 11,
-
-		// right face
-		12, 13, 14,
-		15, 16, 17,
-
-		// back face
-		18, 19, 20,
-		21, 22, 23,
-
-		//left face
-		24, 25, 26,
-		27, 28, 29,
-
-		//bottom
-		30, 31, 32,
-		33, 34, 35
-
-	};
-
-	iBuffer->stride = sizeof(UINT);
-	iBuffer->offset = 0;
-
-	D3D11_BUFFER_DESC tibd { 0 };
-	tibd.Usage = D3D11_USAGE_IMMUTABLE;
-	tibd.ByteWidth = iBuffer->stride * memberCount;
-	tibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA tiInitData { 0 };
-	tiInitData.pSysMem = flatCubeIndices;
-
-	hr = device->CreateBuffer(&tibd, &tiInitData, &iBuffer->buffer);
-	if (FAILED(hr)) {
-		MessageBox(0, L"Index ID3D11Buffer creation failed", 0, 0);
-		return false;
-	}
-
-	return true;
-}
-*/
-
 HRESULT TSR_DX11_CreateShaderInputLayout(ID3D11Device* device, ui32 inputElements, D3D11_INPUT_ELEMENT_DESC inputLayoutDescriptor[], ID3DBlob* shaderBuffer, ID3D11InputLayout** inputLayout)
 {
 	HRESULT hr;
@@ -639,19 +513,28 @@ void TSR_DX11_BuildPixelShader(ID3D11Device* device, eastl::wstring csoPath, DX1
 
 }
 
-void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
+namespace DX11InputLayout
 {
-	D3D11_INPUT_ELEMENT_DESC vsInputLayoutDescriptor[] =
+	D3D11_INPUT_ELEMENT_DESC PCN[] =
 	{
 		{"POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,								D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
+	ui32 pcnsize = 3;
 
-	//TODO(Fran): this has to be done better
-	ui32 elementCount = sizeof(vsInputLayoutDescriptor) / sizeof(vsInputLayoutDescriptor[0]);
+	D3D11_INPUT_ELEMENT_DESC PNT[] =
+	{
+		{"POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,								D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+	ui32 pntsize = 3;
+}
 
-	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), elementCount, vsInputLayoutDescriptor, vsData);
+void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
+{
+	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcnsize, DX11InputLayout::PCN, vsData);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }
 
