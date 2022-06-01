@@ -39,16 +39,6 @@ struct Vertex
 	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
 };
 
-// NOTE(Fran): this gonna dissapear soon
-struct RenderData
-{
-	eastl::vector<Mesh> meshes;
-	eastl::vector<Vertex> vertexData;
-	eastl::vector<ui32> totalIndices;
-};
-
-
-
 //TODO(Fran): recreate swapchain when window resizes...
 
 struct DX11ViewportData 
@@ -103,24 +93,21 @@ struct IMData
 	r32 rotSpeed{ 60.0f };
 };
 
-#define POW(VALUE) (VALUE*VALUE)
-#define VECLEN(X,Y,Z) (sqrt(POW(X) + POW(Y) + POW(Z)))
-//NOTE(Fran): once I've got plenty of math helpers I think it might be wise to move them elsewhere
-// Also, I would like to measure the speed of this, as we have a sqrt over here and when we calculate vector lengths we usually want to calculate them
-// in bulk, so we could take advantage of SIMD instructions, I could have a VECLENBULK and VECLEN to support multiple vector amounts
-inline DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
+//Globally accessible stuff related to DX11 should be under this namespace
+namespace DX11 
 {
-	//TODO(Fran): check this overflow warnings
-	float vLen = VECLEN(f.x, f.y, f.z);
-	DirectX::XMFLOAT3 helper = { vLen, vLen, vLen };
-	DirectX::XMVECTOR vec = DirectX::XMVectorDivide(DirectX::XMLoadFloat3(&f), DirectX::XMLoadFloat3(&helper));
-	helper = { 
-			DirectX::XMVectorGetX(vec),
-			DirectX::XMVectorGetY(vec),
-			DirectX::XMVectorGetZ(vec)
-			};
-	return helper;
+	DX11Data dxData{};
 }
+
+#define POW(VALUE) (TYPECAST(r64,VALUE) * TYPECAST(r64,VALUE))
+
+inline r32 V3LEN(DirectX::XMFLOAT3 f)
+{
+	r64 R = sqrt(POW(f.x) + POW(f.y) + POW(f.z));
+	return TYPECAST(r32, R);
+}
+
+//check the *= operator
 
 inline DirectX::XMFLOAT3 operator*(const r32& s, const DirectX::XMFLOAT3& fv)
 {
@@ -128,6 +115,34 @@ inline DirectX::XMFLOAT3 operator*(const r32& s, const DirectX::XMFLOAT3& fv)
 	R.x = fv.x * s;
 	R.y = fv.y * s;
 	R.z = fv.z * s;
+	return R;
+}
+
+inline DirectX::XMFLOAT3 operator*(const DirectX::XMFLOAT3& fv, const r32& s)
+{
+	DirectX::XMFLOAT3 R;
+	R.x = fv.x * s;
+	R.y = fv.y * s;
+	R.z = fv.z * s;
+	return R;
+}
+
+inline DirectX::XMFLOAT3 operator/(const DirectX::XMFLOAT3 fv, const r32 d)
+{
+	DirectX::XMFLOAT3 R;
+	r32 s = 1.0f / d;
+	R = R * s;
+	return R;
+}
+
+//NOTE(Fran): once I've got plenty of math helpers I think it might be wise to move them elsewhere
+// Also, I would like to measure the speed of this, as we have a sqrt over here and when we calculate vector lengths we usually want to calculate them
+// in bulk, so we could take advantage of SIMD instructions, I could have a VECLENBULK and VECLEN to support multiple vector amounts
+inline DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
+{
+	DirectX::XMFLOAT3 R;
+	r32 v3len = V3LEN(f);
+	R = f / v3len;
 	return R;
 }
 
@@ -164,7 +179,8 @@ void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Da
 	}
 	scDescriptor.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	scDescriptor.BufferCount = 1;
-	scDescriptor.OutputWindow = winData.handle;
+	//NOTE(Fran): This assumes you are using windows
+	scDescriptor.OutputWindow = PTRCAST(HWND, winData.handle);
 	scDescriptor.Windowed = true;
 	scDescriptor.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scDescriptor.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -418,34 +434,6 @@ struct ModelBuffers
 	BufferData vertexBuffer;
 	BufferData indexBuffer;
 };
-
-
-//NOTE(Fran): this helps for the test but probably will dissapear in the future
-void TSR_DX11_BuildGeometryBuffers(ID3D11Device * device, RenderData & renderData, ModelBuffers * buffers)
-{
-	//Build vertex buffer
-	TSR_DX11_BuildBuffer(device,
-						sizeof(Vertex),
-						0,
-						static_cast<ui32>(renderData.vertexData.size()),
-						D3D11_USAGE_IMMUTABLE,
-						D3D11_BIND_VERTEX_BUFFER,
-						renderData.vertexData.data(),
-						&buffers->vertexBuffer
-						);
-
-	//Build index buffer
-	TSR_DX11_BuildBuffer(device,
-						sizeof(ui32),
-						0,
-						static_cast<ui32>(renderData.totalIndices.size()),
-						D3D11_USAGE_IMMUTABLE,
-						D3D11_BIND_INDEX_BUFFER,
-						renderData.totalIndices.data(),
-						&buffers->indexBuffer
-						);
-}
-
 
 void TSR_DX11_BuildGeometryBuffersFromComponent(ID3D11Device * device, DrawComponent * drawComponent, ModelBuffers * buffers)
 {

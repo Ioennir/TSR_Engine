@@ -3,6 +3,14 @@
 void FetchPerformanceCounter(long long* performanceCounter);
 void FetchPerformanceFreq(long long* performanceFreq);
 
+// TODO(Fran): HWND is a windows only type.
+struct WindowData
+{
+	void* handle;//HWND handle;
+	ui32 width;
+	ui32 height;
+};
+
 #if (defined(_WIN64) && _WIN64)
 // target Windows 7 or later
 #define _WIN32_WINNT 0x0601
@@ -55,3 +63,8 @@ void FetchPerformanceFreq(long long* performanceFreq);
 #include "tsr_win32.cpp"
 
 #endif
+
+namespace Platform
+{
+	WindowData windowData{};
+}

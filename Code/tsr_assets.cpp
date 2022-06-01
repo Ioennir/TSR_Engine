@@ -13,7 +13,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> map
 	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
 	const aiScene* scene = Importer.ReadFile(path.c_str(), importFlags);
 	LOGCHECK(LOGSYSTEM_ASSIMP, "Invalid path.", scene != nullptr);
-		
+	// this just crashes if scene is nullptr
 	model->name = scene->GetShortFilename(path.c_str());
 	// Set the number of sub meshes and reserve start and end indexes
 	model->submeshCount = scene->mNumMeshes;

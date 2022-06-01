@@ -1,14 +1,6 @@
 
 #if (defined(_WIN64) && _WIN64)
 
-// TODO(Fran): HWND is a windows only type.
-struct WindowData
-{
-	HWND handle;
-	UINT width;
-	UINT height;
-};
-
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -64,7 +56,7 @@ void CreateAndSpawnWindow(LPCWSTR winName, WindowData & winData, HINSTANCE hInst
 
 	// Show the window
 	ShowWindow(wHandler, nCmdShow);
-	winData.handle = wHandler;
+	winData.handle = PTRCAST(void*, wHandler); // cast to void* to be platform agnostic
 	//NOTE(Fran): check this out
 	winData.width = 1280;//wRect.right - wRect.left;
 	winData.height = 720;//wRect.bottom - wRect.top;

@@ -7,6 +7,7 @@
 // TODO(Fran): Maybe check in the future to fix these warnings myself and recompile eastl.
 #pragma warning(push)
 #pragma warning(disable:26495)
+#pragma warning(disable:26439)
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
 #pragma warning(pop)
@@ -59,25 +60,22 @@ INT WINAPI wWinMain(
 	_In_ int nCmdShow)
 {
 	// Initialize and reset the time information for the application
-	TimeData Time;
-	FrameStats frameStats{ 0 };
-	ResetTimeInformation(&Time);
+	ResetTimeInformation(&Time::Time);
 
 	// create the window and display it.
-	WindowData winData{};
-	CreateAndSpawnWindow(L"TSR Engine", winData, hInstance, nCmdShow);
+	//WindowData winData{};
+	CreateAndSpawnWindow(L"TSR Engine", Platform::windowData, hInstance, nCmdShow);
 
 	// Initialize DX11 and get all the information needed
-	DX11Data dxData{};
-	TSR_DX11_Init(winData, &dxData);
+	TSR_DX11_Init(Platform::windowData, &DX11::dxData);
 
 	// setup Imgui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& imIO = ImGui::GetIO();
 	imIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-	ImGui_ImplWin32_Init(winData.handle);
-	ImGui_ImplDX11_Init(dxData.device, dxData.context);
+	ImGui_ImplWin32_Init(Platform::windowData.handle);
+	ImGui_ImplDX11_Init(DX11::dxData.device, DX11::dxData.context);
 	ImGui::StyleColorsDark();
 	
 	// Load vivi
@@ -86,26 +84,26 @@ INT WINAPI wWinMain(
 	eastl::vector<MaterialMapNames> mapNames;
 	TSR_LoadMeshFromPath(&drawable.model, mapNames, path);
 	TSR_FillComponentVertexInput(&drawable);
-	TSR_DX11_ImportTextures(dxData.device, mapNames);
+	TSR_DX11_ImportTextures(DX11::dxData.device, mapNames);
 
 	ModelBuffers buffers{};
 	DX11VertexShaderData vsData;
 	DX11PixelShaderData psData;
 
-	TSR_DX11_BuildShaders(dxData.device, &vsData, &psData);
-	TSR_DX11_BuildGeometryBuffersFromComponent(dxData.device, &drawable, &buffers);
+	TSR_DX11_BuildShaders(DX11::dxData.device, &vsData, &psData);
+	TSR_DX11_BuildGeometryBuffersFromComponent(DX11::dxData.device, &drawable, &buffers);
 	
 	//Primitives
 	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
 	ModelBuffers primitiveBuffers{};
-	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, dxData.device, &primitiveBuffers);
+	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, DX11::dxData.device, &primitiveBuffers);
 	
 
-	float aspectRatio = dxData.VP.Viewport.Width / dxData.VP.Viewport.Height;
+	float aspectRatio = DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height;
 	CameraData camData{};
 	InitializeCamera({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
 	ConstantBuffer cbuffer{};
-	InitializeCBuffer(camData, &dxData, &cbuffer);
+	InitializeCBuffer(camData, &DX11::dxData, &cbuffer);
 
 	IMData imData{};
 	//this is for testing purposes;
@@ -123,23 +121,23 @@ INT WINAPI wWinMain(
 		}
 		else // "game loop"
 		{
-			UpdateTimeInformation(&Time);
+			UpdateTimeInformation(&Time::Time);
 			// calculate and show frame stats:
 			// Note(Fran): Currently it averages it every second.
-			CalculateFrameStats(Time, &frameStats);
+			CalculateFrameStats(Time::Time, &Profiling::frameStats);
 			
-			dt = TYPECAST(r32, Time.deltaTime);
+			dt = TYPECAST(r32, Time::Time.deltaTime);
 			//SCENE UPDATE
 			TSR_Update(dt);
 
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, dxData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
+			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, DX11::dxData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
 			// GUI RENDERING
-			TSR_DrawGUI(dxData, &imData, frameStats);
+			TSR_DrawGUI(DX11::dxData, &imData, Profiling::frameStats);
 
-			dxData.swapChain->Present(NO_VSYNC, 0);
+			DX11::dxData.swapChain->Present(NO_VSYNC, 0);
 		}
 	}
 

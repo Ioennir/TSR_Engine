@@ -18,6 +18,16 @@ struct FrameStats
 	r64 avgmspf;
 };
 
+namespace Time
+{
+	TimeData Time{};
+}
+
+namespace Profiling
+{
+	FrameStats frameStats{ 0 };
+}
+
 void CalculateFrameStats(TimeData& tData, FrameStats* fStats)
 {
 	// avg frames per second
