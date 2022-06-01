@@ -108,7 +108,7 @@ struct IMData
 //NOTE(Fran): once I've got plenty of math helpers I think it might be wise to move them elsewhere
 // Also, I would like to measure the speed of this, as we have a sqrt over here and when we calculate vector lengths we usually want to calculate them
 // in bulk, so we could take advantage of SIMD instructions, I could have a VECLENBULK and VECLEN to support multiple vector amounts
-DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
+inline DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
 {
 	//TODO(Fran): check this overflow warnings
 	float vLen = VECLEN(f.x, f.y, f.z);
@@ -120,6 +120,15 @@ DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
 			DirectX::XMVectorGetZ(vec)
 			};
 	return helper;
+}
+
+inline DirectX::XMFLOAT3 operator*(const r32& s, const DirectX::XMFLOAT3& fv)
+{
+	DirectX::XMFLOAT3 R;
+	R.x = fv.x * s;
+	R.y = fv.y * s;
+	R.z = fv.z * s;
+	return R;
 }
 
 // TODO(Fran): update this to do all the checks we need.
@@ -538,3 +547,8 @@ void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData,
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }
 
+//https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-textures-how-to
+void TSR_DX11_ImportTextures(ID3D11Device * device, eastl::vector<MaterialMapNames> mapNames)
+{
+	
+}

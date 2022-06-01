@@ -6,7 +6,7 @@ void TSR_LoadMeshesToMemory()
 
 }
 
-void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
+void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> mapNames, eastl::string path)
 {
 	Assimp::Importer Importer;
 	//NOTE(Fran): this flags might change soon, I.E: left handedness etc.
@@ -21,6 +21,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	model->submeshEndIndex.reserve(model->submeshCount);
 	model->submeshTexcoordStart.reserve(model->submeshCount);
 	model->submeshTexcoordEnd.reserve(model->submeshCount);
+
 	//Reserve total amount of vertex in the model
 	ui32 totalVertexCount = 0;
 	ui32 totalIndexCount = 0;
@@ -38,6 +39,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	model->totalIndices.reserve(TYPECAST(eastl_size_t, totalIndexCount));
 	ui32 indexOffset = 0;
 	ui32 texCoordIndex = 0;
+
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
@@ -65,6 +67,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 			PTRCAST(DirectX::XMFLOAT3*, mesh->mVertices),
 			PTRCAST(DirectX::XMFLOAT3 *, mesh->mVertices + mesh->mNumVertices)
 		);
+
 		//bulk insert normals
 		model->normals.insert(
 			model->normals.end(),
@@ -83,27 +86,76 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		}
 		model->submeshEndIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
+	}
 
-		if (scene->HasMaterials())
+	if (scene->HasMaterials())
+	{
+		mapNames.reserve(TYPECAST(eastl_size_t, scene->mNumMaterials));
+
+		aiMaterial** const mats = scene->mMaterials;
+		model->submeshMaterialIndex.reserve(model->submeshCount);
+		for (ui32 i = 0; i < model->submeshCount; ++i)
 		{
-			aiMaterial** const mats = scene->mMaterials;
-			model->submeshMaterialIndex.reserve(model->submeshCount);
-			for (ui32 i = 0; i < model->submeshCount; ++i)
-			{
-				//store the material each mesh uses.
-				model->submeshMaterialIndex.push_back(scene->mMeshes[i]->mMaterialIndex);
-			}
+			//store the material index each mesh uses.
+			model->submeshMaterialIndex.push_back(scene->mMeshes[i]->mMaterialIndex);
+		}
 
-			for (ui32 i = 0; i < scene->mNumMaterials; ++i)
+		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
+		{
+			mapNames.push_back({});
+			//foreach material fetch it and store its information somewhere.
+			const aiMaterial* mat = mats[i];
+			
+			aiString texName;
+			//get Diffuse
+			mat->GetTexture(aiTextureType_DIFFUSE, 0, &texName);
+			mapNames[i].diffuse.append(texName.C_Str());
+			
+			texName.Clear();
+
+			mat->GetTexture(aiTextureType_METALNESS, 0, &texName);
+			mapNames[i].metallic.append(texName.C_Str());
+
+			texName.Clear();
+
+			mat->GetTexture(aiTextureType_SHININESS, 0, &texName);
+			mapNames[i].roughness.append(texName.C_Str());
+
+			texName.Clear();
+
+			mat->GetTexture(aiTextureType_EMISSIVE, 0, &texName);
+			mapNames[i].emissive.append(texName.C_Str());
+
+			texName.Clear();
+
+			mat->GetTexture(aiTextureType_NORMALS, 0, &texName);
+			mapNames[i].normal.append(texName.C_Str());
+
+			texName.Clear();
+
+			mat->GetTexture(aiTextureType_OPACITY, 0, &texName);
+			mapNames[i].opacity.append(texName.C_Str());
+			
+		}
+
+		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
+		{
+			if (!mapNames[i].diffuse.empty())
 			{
-				//foreach material fetch it and store its information somewhere.
-				aiMaterial* mat = mats[i];
+				//Load texture map
 				
 			}
-
 		}
 
 	}
+
+	//Apply some scale to the vertices(fbx scales are quite huge)
+	r32 scale = 1.0f / 100.0f;
+	for (ui32 w = 0; w < model->vertexCount; ++w)
+	{
+		model->totalVertices[w] = (scale * model->totalVertices[w]);
+	}
+
 }
 
 //Note(Fran): This will be outdated soon as I'm refactoring the whole renderizables data layout and 
