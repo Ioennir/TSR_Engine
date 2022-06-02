@@ -1,3 +1,26 @@
+//These structs are as simple as possible for now to perform
+// a basic 3D projection and get things going.
+struct CameraData
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mView;
+	DirectX::XMMATRIX mProj;
+};
+
+struct ConstantBuffer
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mVWP;
+	DirectX::XMMATRIX normalMatrix;
+};
+
+//TODO(Fran): this will be surely changed
+struct IMData
+{
+	r32 rot[3]{ 0.0f, 1.0f, 0.0f };
+	r32 rotSpeed{ 60.0f };
+};
+
 void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 {
 	// Start the Dear ImGui frame

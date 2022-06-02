@@ -1,4 +1,14 @@
+#include <WICTextureLoader.h>
 
+struct MaterialMapNames
+{
+	eastl::string diffuse;
+	eastl::string metallic;
+	eastl::string roughness;
+	eastl::string normal;
+	eastl::string emissive;
+	eastl::string opacity;
+};
 
 //TODO(Fran): doing this at the start might be useful
 void TSR_LoadMeshesToMemory()
@@ -137,15 +147,24 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> map
 			mapNames[i].opacity.append(texName.C_Str());
 			
 		}
+		ID3D11Resource* tex;
+		ID3D11ShaderResourceView* srview;
+		eastl::string path = "..\\..\\..\\MODELS\\" + mapNames[1].diffuse;
+		eastl::wstring wide;
+		wide.append_convert(path.data(), path.size());
+		HRESULT hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), &tex, &srview);
+		CD3D11_SHADER_RESOURCE_VIEW_DESC texDesc;
+		srview->GetDesc(&texDesc);
 
-		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
-		{
-			if (!mapNames[i].diffuse.empty())
-			{
-				//Load texture map
-				
-			}
-		}
+		int u = 0;
+		//for (ui32 i = 0; i < scene->mNumMaterials; ++i)
+		//{
+		//	if (!mapNames[i].diffuse.empty())
+		//	{
+		//		//Load texture map
+		//		DirectX::CreateWICTextureFromFile(DX11::dxData.device, mapNames[1].diffuse, )
+		//	}
+		//}
 
 	}
 

@@ -18,16 +18,6 @@
 // GUI INDEPENDENT CODE
 #include "tsr_gui.h"
 
-struct MaterialMapNames
-{
-	eastl::string diffuse;
-	eastl::string metallic;
-	eastl::string roughness;
-	eastl::string normal;
-	eastl::string emissive;
-	eastl::string opacity;
-};
-
 // DX11 layer
 #include "tsr_dx11.cpp"
 
@@ -84,7 +74,6 @@ INT WINAPI wWinMain(
 	eastl::vector<MaterialMapNames> mapNames;
 	TSR_LoadMeshFromPath(&drawable.model, mapNames, path);
 	TSR_FillComponentVertexInput(&drawable);
-	TSR_DX11_ImportTextures(DX11::dxData.device, mapNames);
 
 	ModelBuffers buffers{};
 	DX11VertexShaderData vsData;

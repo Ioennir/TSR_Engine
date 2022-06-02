@@ -1,6 +1,7 @@
 /*
 	This .cpp contains all functions to interact with D3D11.
 */
+//TODO(Fran): recreate swapchain when window resizes...
 
 #include <d3d11.h>
 #include <dxgi.h>
@@ -9,37 +10,12 @@
 
 #define NO_VSYNC 0
 #define VSYNC 1
-
-//These structs are as simple as possible for now to perform
-// a basic 3D projection and get things going.
-struct CameraData
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mView;
-	DirectX::XMMATRIX mProj;
-};
-
-struct ConstantBuffer
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mVWP;
-	DirectX::XMMATRIX normalMatrix;
-};
-
-struct Mesh
-{
-	eastl::vector<DirectX::XMFLOAT3> vertices;
-	eastl::vector<ui32> indices;
-};
-
 struct Vertex
 {
 	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
 };
-
-//TODO(Fran): recreate swapchain when window resizes...
 
 struct DX11ViewportData 
 {
@@ -87,63 +63,39 @@ struct BufferData
 	UINT offset{ 0 };
 };
 
-struct IMData
+struct ModelData
 {
-	r32 rot[3]{ 0.0f, 1.0f, 0.0f };
-	r32 rotSpeed{ 60.0f };
+	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
+	eastl::vector<DirectX::XMFLOAT3>	normals;
+	eastl::vector<DirectX::XMFLOAT2>	texCoords;
+	eastl::vector<ui32>					totalIndices;
+	eastl::vector<ui32>					submeshStartIndex;
+	eastl::vector<ui32>					submeshEndIndex;
+	eastl::vector<ui32>					submeshTexcoordStart;
+	eastl::vector<ui32>					submeshTexcoordEnd;
+	eastl::vector<ui32>					submeshMaterialIndex;
+	ui32								submeshCount;
+	ui32								vertexCount;
+	ui32								indexCount;
+	eastl::string						name;
+};
+
+struct DrawComponent
+{
+	ModelData model;
+	eastl::vector<Vertex> vertexBufferInput;
+};
+
+struct ModelBuffers
+{
+	BufferData vertexBuffer;
+	BufferData indexBuffer;
 };
 
 //Globally accessible stuff related to DX11 should be under this namespace
 namespace DX11 
 {
 	DX11Data dxData{};
-}
-
-#define POW(VALUE) (TYPECAST(r64,VALUE) * TYPECAST(r64,VALUE))
-
-inline r32 V3LEN(DirectX::XMFLOAT3 f)
-{
-	r64 R = sqrt(POW(f.x) + POW(f.y) + POW(f.z));
-	return TYPECAST(r32, R);
-}
-
-//check the *= operator
-
-inline DirectX::XMFLOAT3 operator*(const r32& s, const DirectX::XMFLOAT3& fv)
-{
-	DirectX::XMFLOAT3 R;
-	R.x = fv.x * s;
-	R.y = fv.y * s;
-	R.z = fv.z * s;
-	return R;
-}
-
-inline DirectX::XMFLOAT3 operator*(const DirectX::XMFLOAT3& fv, const r32& s)
-{
-	DirectX::XMFLOAT3 R;
-	R.x = fv.x * s;
-	R.y = fv.y * s;
-	R.z = fv.z * s;
-	return R;
-}
-
-inline DirectX::XMFLOAT3 operator/(const DirectX::XMFLOAT3 fv, const r32 d)
-{
-	DirectX::XMFLOAT3 R;
-	r32 s = 1.0f / d;
-	R = R * s;
-	return R;
-}
-
-//NOTE(Fran): once I've got plenty of math helpers I think it might be wise to move them elsewhere
-// Also, I would like to measure the speed of this, as we have a sqrt over here and when we calculate vector lengths we usually want to calculate them
-// in bulk, so we could take advantage of SIMD instructions, I could have a VECLENBULK and VECLEN to support multiple vector amounts
-inline DirectX::XMFLOAT3 TSR_DX_NormalizeFLOAT3(DirectX::XMFLOAT3 f)
-{
-	DirectX::XMFLOAT3 R;
-	r32 v3len = V3LEN(f);
-	R = f / v3len;
-	return R;
 }
 
 // TODO(Fran): update this to do all the checks we need.
@@ -392,29 +344,6 @@ void TSR_DX11_BuildBuffer(ID3D11Device * device, ui32 bStride, ui32 bOffset, ui3
 	LOGDEBUG(LOGSYSTEM_DX11, "Buffer creation succeeded.");
 }
 
-struct ModelData
-{
-	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
-	eastl::vector<DirectX::XMFLOAT3>	normals;
-	eastl::vector<DirectX::XMFLOAT2>	texCoords;
-	eastl::vector<ui32>					totalIndices;
-	eastl::vector<ui32>					submeshStartIndex;
-	eastl::vector<ui32>					submeshEndIndex;
-	eastl::vector<ui32>					submeshTexcoordStart;
-	eastl::vector<ui32>					submeshTexcoordEnd;
-	eastl::vector<ui32>					submeshMaterialIndex;
-	ui32								submeshCount;
-	ui32								vertexCount;
-	ui32								indexCount;
-	eastl::string						name;
-};
-
-struct DrawComponent
-{
-	ModelData model;
-	eastl::vector<Vertex> vertexBufferInput;
-};
-
 //Fix these names I dont like them
 void TSR_FillComponentVertexInput(DrawComponent * drawComponent)
 {
@@ -427,13 +356,6 @@ void TSR_FillComponentVertexInput(DrawComponent * drawComponent)
 		drawComponent->vertexBufferInput.push_back(v);
 	}
 }
-
-//NOTE(Fran): to do the typeof(T) use templates so I can have multiple input layouts, for now vertex
-struct ModelBuffers
-{
-	BufferData vertexBuffer;
-	BufferData indexBuffer;
-};
 
 void TSR_DX11_BuildGeometryBuffersFromComponent(ID3D11Device * device, DrawComponent * drawComponent, ModelBuffers * buffers)
 {
@@ -533,10 +455,4 @@ void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData,
 {
 	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcnsize, DX11InputLayout::PCN, vsData);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
-}
-
-//https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-textures-how-to
-void TSR_DX11_ImportTextures(ID3D11Device * device, eastl::vector<MaterialMapNames> mapNames)
-{
-	
 }
