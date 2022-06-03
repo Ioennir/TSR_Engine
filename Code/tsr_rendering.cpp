@@ -55,6 +55,14 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 		ImGui::Image(PTRCAST(void*, dxData.VP.ShaderResourceView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
 	}
 	ImGui::End();
+
+	
+	//ImGui::Begin("texture", 0, rtWindowFlags);
+	//{
+	//	ImGui::Image(PTRCAST(void*, srviewtest), ImVec2{ 1024, 1024.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
+	//}
+	//ImGui::End();
+
 	ImGui::Render();
 
 	ID3D11RenderTargetView* views[1];
@@ -196,7 +204,8 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxData.context->VSSetShader(vsData.shader, 0, 0);
 	dxData.context->PSSetShader(psData.shader, 0, 0);
-
+	
+	DX11::dxData.context->PSSetShaderResources(0, 1, &srviewtest);
 	
 	//CBUFFER
 	// TODO(Fran): Move this to the update, check the issues 

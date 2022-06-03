@@ -10,11 +10,22 @@ struct MaterialMapNames
 	eastl::string opacity;
 };
 
+struct MaterialTextures
+{
+	ID3D11Resource* texture;
+	ID3D11ShaderResourceView* textureView;
+};
+
 //TODO(Fran): doing this at the start might be useful
 void TSR_LoadMeshesToMemory()
 {
 
 }
+ID3D11ShaderResourceView* srviewtest;
+struct TestColor
+{
+	ui8 member[4];
+};
 
 void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> mapNames, eastl::string path)
 {
@@ -147,22 +158,62 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> map
 			mapNames[i].opacity.append(texName.C_Str());
 			
 		}
-		ID3D11Resource* tex;
-		ID3D11ShaderResourceView* srview;
+
+		D3D11_TEXTURE2D_DESC tdesc;
+		tdesc.Width = 4096;
+		tdesc.Height = 4096;
+		tdesc.MipLevels = 1;
+		tdesc.ArraySize = 1;
+		tdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		tdesc.SampleDesc.Count = 1;
+		tdesc.SampleDesc.Quality = 0;
+		tdesc.Usage = D3D11_USAGE_DEFAULT;
+		tdesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		tdesc.CPUAccessFlags = 0;
+		tdesc.MiscFlags = 0;
+
+		void* mem = malloc(4096 * 4096 * 4);
+
+		D3D11_SUBRESOURCE_DATA tinitdata;
+		tinitdata.pSysMem = mem;
+		tinitdata.SysMemPitch = TYPECAST(ui32, 4096);
+		tinitdata.SysMemSlicePitch = TYPECAST(ui32, 4096 * 4096);
+
+		ID3D11Texture2D* texP = nullptr;
+		HRESULT hr = DX11::dxData.device->CreateTexture2D(&tdesc, &tinitdata, &texP);
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvdesc;
+		memset(&srvdesc, 0, sizeof(srvdesc));
+		srvdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvdesc.Texture2D.MipLevels = 1;
+
+
+		//ID3D11ShaderResourceView* srview;
+		hr = DX11::dxData.device->CreateShaderResourceView(texP, &srvdesc, &srviewtest);
+
+
+		
+
 		eastl::string path = "..\\..\\..\\MODELS\\" + mapNames[1].diffuse;
 		eastl::wstring wide;
 		wide.append_convert(path.data(), path.size());
-		HRESULT hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), &tex, &srview);
-		CD3D11_SHADER_RESOURCE_VIEW_DESC texDesc;
-		srview->GetDesc(&texDesc);
+		
+		hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &srviewtest);
 
+		//DX11::dxData.context->VSSetShaderResources(0, 1, &srview);
+		//DX11::dxData.context->PSSetShaderResources(0, 1, &srview);
 		int u = 0;
+
+		//DX11::dxData.device->CreateTexture2D();
+
+		//int u = 0;
 		//for (ui32 i = 0; i < scene->mNumMaterials; ++i)
 		//{
 		//	if (!mapNames[i].diffuse.empty())
 		//	{
 		//		//Load texture map
-		//		DirectX::CreateWICTextureFromFile(DX11::dxData.device, mapNames[1].diffuse, )
+		//		
 		//	}
 		//}
 

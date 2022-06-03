@@ -17,6 +17,14 @@ struct Vertex
 	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
 };
 
+struct Vertex_PCNT
+{
+	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT2 Texcoord{ 0.0f, 0.0f };
+};
+
 struct DX11ViewportData 
 {
 	ID3D11Texture2D*			RenderTargetTexture;
@@ -449,6 +457,15 @@ namespace DX11InputLayout
 		{"TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	ui32 pntsize = 3;
+
+	D3D11_INPUT_ELEMENT_DESC PCNT[] =
+	{
+		{"POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,								D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+	ui32 pcntsize = 4;
 }
 
 void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
