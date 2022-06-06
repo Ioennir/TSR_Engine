@@ -17,6 +17,13 @@ struct Vertex
 	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
 };
 
+struct Vertex_PNT
+{
+	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT2 Texcoord{ 0.0f, 0.0f };
+};
+
 struct Vertex_PCNT
 {
 	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
@@ -46,6 +53,7 @@ struct DX11Data
 	ID3D11RenderTargetView*		renderTargetView{};
 	ID3D11DepthStencilView*		depthStencilView{};
 	ID3D11RasterizerState*		currentRasterizerState{};
+	ID3D11SamplerState*			samplerState{};
 	DX11ViewportData			VP;
 	ID3D11Buffer*				dx11_cbuffer{}; // this will be moved elsewhere
 };
@@ -71,6 +79,16 @@ struct BufferData
 	UINT offset{ 0 };
 };
 
+struct MaterialData
+{
+	ID3D11ShaderResourceView* diffuse;
+	ID3D11ShaderResourceView* metallic;
+	ID3D11ShaderResourceView* roughness;
+	ID3D11ShaderResourceView* normal;
+	ID3D11ShaderResourceView* emissive;
+	ID3D11ShaderResourceView* opacity;
+};
+
 struct ModelData
 {
 	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
@@ -82,6 +100,7 @@ struct ModelData
 	eastl::vector<ui32>					submeshTexcoordStart;
 	eastl::vector<ui32>					submeshTexcoordEnd;
 	eastl::vector<ui32>					submeshMaterialIndex;
+	eastl::vector<MaterialData>			materials;
 	ui32								submeshCount;
 	ui32								vertexCount;
 	ui32								indexCount;
@@ -91,7 +110,7 @@ struct ModelData
 struct DrawComponent
 {
 	ModelData model;
-	eastl::vector<Vertex> vertexBufferInput;
+	eastl::vector<Vertex_PCNT> vertexBufferInput;
 };
 
 struct ModelBuffers
@@ -310,6 +329,22 @@ void TSR_DX11_SetGameViewport(ui32 vpWidth, ui32 vpHeight, DX11ViewportData * VP
 	VP->Viewport.Height = static_cast<float>(vpHeight);
 }
 
+void TSR_DX11_InitSampler()
+{
+	D3D11_SAMPLER_DESC sDesc;
+	ZeroMemory(&sDesc, sizeof(sDesc));
+	sDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sDesc.MinLOD = 0;
+	sDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	HRESULT hr = DX11::dxData.device->CreateSamplerState(&sDesc, &DX11::dxData.samplerState);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed Creating the sampler state.", !FAILED(hr));
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Successfully created sampler state.");
+}
+
 //TODO(Fran): check MSAA support later.
 //TODO(Fran): Do the debug implementation with dxtrace etc.
 //TODO(Fran): Check MSAA thingy.
@@ -331,6 +366,7 @@ void TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	TSR_DX11_InitDepthBuffer(rtWidth, rtHeight, dxData->device, &dxData->VP.DepthStencilTexture);
 	TSR_DX11_InitViewport(dxData->device, dxData->context, &dxData->VP);
 	TSR_DX11_SetGameViewport(rtWidth, rtHeight, &dxData->VP);
+	TSR_DX11_InitSampler();
 }
 
 //TODO(Fran): Maybe implement a template here
@@ -360,15 +396,16 @@ void TSR_FillComponentVertexInput(DrawComponent * drawComponent)
 	{
 		DirectX::XMFLOAT3 position = drawComponent->model.totalVertices[i];
 		DirectX::XMFLOAT3 normal = drawComponent->model.normals[i];
-		Vertex v{position, white, normal};
+		DirectX::XMFLOAT2 texcoord = drawComponent->model.texCoords[i];
+		Vertex_PCNT v{ position, white, normal, texcoord };
 		drawComponent->vertexBufferInput.push_back(v);
 	}
 }
 
-void TSR_DX11_BuildGeometryBuffersFromComponent(ID3D11Device * device, DrawComponent * drawComponent, ModelBuffers * buffers)
+void TSR_DX11_BuildGeometryBuffersFromComponent(ID3D11Device * device, DrawComponent * drawComponent, ModelBuffers * buffers, ui32 vertexBufferSize)
 {
 	TSR_DX11_BuildBuffer(device,
-		sizeof(Vertex),
+		vertexBufferSize,
 		0,
 		drawComponent->model.vertexCount,
 		D3D11_USAGE_IMMUTABLE,
@@ -470,6 +507,6 @@ namespace DX11InputLayout
 
 void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
-	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcnsize, DX11InputLayout::PCN, vsData);
+	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcntsize, DX11InputLayout::PCNT, vsData);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }

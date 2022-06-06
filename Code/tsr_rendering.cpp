@@ -59,7 +59,7 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	
 	//ImGui::Begin("texture", 0, rtWindowFlags);
 	//{
-	//	ImGui::Image(PTRCAST(void*, srviewtest), ImVec2{ 1024, 1024.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
+	//	ImGui::Image(PTRCAST(void*, srviewtest), ImVec2{ 200.0f, 200.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
 	//}
 	//ImGui::End();
 
@@ -171,15 +171,18 @@ void TSR_Update(float dt)
 
 }
 
-//Generates the drawcalls for the model
+//Generates the drawcalls for the model 
 void TSR_RenderEntity(ID3D11DeviceContext * context, ModelBuffers * buffers, DrawComponent * drawable)
 {
 	// for now, one drawcall.
 	context->IASetVertexBuffers(0, 1, &buffers->vertexBuffer.buffer, &buffers->vertexBuffer.stride, &buffers->vertexBuffer.offset);
 	context->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
+	context->PSSetSamplers(0, 1, &DX11::dxData.samplerState);
 	//context->DrawIndexed(drawable->model.indexCount, 0, 0);
 	for (ui32 i = 0; i < drawable->model.submeshCount; ++i)
 	{
+		DX11::dxData.context->PSSetShaderResources(0, 1, &drawable->model.materials[drawable->model.submeshMaterialIndex[i]].diffuse);
+		//also set the textures
 		ui32 start = drawable->model.submeshStartIndex[i];
 		ui32 indexcount = drawable->model.submeshEndIndex[i] - start;
 		context->DrawIndexed(indexcount, start, 0);
@@ -204,8 +207,6 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxData.context->VSSetShader(vsData.shader, 0, 0);
 	dxData.context->PSSetShader(psData.shader, 0, 0);
-	
-	DX11::dxData.context->PSSetShaderResources(0, 1, &srviewtest);
 	
 	//CBUFFER
 	// TODO(Fran): Move this to the update, check the issues 

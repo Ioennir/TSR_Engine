@@ -10,28 +10,17 @@ struct MaterialMapNames
 	eastl::string opacity;
 };
 
-struct MaterialTextures
-{
-	ID3D11Resource* texture;
-	ID3D11ShaderResourceView* textureView;
-};
-
 //TODO(Fran): doing this at the start might be useful
 void TSR_LoadMeshesToMemory()
 {
 
 }
-ID3D11ShaderResourceView* srviewtest;
-struct TestColor
-{
-	ui8 member[4];
-};
 
-void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> mapNames, eastl::string path)
+void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 {
 	Assimp::Importer Importer;
 	//NOTE(Fran): this flags might change soon, I.E: left handedness etc.
-	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
+	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs;
 	const aiScene* scene = Importer.ReadFile(path.c_str(), importFlags);
 	LOGCHECK(LOGSYSTEM_ASSIMP, "Invalid path.", scene != nullptr);
 	// this just crashes if scene is nullptr
@@ -108,7 +97,8 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> map
 		model->submeshEndIndex.push_back(TYPECAST(ui32, model->totalIndices.size()));
 		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
 	}
-
+	eastl::vector<MaterialMapNames> mapNames;
+	model->materials.reserve(TYPECAST(eastl_size_t, scene->mNumMaterials));
 	if (scene->HasMaterials())
 	{
 		mapNames.reserve(TYPECAST(eastl_size_t, scene->mNumMaterials));
@@ -120,11 +110,10 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> map
 			//store the material index each mesh uses.
 			model->submeshMaterialIndex.push_back(scene->mMeshes[i]->mMaterialIndex);
 		}
-
+		//foreach material fetch it and store its information somewhere.
 		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
 		{
 			mapNames.push_back({});
-			//foreach material fetch it and store its information somewhere.
 			const aiMaterial* mat = mats[i];
 			
 			aiString texName;
@@ -159,63 +148,63 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::vector<MaterialMapNames> map
 			
 		}
 
-		D3D11_TEXTURE2D_DESC tdesc;
-		tdesc.Width = 4096;
-		tdesc.Height = 4096;
-		tdesc.MipLevels = 1;
-		tdesc.ArraySize = 1;
-		tdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		tdesc.SampleDesc.Count = 1;
-		tdesc.SampleDesc.Quality = 0;
-		tdesc.Usage = D3D11_USAGE_DEFAULT;
-		tdesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		tdesc.CPUAccessFlags = 0;
-		tdesc.MiscFlags = 0;
+		eastl::string path = "..\\..\\..\\MODELS\\";
+		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
+		{
+			HRESULT hr; 
+			eastl::string tex;
+			eastl::wstring wide;
+			model->materials.push_back({});
+			if (!mapNames[i].diffuse.empty())
+			{
+				ID3D11ShaderResourceView* diffuse = nullptr;
+				tex = path + mapNames[i].diffuse;
+				wide.append_convert(tex.data(), tex.size());
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &diffuse);
+				model->materials[i].diffuse = diffuse;
+			}
+			if (!mapNames[i].metallic.empty())
+			{
+				ID3D11ShaderResourceView* metallic = nullptr;
+				tex = path + mapNames[i].metallic;
+				wide.append_convert(tex.data(), tex.size());
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &metallic);
+				model->materials[i].metallic = metallic;
+			}
+			if (!mapNames[i].normal.empty())
+			{
+				ID3D11ShaderResourceView* normal = nullptr;
+				tex = path + mapNames[i].normal;
+				wide.append_convert(tex.data(), tex.size());
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &normal);
+				model->materials[i].normal = normal;
+			}
+			if (!mapNames[i].roughness.empty())
+			{
+				ID3D11ShaderResourceView* roughness = nullptr;
+				tex = path + mapNames[i].roughness;
+				wide.append_convert(tex.data(), tex.size());
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &roughness);
+				model->materials[i].roughness = roughness;
+			}
+			if (!mapNames[i].emissive.empty())
+			{
+				ID3D11ShaderResourceView* emissive = nullptr;
+				tex = path + mapNames[i].emissive;
+				wide.append_convert(tex.data(), tex.size());
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &emissive);
+				model->materials[i].emissive = emissive;
+			}
+			if (!mapNames[i].opacity.empty())
+			{
+				ID3D11ShaderResourceView* opacity = nullptr;
+				tex = path + mapNames[i].opacity;
+				wide.append_convert(tex.data(), tex.size());
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &opacity);
+				model->materials[i].opacity = opacity;
+			}
 
-		void* mem = malloc(4096 * 4096 * 4);
-
-		D3D11_SUBRESOURCE_DATA tinitdata;
-		tinitdata.pSysMem = mem;
-		tinitdata.SysMemPitch = TYPECAST(ui32, 4096);
-		tinitdata.SysMemSlicePitch = TYPECAST(ui32, 4096 * 4096);
-
-		ID3D11Texture2D* texP = nullptr;
-		HRESULT hr = DX11::dxData.device->CreateTexture2D(&tdesc, &tinitdata, &texP);
-
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvdesc;
-		memset(&srvdesc, 0, sizeof(srvdesc));
-		srvdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		srvdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srvdesc.Texture2D.MipLevels = 1;
-
-
-		//ID3D11ShaderResourceView* srview;
-		hr = DX11::dxData.device->CreateShaderResourceView(texP, &srvdesc, &srviewtest);
-
-
-		
-
-		eastl::string path = "..\\..\\..\\MODELS\\" + mapNames[1].diffuse;
-		eastl::wstring wide;
-		wide.append_convert(path.data(), path.size());
-		
-		hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &srviewtest);
-
-		//DX11::dxData.context->VSSetShaderResources(0, 1, &srview);
-		//DX11::dxData.context->PSSetShaderResources(0, 1, &srview);
-		int u = 0;
-
-		//DX11::dxData.device->CreateTexture2D();
-
-		//int u = 0;
-		//for (ui32 i = 0; i < scene->mNumMaterials; ++i)
-		//{
-		//	if (!mapNames[i].diffuse.empty())
-		//	{
-		//		//Load texture map
-		//		
-		//	}
-		//}
+		}
 
 	}
 

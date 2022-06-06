@@ -71,8 +71,7 @@ INT WINAPI wWinMain(
 	// Load vivi
 	eastl::string path = "..\\..\\..\\MODELS\\vivi\\vivi_modified.fbx";
 	DrawComponent drawable{};
-	eastl::vector<MaterialMapNames> mapNames;
-	TSR_LoadMeshFromPath(&drawable.model, mapNames, path);
+	TSR_LoadMeshFromPath(&drawable.model, path);
 	TSR_FillComponentVertexInput(&drawable);
 
 	ModelBuffers buffers{};
@@ -80,7 +79,7 @@ INT WINAPI wWinMain(
 	DX11PixelShaderData psData;
 
 	TSR_DX11_BuildShaders(DX11::dxData.device, &vsData, &psData);
-	TSR_DX11_BuildGeometryBuffersFromComponent(DX11::dxData.device, &drawable, &buffers);
+	TSR_DX11_BuildGeometryBuffersFromComponent(DX11::dxData.device, &drawable, &buffers, sizeof(Vertex_PCNT));
 	
 	//Primitives
 	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
