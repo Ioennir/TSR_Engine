@@ -213,7 +213,7 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
 	dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
-
+	dxData.context->PSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	TSR_RenderEntity(dxData.context, buffers, drawable);
 
 	//Primitive Rendering
