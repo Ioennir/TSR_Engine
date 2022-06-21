@@ -20,7 +20,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 {
 	Assimp::Importer Importer;
 	//NOTE(Fran): this flags might change soon, I.E: left handedness etc.
-	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs;
+	ui32 importFlags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_CalcTangentSpace;
 	const aiScene* scene = Importer.ReadFile(path.c_str(), importFlags);
 	LOGCHECK(LOGSYSTEM_ASSIMP, "Invalid path.", scene != nullptr);
 	// this just crashes if scene is nullptr
@@ -53,10 +53,9 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
-		
 		// first index of the submesh texcoord
 		model->submeshTexcoordStart.push_back(texCoordIndex);
-		
+		//bool hasem = mesh->HasTangentsAndBitangents();
 		//texture coordinates; check if this can be done better
 		// im assuming things here as I dont fully know the assimp texturecoords member,
 		eastl::vector<DirectX::XMFLOAT2> meshTexCoords;
