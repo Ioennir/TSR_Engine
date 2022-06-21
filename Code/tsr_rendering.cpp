@@ -182,6 +182,7 @@ void TSR_RenderEntity(ID3D11DeviceContext * context, ModelBuffers * buffers, Dra
 	for (ui32 i = 0; i < drawable->model.submeshCount; ++i)
 	{
 		DX11::dxData.context->PSSetShaderResources(0, 1, &drawable->model.materials[drawable->model.submeshMaterialIndex[i]].diffuse);
+		DX11::dxData.context->PSSetShaderResources(1, 1, &drawable->model.materials[drawable->model.submeshMaterialIndex[i]].normal);
 		//also set the textures
 		ui32 start = drawable->model.submeshStartIndex[i];
 		ui32 indexcount = drawable->model.submeshEndIndex[i] - start;

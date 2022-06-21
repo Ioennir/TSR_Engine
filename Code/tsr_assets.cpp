@@ -162,6 +162,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				wide.append_convert(tex.data(), tex.size());
 				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &diffuse);
 				model->materials[i].diffuse = diffuse;
+				wide.clear();
 			}
 			if (!mapNames[i].metallic.empty())
 			{
@@ -170,6 +171,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				wide.append_convert(tex.data(), tex.size());
 				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &metallic);
 				model->materials[i].metallic = metallic;
+				wide.clear();
 			}
 			if (!mapNames[i].normal.empty())
 			{
@@ -178,6 +180,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				wide.append_convert(tex.data(), tex.size());
 				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &normal);
 				model->materials[i].normal = normal;
+				wide.clear();
 			}
 			if (!mapNames[i].roughness.empty())
 			{
@@ -186,6 +189,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				wide.append_convert(tex.data(), tex.size());
 				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &roughness);
 				model->materials[i].roughness = roughness;
+				wide.clear();
 			}
 			if (!mapNames[i].emissive.empty())
 			{
@@ -194,6 +198,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				wide.append_convert(tex.data(), tex.size());
 				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &emissive);
 				model->materials[i].emissive = emissive;
+				wide.clear();
 			}
 			if (!mapNames[i].opacity.empty())
 			{
@@ -202,6 +207,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				wide.append_convert(tex.data(), tex.size());
 				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &opacity);
 				model->materials[i].opacity = opacity;
+				wide.clear();
 			}
 
 		}
