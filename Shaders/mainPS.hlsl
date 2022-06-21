@@ -47,5 +47,6 @@ float4 main(
     float4 lightIntensity = saturate(dot(normalWorldSpace, LIGHT_DIR));
     pixelColor = saturate(pixelColor * lightIntensity);
     pixelColor = float4(LinearTosRGB(pixelColor.rgb), 1.0f);
+    //pixelColor = float4(normalTex, 1.0f);
     return pixelColor;
 }

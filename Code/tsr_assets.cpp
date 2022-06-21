@@ -159,7 +159,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				ID3D11ShaderResourceView* diffuse = nullptr;
 				tex = path + mapNames[i].diffuse;
 				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &diffuse);
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &diffuse);
 				model->materials[i].diffuse = diffuse;
 				wide.clear();
 			}
@@ -168,7 +168,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				ID3D11ShaderResourceView* metallic = nullptr;
 				tex = path + mapNames[i].metallic;
 				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &metallic);
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &metallic);
 				model->materials[i].metallic = metallic;
 				wide.clear();
 			}
@@ -177,7 +177,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				ID3D11ShaderResourceView* normal = nullptr;
 				tex = path + mapNames[i].normal;
 				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &normal);
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &normal);
 				model->materials[i].normal = normal;
 				wide.clear();
 			}
@@ -186,7 +186,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				ID3D11ShaderResourceView* roughness = nullptr;
 				tex = path + mapNames[i].roughness;
 				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &roughness);
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &roughness);
 				model->materials[i].roughness = roughness;
 				wide.clear();
 			}
@@ -195,7 +195,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				ID3D11ShaderResourceView* emissive = nullptr;
 				tex = path + mapNames[i].emissive;
 				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &emissive);
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &emissive);
 				model->materials[i].emissive = emissive;
 				wide.clear();
 			}
@@ -204,7 +204,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 				ID3D11ShaderResourceView* opacity = nullptr;
 				tex = path + mapNames[i].opacity;
 				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, wide.c_str(), nullptr, &opacity);
+				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &opacity);
 				model->materials[i].opacity = opacity;
 				wide.clear();
 			}
