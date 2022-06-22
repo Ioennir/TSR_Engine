@@ -1,5 +1,3 @@
-#include <WICTextureLoader.h>
-
 struct MaterialMapNames
 {
 	eastl::string diffuse;
@@ -9,12 +7,6 @@ struct MaterialMapNames
 	eastl::string emissive;
 	eastl::string opacity;
 };
-
-//TODO(Fran): doing this at the start might be useful
-void TSR_LoadMeshesToMemory()
-{
-
-}
 
 void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 {
@@ -37,7 +29,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	ui32 totalIndexCount = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
-		LOGCHECK(LOGSYSTEM_ASSIMP, eastl::string("Submesh of " + model->name + " doesnt have vertex colors, setting to white instead.").c_str(), scene->mMeshes[i]->HasVertexColors(i));
+		LOGCHECK(LOGSYSTEM_ASSIMP, MESSAGE("Submesh of " + model->name + " doesnt have vertex colors, setting to white instead."), scene->mMeshes[i]->HasVertexColors(i));
 		totalVertexCount += scene->mMeshes[i]->mNumVertices;
 		totalIndexCount += (scene->mMeshes[i]->mNumFaces * 3);
 	}
@@ -88,7 +80,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		for (ui32 j = 0; j < trisCount; ++j)
 		{
 			const aiFace face = mesh->mFaces[j];
-			LOGASSERT(LOGSYSTEM_ASSIMP, eastl::string("One or more model " + model->name + " faces are not triangles.").c_str() , face.mNumIndices == 3);
+			LOGASSERT(LOGSYSTEM_ASSIMP, MESSAGE("One or more model " + model->name + " faces are not triangles.") , face.mNumIndices == 3);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[0] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[1] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[2] + indexOffset);
@@ -109,12 +101,13 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 			//store the material index each mesh uses.
 			model->submeshMaterialIndex.push_back(scene->mMeshes[i]->mMaterialIndex);
 		}
-		//foreach material fetch it and store its information somewhere.
+		//foreach material fetch it and store its information
+		// For now, we only fetch texture type and paths.
 		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
 		{
 			mapNames.push_back({});
 			const aiMaterial* mat = mats[i];
-			
+
 			aiString texName;
 			//get Diffuse
 			mat->GetTexture(aiTextureType_DIFFUSE, 0, &texName);
@@ -150,128 +143,55 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		eastl::string path = "..\\..\\..\\MODELS\\";
 		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
 		{
-			HRESULT hr; 
 			eastl::string tex;
-			eastl::wstring wide;
 			model->materials.push_back({});
+			
 			if (!mapNames[i].diffuse.empty())
 			{
-				ID3D11ShaderResourceView* diffuse = nullptr;
 				tex = path + mapNames[i].diffuse;
-				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &diffuse);
-				model->materials[i].diffuse = diffuse;
-				wide.clear();
-			}
-			if (!mapNames[i].metallic.empty())
-			{
-				ID3D11ShaderResourceView* metallic = nullptr;
-				tex = path + mapNames[i].metallic;
-				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &metallic);
-				model->materials[i].metallic = metallic;
-				wide.clear();
-			}
-			if (!mapNames[i].normal.empty())
-			{
-				ID3D11ShaderResourceView* normal = nullptr;
-				tex = path + mapNames[i].normal;
-				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &normal);
-				model->materials[i].normal = normal;
-				wide.clear();
-			}
-			if (!mapNames[i].roughness.empty())
-			{
-				ID3D11ShaderResourceView* roughness = nullptr;
-				tex = path + mapNames[i].roughness;
-				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &roughness);
-				model->materials[i].roughness = roughness;
-				wide.clear();
-			}
-			if (!mapNames[i].emissive.empty())
-			{
-				ID3D11ShaderResourceView* emissive = nullptr;
-				tex = path + mapNames[i].emissive;
-				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &emissive);
-				model->materials[i].emissive = emissive;
-				wide.clear();
-			}
-			if (!mapNames[i].opacity.empty())
-			{
-				ID3D11ShaderResourceView* opacity = nullptr;
-				tex = path + mapNames[i].opacity;
-				wide.append_convert(tex.data(), tex.size());
-				hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &opacity);
-				model->materials[i].opacity = opacity;
-				wide.clear();
+				model->materials[i].diffuse = TSR_DX11_LoadTextureFromPath(tex);
 			}
 
+			if (!mapNames[i].metallic.empty())
+			{
+				tex = path + mapNames[i].metallic;
+				model->materials[i].metallic = TSR_DX11_LoadTextureFromPath(tex);
+			}
+
+			if (!mapNames[i].normal.empty())
+			{
+				tex = path + mapNames[i].normal;
+				model->materials[i].normal = TSR_DX11_LoadTextureFromPath(tex);
+			}
+
+			if (!mapNames[i].roughness.empty())
+			{
+				tex = path + mapNames[i].roughness;
+				model->materials[i].roughness = TSR_DX11_LoadTextureFromPath(tex);
+			}
+
+			if (!mapNames[i].emissive.empty())
+			{
+				tex = path + mapNames[i].emissive;
+				model->materials[i].roughness = TSR_DX11_LoadTextureFromPath(tex);
+			}
+
+			if (!mapNames[i].opacity.empty())
+			{
+				tex = path + mapNames[i].opacity;
+				model->materials[i].roughness = TSR_DX11_LoadTextureFromPath(tex);
+			}
 		}
 
 	}
 
 	//Apply some scale to the vertices(fbx scales are quite huge)
+	//TODO(Fran): take a deep look at scaled models with different extensions
+	// coming from different 3D editors ( blender, maya etc)
 	r32 scale = 1.0f / 100.0f;
 	for (ui32 w = 0; w < model->vertexCount; ++w)
 	{
 		model->totalVertices[w] = (scale * model->totalVertices[w]);
 	}
 
-}
-
-//Note(Fran): This will be outdated soon as I'm refactoring the whole renderizables data layout and 
-// loading
-void LoadMeshToVertex(eastl::string path, eastl::vector<Vertex>& vertexData, eastl::vector<ui32>& indices) {
-	Assimp::Importer imp;
-	// This loads the supplied model into the aiScene structure
-	const aiScene* model = imp.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
-	if (!model) {
-		printf("%s", imp.GetErrorString());
-		return;
-	}
-
-	// Get total amount of vertices so we can reserve
-	ui32 numVertex = 0;
-	for(ui32 i = 0; i < model->mNumMeshes; ++i)
-	{
-		const auto& mesh = model->mMeshes[i];
-		for (ui32 j = 0; j < mesh->mNumVertices; ++j) 
-		{
-			numVertex += 1;
-		}
-	}
-	vertexData.reserve(numVertex);
-
-	ui32 indexOffset = 0;
-	for (ui32 i = 0; i < model->mNumMeshes; ++i) {
-		const auto mesh = model->mMeshes[i];
-		for (ui32 j = 0; j < mesh->mNumVertices; ++j)
-		{
-			// Get vertices and insert them
-			DirectX::XMFLOAT3 * vertices = PTRCAST(DirectX::XMFLOAT3 *, &mesh->mVertices[j]);
-			DirectX::XMFLOAT3 * normal = PTRCAST(DirectX::XMFLOAT3*, &mesh->mNormals[j]);
-			Vertex v = { *vertices, white, *normal };
-			vertexData.push_back(v);
-		}
-
-		DirectX::XMFLOAT3* vertices = PTRCAST(DirectX::XMFLOAT3*, mesh->mVertices);
-
-		// Fetch total number of faces and reserve index amount
-		const eastl_size_t faceCount = TYPECAST(eastl_size_t, mesh->mNumFaces);
-		indices.reserve(faceCount * 3);
-		// Get indices and insert them
-		//TODO(Fran): Add the correct offset to the indices.
-		for (ui32 j = 0; j < faceCount; ++j)
-		{
-			const auto& face = mesh->mFaces[j];
-			assert(face.mNumIndices == 3);
-			indices.insert(indices.end(), face.mIndices[0] + indexOffset);
-			indices.insert(indices.end(), face.mIndices[1] + indexOffset);
-			indices.insert(indices.end(), face.mIndices[2] + indexOffset);
-		}
-		indexOffset += TYPECAST(ui32, mesh->mNumVertices);
-	}
 }

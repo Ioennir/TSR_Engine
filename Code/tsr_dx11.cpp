@@ -7,6 +7,7 @@
 #include <dxgi.h>
 #include <d3dcompiler.h>
 #include <DirectXPackedVector.h>
+#include <WICTextureLoader.h>
 
 #define NO_VSYNC 0
 #define VSYNC 1
@@ -180,6 +181,17 @@ void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Da
 	);
 	LOGASSERT(LOGSYSTEM_DX11, "Failed creating Device and/or SwapChain.", !FAILED(hr));
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Device & Swapchain created!");
+}
+
+ID3D11ShaderResourceView* TSR_DX11_LoadTextureFromPath(eastl::string texturePath)
+{
+	ID3D11ShaderResourceView* TextureView = nullptr;
+	HRESULT hr;
+	eastl::wstring wide;
+	wide.append_convert(texturePath.data(), texturePath.size());
+	hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &TextureView);
+	LOGCHECK(LOGSYSTEM_ASSIMP, MESSAGE("No texture present in path: " + texturePath + " (Null or invalid texture path.)"), !FAILED(hr));
+	return TextureView;
 }
 
 //DESCRIPTION: Acquires the DX11 BackBuffer and RT View

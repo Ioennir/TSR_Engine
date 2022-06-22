@@ -39,7 +39,7 @@
 #include "tsr_rendering.cpp"
 #include "tsr_primitives.cpp"
 
-
+//TODO(Fran): Set DX11/DX12 Guards so integration of DX12 will be easier
 //TODO(Fran): Implement a naive input system, maybe winsdk has something or the Imgui input system itself.
 
 #if (defined(_WIN64) && _WIN64)
