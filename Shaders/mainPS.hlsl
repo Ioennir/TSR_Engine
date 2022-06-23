@@ -55,6 +55,6 @@ float4 main(
     float4 lightIntensity = saturate(dot(bumpNormal, LIGHT_DIR));
     pixelColor = saturate(pixelColor * lightIntensity);
     pixelColor = float4(LinearTosRGB(pixelColor.rgb), 1.0f);
-    pixelColor = float4(binormalWS, 1.0f);
+    
     return pixelColor;
 }
