@@ -42,13 +42,15 @@ float4 main(
 ) : SV_TARGET
 {
     float3 normalTex = nor.Sample(smp, input.iTexcoord);
+    //Unpack normal
+    normalTex = normalTex * 2.0f - 1.0f;
     float4 texColor = tex.Sample(smp, input.iTexcoord);
     //Diffuse
-    float3 normalWorldSpace = normalize(mul((float3x3)normalMatrix, input.iNormal));
+    float3 normalWS = normalize(mul((float3x3)normalMatrix, input.iNormal));
     float3 tangentWS = normalize(mul((float3x3) normalMatrix, input.iTangent.xyz));
     float3 binormalWS = normalize(mul((float3x3) normalMatrix, input.iBinormal.xyz));
     
-    float3 bumpNormal = (normalTex.x * tangentWS) + (normalTex.y * binormalWS) + (normalTex.z * normalWorldSpace);
+    float3 bumpNormal = (normalTex.x * tangentWS) + (normalTex.y * binormalWS) + (normalTex.z * normalWS);
     bumpNormal = normalize(bumpNormal);
     
     float4 pixelColor = float4(sRGBToLinear(texColor.rgb), texColor.a);
