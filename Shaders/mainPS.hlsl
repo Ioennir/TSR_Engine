@@ -17,6 +17,8 @@ struct PS_Input
     float4 iColor       : COLOR0;
     float3 iNormal      : NORMAL0;
     float2 iTexcoord    : TEXCOORD0;
+    float4 iTangent : TANGENT0;
+    float4 iBinormal : BINORMAL0;
 };
 
 
@@ -42,11 +44,17 @@ float4 main(
     float3 normalTex = nor.Sample(smp, input.iTexcoord);
     float4 texColor = tex.Sample(smp, input.iTexcoord);
     //Diffuse
-    float4 pixelColor = float4(sRGBToLinear(texColor.rgb), texColor.a);
     float3 normalWorldSpace = normalize(mul((float3x3)normalMatrix, input.iNormal));
-    float4 lightIntensity = saturate(dot(normalWorldSpace, LIGHT_DIR));
+    float3 tangentWS = normalize(mul((float3x3) normalMatrix, input.iTangent.xyz));
+    float3 binormalWS = normalize(mul((float3x3) normalMatrix, input.iBinormal.xyz));
+    
+    float3 bumpNormal = (normalTex.x * tangentWS) + (normalTex.y * binormalWS) + (normalTex.z * normalWorldSpace);
+    bumpNormal = normalize(bumpNormal);
+    
+    float4 pixelColor = float4(sRGBToLinear(texColor.rgb), texColor.a);
+    float4 lightIntensity = saturate(dot(bumpNormal, LIGHT_DIR));
     pixelColor = saturate(pixelColor * lightIntensity);
     pixelColor = float4(LinearTosRGB(pixelColor.rgb), 1.0f);
-    //pixelColor = float4(normalTex, 1.0f);
+    pixelColor = float4(binormalWS, 1.0f);
     return pixelColor;
 }

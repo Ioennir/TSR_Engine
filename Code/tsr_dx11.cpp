@@ -25,12 +25,14 @@ struct Vertex_PNT
 	DirectX::XMFLOAT2 Texcoord{ 0.0f, 0.0f };
 };
 
-struct Vertex_PCNT
+struct Vertex_PCNTTB
 {
 	DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
 	DirectX::XMFLOAT3 Normal{ 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT2 Texcoord{ 0.0f, 0.0f };
+	DirectX::XMFLOAT4 Tangent{ 0.0f, 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 Binormal{ 0.0f, 0.0f, 0.0f, 0.0f };
 };
 
 struct DX11ViewportData 
@@ -94,6 +96,8 @@ struct ModelData
 {
 	eastl::vector<DirectX::XMFLOAT3>	totalVertices;
 	eastl::vector<DirectX::XMFLOAT3>	normals;
+	eastl::vector<DirectX::XMFLOAT3>	tangents;
+	eastl::vector<DirectX::XMFLOAT3>	binormals;
 	eastl::vector<DirectX::XMFLOAT2>	texCoords;
 	eastl::vector<ui32>					totalIndices;
 	eastl::vector<ui32>					submeshStartIndex;
@@ -111,7 +115,7 @@ struct ModelData
 struct DrawComponent
 {
 	ModelData model;
-	eastl::vector<Vertex_PCNT> vertexBufferInput;
+	eastl::vector<Vertex_PCNTTB> vertexBufferInput;
 };
 
 struct ModelBuffers
@@ -409,7 +413,9 @@ void TSR_FillComponentVertexInput(DrawComponent * drawComponent)
 		DirectX::XMFLOAT3 position = drawComponent->model.totalVertices[i];
 		DirectX::XMFLOAT3 normal = drawComponent->model.normals[i];
 		DirectX::XMFLOAT2 texcoord = drawComponent->model.texCoords[i];
-		Vertex_PCNT v{ position, white, normal, texcoord };
+		DirectX::XMFLOAT4 tangent = { drawComponent->model.tangents[i].x,drawComponent->model.tangents[i].y,drawComponent->model.tangents[i].z,0.0f };
+		DirectX::XMFLOAT4 binormal = { drawComponent->model.binormals[i].x,drawComponent->model.binormals[i].y,drawComponent->model.binormals[i].z,0.0f };
+		Vertex_PCNTTB v{ position, white, normal, texcoord, tangent, binormal };
 		drawComponent->vertexBufferInput.push_back(v);
 	}
 }
@@ -515,10 +521,21 @@ namespace DX11InputLayout
 		{"TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	ui32 pcntsize = 4;
+
+	D3D11_INPUT_ELEMENT_DESC PCNTTB[] =
+	{
+		{"POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,								D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TANGENT",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"BINORMAL",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, D3D11_APPEND_ALIGNED_ELEMENT,	D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+	ui32 pcnttbsize = 6;
 }
 
 void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData, DX11PixelShaderData * psData)
 {
-	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcntsize, DX11InputLayout::PCNT, vsData);
+	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcnttbsize, DX11InputLayout::PCNTTB, vsData);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }

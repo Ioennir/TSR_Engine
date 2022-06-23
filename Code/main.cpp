@@ -79,7 +79,7 @@ INT WINAPI wWinMain(
 	DX11PixelShaderData psData;
 
 	TSR_DX11_BuildShaders(DX11::dxData.device, &vsData, &psData);
-	TSR_DX11_BuildGeometryBuffersFromComponent(DX11::dxData.device, &drawable, &buffers, sizeof(Vertex_PCNT));
+	TSR_DX11_BuildGeometryBuffersFromComponent(DX11::dxData.device, &drawable, &buffers, sizeof(Vertex_PCNTTB));
 	
 	//Primitives
 	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.

@@ -38,6 +38,8 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	model->totalVertices.reserve(TYPECAST(eastl_size_t, totalVertexCount));
 	model->texCoords.reserve(TYPECAST(eastl_size_t, totalVertexCount));
 	model->normals.reserve(TYPECAST(eastl_size_t, totalVertexCount));
+	model->tangents.reserve(TYPECAST(eastl_size_t, totalVertexCount));
+	model->binormals.reserve(TYPECAST(eastl_size_t, totalVertexCount));
 	model->totalIndices.reserve(TYPECAST(eastl_size_t, totalIndexCount));
 	ui32 indexOffset = 0;
 	ui32 texCoordIndex = 0;
@@ -50,15 +52,19 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		//bool hasem = mesh->HasTangentsAndBitangents();
 		//texture coordinates; check if this can be done better
 		// im assuming things here as I dont fully know the assimp texturecoords member,
-		eastl::vector<DirectX::XMFLOAT2> meshTexCoords;
-		meshTexCoords.reserve(mesh->mNumVertices);
 		for (ui32 j = 0; j < mesh->mNumVertices; ++j)
 		{
 			aiVector3D tc = mesh->mTextureCoords[0][j];
-			DirectX::XMFLOAT2 tcdx{tc.x, tc.y};
-			model->texCoords.push_back(tcdx);
+			model->texCoords.push_back({tc.x, tc.y});
+			//If these are wrong, i'll calculate them
+			// myself
+			
+			aiVector3D tg = mesh->mTangents[j];
+			model->tangents.push_back({ tg.x, tg.y, tg.z });
+			aiVector3D bn = mesh->mBitangents[j];
+			model->binormals.push_back({ bn.x, bn.y, bn.z });
 		}
-
+		
 		texCoordIndex += mesh->mNumVertices;
 		model->submeshTexcoordEnd.push_back(texCoordIndex);
 
@@ -143,6 +149,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		eastl::string path = "..\\..\\..\\MODELS\\";
 		for (ui32 i = 0; i < scene->mNumMaterials; ++i)
 		{
+			//This could be done async/ in other thread or parallel
 			eastl::string tex;
 			model->materials.push_back({});
 			
