@@ -150,6 +150,8 @@ void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Da
 	// TODO(Fran): maybe pool displays and query refresh rate to get this exact
 	scDescriptor.BufferDesc.RefreshRate.Numerator = 60;
 	scDescriptor.BufferDesc.RefreshRate.Denominator = 1;
+	// note fran: srgb option
+	// https://developer.nvidia.com/gpugems/gpugems3/part-iv-image-effects/chapter-24-importance-being-linear
 	scDescriptor.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	scDescriptor.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	scDescriptor.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;

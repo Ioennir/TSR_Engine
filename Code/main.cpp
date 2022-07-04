@@ -36,8 +36,11 @@
 
 #include "tsr_assets.cpp"
 
+#include "tsr_camera.cpp"
+
 #include "tsr_rendering.cpp"
 #include "tsr_primitives.cpp"
+
 
 //TODO(Fran): Set DX11/DX12 Guards so integration of DX12 will be easier
 //TODO(Fran): Implement a naive input system, maybe winsdk has something or the Imgui input system itself.
@@ -84,7 +87,7 @@ INT WINAPI wWinMain(
 	//Primitives
 	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
 	ModelBuffers primitiveBuffers{};
-	TSR_DX11_BuildPrimitiveBuffers(Primitive::Sphere, DX11::dxData.device, &primitiveBuffers);
+	TSR_DX11_BuildPrimitiveBuffers(Primitive::Plane, DX11::dxData.device, &primitiveBuffers);
 	
 
 	float aspectRatio = DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height;

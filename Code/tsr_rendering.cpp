@@ -1,12 +1,3 @@
-//These structs are as simple as possible for now to perform
-// a basic 3D projection and get things going.
-struct CameraData
-{
-	DirectX::XMMATRIX mWorld;
-	DirectX::XMMATRIX mView;
-	DirectX::XMMATRIX mProj;
-};
-
 struct ConstantBuffer
 {
 	DirectX::XMMATRIX mWorld;
@@ -79,30 +70,6 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	}
 }
 
-void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, DirectX::XMFLOAT3 up, float fov, float aspectRatio, CameraData* camData)
-{
-	// camera position, target and up vector in 3D world
-	DirectX::XMVECTOR cEye = DirectX::XMVectorSet(position.x, position.y, position.z, 0.0f);
-	DirectX::XMVECTOR cFocus = DirectX::XMVectorSet(target.x, target.y, target.z, 0.0f);
-	DirectX::XMVECTOR cUp = DirectX::XMVectorSet(up.x, up.y, up.z, 0.0f);
-
-	// build view matrix
-	DirectX::XMMATRIX mView = DirectX::XMMatrixLookAtLH(cEye, cFocus, cUp);
-
-	// frustum data
-	float yFov = DirectX::XMConvertToRadians(fov);
-	float nearZ = 0.1f;
-	float farZ = 1000.0f;
-	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(yFov, aspectRatio, nearZ, farZ);
-
-	// world mat
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
-
-	camData->mWorld = mWorld;
-	camData->mView = mView;
-	camData->mProj = mProj;
-}
-
 void InitializeCBuffer(CameraData& camData, DX11Data* dxData, ConstantBuffer* cbuffer) {
 	//Simple translation followed by the camera view and projection
 	//Note(Fran): Camera world now is identity but maybe we should multiply it aswell for the future
@@ -147,25 +114,6 @@ void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], 
 	};
 }
 
-void TestUpdate(const CameraData& camData, float deltarot, float rotaxis[3], ConstantBuffer* cbuffer)
-{
-	float anim = DirectX::XMConvertToRadians(deltarot);
-	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(-3.0f, -3.0f, 4.0f);
-	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, -anim);
-
-	DirectX::XMMATRIX currentWorld = rotationMatrix * translation;
-
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
-
-	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(currentWorld.r, currentWorld));
-
-	*cbuffer = {
-		currentWorld,
-		mWVP,
-		normalMatrix
-	};
-}
-
 void TSR_Update(float dt)
 {
 
@@ -189,6 +137,15 @@ void TSR_RenderEntity(ID3D11DeviceContext * context, ModelBuffers * buffers, Dra
 		ui32 indexcount = drawable->model.submeshEndIndex[i] - start;
 		context->DrawIndexed(indexcount, start, 0);
 	}
+}
+
+//redo this
+void TSR_RenderPrimitive(ID3D11DeviceContext * context, ModelBuffers * primitiveBuffers)
+{
+	context->IASetVertexBuffers(0, 1, &primitiveBuffers->vertexBuffer.buffer, &primitiveBuffers->vertexBuffer.stride, &primitiveBuffers->vertexBuffer.offset);
+	context->IASetIndexBuffer(primitiveBuffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, primitiveBuffers->indexBuffer.offset);
+	//plane
+	context->DrawIndexed(4, 0, 0);
 }
 
 void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
@@ -217,17 +174,7 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	dxData.context->PSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	TSR_RenderEntity(dxData.context, buffers, drawable);
-
-	//Primitive Rendering
-
-	//TestUpdate(*camData, rotVelocity, imData->rot, cbuffer);
-	//dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
-	//dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
-	
-
-	//dxData.context->IASetVertexBuffers(0, 1, &primitiveBuffers->vertexBuffer.buffer, &primitiveBuffers->vertexBuffer.stride, &primitiveBuffers->vertexBuffer.offset);
-	//dxData.context->IASetIndexBuffer(primitiveBuffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, primitiveBuffers->indexBuffer.offset);
-	//dxData.context->DrawIndexed(1080, 0, 0);
+	//TSR_RenderPrimitive(dxData.context, primitiveBuffers);
 }
 
 void TSR_UpdateTransformComponents()
