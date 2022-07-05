@@ -29,23 +29,24 @@ void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, Dire
 	camData->mProj = mProj;
 }
 
-void UpdateCamera(float dt)
+// test
+void UpdateCamera(float dt, CameraData * camData)
 {
 	const float rotSpeed = 40.0f;
+	const float movSpeed = 15.0f;
 	// Fetch input from keyboard
-	bool forward = ImGui::IsKeyPressed(ImGuiKey_W);
-	bool back = ImGui::IsKeyPressed(ImGuiKey_S);
-	bool right = ImGui::IsKeyPressed(ImGuiKey_D);
-	bool left = ImGui::IsKeyPressed(ImGuiKey_A);
-	// convert input to axis value
-	float vertical = (forward ? 1.0f : 0.0f) + (back ? -1.0f : 0.0f);
-	float horizontal = (right ? 1.0f : 0.0f) + (left ? -1.0f : 0.0f);
 	
-	// angle
-	bool rotate = ImGui::IsMouseDragging(ImGuiMouseButton_Right);
-	ImVec2 ddelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
-	//eastl::string s = eastl::to_string(ddelta.x);
-	//LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("Y: "));
-	bool test = true;
-	//float amount = (rotate ? )
+	// TODO(Fran): Check the disable obsolete keyIO
+	bool forward = ImGui::IsKeyDown(ImGuiKey_W);
+	bool back = ImGui::IsKeyDown(ImGuiKey_S);
+	bool right = ImGui::IsKeyDown(ImGuiKey_D);
+	bool left = ImGui::IsKeyDown(ImGuiKey_A);
+	// convert input to axis value
+	float fwdmove = (forward ? -1.0f : 0.0f) + (back ? 1.0f : 0.0f);
+	float hormove = (right ? 1.0f : 0.0f) + (left ? -1.0f : 0.0f);
+	
+	//rebuild mView
+	float x = hormove * movSpeed * dt;
+	float z = fwdmove * movSpeed * dt;
+	camData->mView *= DirectX::XMMatrixTranslation(x, 0.0f, z);
 }

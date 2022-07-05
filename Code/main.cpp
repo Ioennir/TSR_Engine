@@ -54,8 +54,6 @@ INT WINAPI wWinMain(
 {
 	// Initialize and reset the time information for the application
 	ResetTimeInformation(&Time::Time);
-	
-	eastl::string s = eastl::to_string(1.0f);
 
 	// create the window and display it.
 	//WindowData winData{};
@@ -121,7 +119,7 @@ INT WINAPI wWinMain(
 			
 			dt = TYPECAST(r32, Time::Time.deltaTime);
 			//SCENE UPDATE
-			TSR_Update(dt);
+			TSR_Update(dt, &camData);
 
 			rotVelocity += imData.rotSpeed * dt;
 

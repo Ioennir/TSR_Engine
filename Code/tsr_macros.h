@@ -22,6 +22,7 @@ enum class LOGTYPE {
 	COUNT
 };
 
+#define STR(VALUE) eastl::to_string(VALUE)
 #define TEXTMESSAGE(VALUE) eastl::string(VALUE).c_str()
 
 #define LOGTYPE_ERROR		"[ERROR]"
@@ -56,6 +57,10 @@ inline r32 V3LEN(DirectX::XMFLOAT3 f)
 	r64 R = sqrt(POW(f.x) + POW(f.y) + POW(f.z));
 	return TYPECAST(r32, R);
 }
+
+#define MIN(VAL, VAL_) ((VAL > VAL_) ? VAL_ : VAL)
+#define MAX(VAL, VAL_) ((VAL < VAL_) ? VAL_ : VAL)
+#define CLAMP(VAL, MIN_, MAX_) MIN(MAX_, MAX(MIN_, VAL))
 
 //check the *= operator
 
