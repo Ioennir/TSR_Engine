@@ -22,7 +22,7 @@ enum class LOGTYPE {
 	COUNT
 };
 
-#define MESSAGE(VALUE) eastl::string(VALUE).c_str()
+#define TEXTMESSAGE(VALUE) eastl::string(VALUE).c_str()
 
 #define LOGTYPE_ERROR		"[ERROR]"
 #define LOGTYPE_WARNING		"[WARNING]"

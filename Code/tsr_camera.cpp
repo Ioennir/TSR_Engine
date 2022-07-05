@@ -29,7 +29,23 @@ void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, Dire
 	camData->mProj = mProj;
 }
 
-void UpdateCamera()
+void UpdateCamera(float dt)
 {
-
+	const float rotSpeed = 40.0f;
+	// Fetch input from keyboard
+	bool forward = ImGui::IsKeyPressed(ImGuiKey_W);
+	bool back = ImGui::IsKeyPressed(ImGuiKey_S);
+	bool right = ImGui::IsKeyPressed(ImGuiKey_D);
+	bool left = ImGui::IsKeyPressed(ImGuiKey_A);
+	// convert input to axis value
+	float vertical = (forward ? 1.0f : 0.0f) + (back ? -1.0f : 0.0f);
+	float horizontal = (right ? 1.0f : 0.0f) + (left ? -1.0f : 0.0f);
+	
+	// angle
+	bool rotate = ImGui::IsMouseDragging(ImGuiMouseButton_Right);
+	ImVec2 ddelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+	//eastl::string s = eastl::to_string(ddelta.x);
+	//LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("Y: "));
+	bool test = true;
+	//float amount = (rotate ? )
 }

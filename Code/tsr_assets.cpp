@@ -29,7 +29,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 	ui32 totalIndexCount = 0;
 	for (ui32 i = 0; i < scene->mNumMeshes; ++i)
 	{
-		LOGCHECK(LOGSYSTEM_ASSIMP, MESSAGE("Submesh of " + model->name + " doesnt have vertex colors, setting to white instead."), scene->mMeshes[i]->HasVertexColors(i));
+		LOGCHECK(LOGSYSTEM_ASSIMP, TEXTMESSAGE("Submesh of " + model->name + " doesnt have vertex colors, setting to white instead."), scene->mMeshes[i]->HasVertexColors(i));
 		totalVertexCount += scene->mMeshes[i]->mNumVertices;
 		totalIndexCount += (scene->mMeshes[i]->mNumFaces * 3);
 	}
@@ -86,7 +86,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 		for (ui32 j = 0; j < trisCount; ++j)
 		{
 			const aiFace face = mesh->mFaces[j];
-			LOGASSERT(LOGSYSTEM_ASSIMP, MESSAGE("One or more model " + model->name + " faces are not triangles.") , face.mNumIndices == 3);
+			LOGASSERT(LOGSYSTEM_ASSIMP, TEXTMESSAGE("One or more model " + model->name + " faces are not triangles.") , face.mNumIndices == 3);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[0] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[1] + indexOffset);
 			model->totalIndices.insert(model->totalIndices.end(), face.mIndices[2] + indexOffset);

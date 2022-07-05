@@ -196,7 +196,7 @@ ID3D11ShaderResourceView* TSR_DX11_LoadTextureFromPath(eastl::string texturePath
 	eastl::wstring wide;
 	wide.append_convert(texturePath.data(), texturePath.size());
 	hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &TextureView);
-	LOGCHECK(LOGSYSTEM_ASSIMP, MESSAGE("No texture present in path: " + texturePath + " (Null or invalid texture path.)"), !FAILED(hr));
+	LOGCHECK(LOGSYSTEM_ASSIMP, TEXTMESSAGE("No texture present in path: " + texturePath + " (Null or invalid texture path.)"), !FAILED(hr));
 	return TextureView;
 }
 

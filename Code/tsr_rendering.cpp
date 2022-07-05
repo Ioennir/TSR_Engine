@@ -116,7 +116,7 @@ void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], 
 
 void TSR_Update(float dt)
 {
-
+	UpdateCamera(dt);
 }
 
 //NOTE(I should think on grouping by material or something like that. (VIVI's ball hasnt got normals so it appears black)

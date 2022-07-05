@@ -54,6 +54,8 @@ INT WINAPI wWinMain(
 {
 	// Initialize and reset the time information for the application
 	ResetTimeInformation(&Time::Time);
+	
+	eastl::string s = eastl::to_string(1.0f);
 
 	// create the window and display it.
 	//WindowData winData{};
