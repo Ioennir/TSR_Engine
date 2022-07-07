@@ -13,6 +13,10 @@ namespace MouseControl
 
 namespace CameraControl
 {
+	DirectX::XMFLOAT4 defUp = { 0.0f, 1.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 defFwd = { 0.0f, 0.0f, 1.0f, 0.0f };
+	DirectX::XMFLOAT4 defRight = { 1.0f, 0.0f, 0.0f, 0.0f };
+
 	CameraData camData = {};
 	DirectX::XMFLOAT4 camPosition;
 	DirectX::XMFLOAT4 camTarget;
@@ -27,7 +31,10 @@ void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, Dire
 	CameraControl::camUp = { up.x, up.y, up.z, 0.0f };
 	CameraControl::camFwd = { target.x, target.y, target.z, 0.0f };
 	CameraControl::camTarget = { target.x, target.y, target.z, 0.0f };
-	CameraControl::camRight = { 1.0f, 0.0f, 0.0f, 0.0f };
+	DirectX::XMVECTOR Up = { up.x, up.y, up.z, 0.0f };
+	DirectX::XMVECTOR Fwd = { target.x, target.y, target.z, 0.0f };
+	DirectX::XMVECTOR Right = DirectX::XMVector3Cross(Up, Fwd);
+	DirectX::XMStoreFloat4(&CameraControl::camRight, Right);
 
 	// camera position, target and up vector in 3D world
 	DirectX::XMVECTOR cEye = DirectX::XMLoadFloat4(&CameraControl::camPosition);
@@ -61,41 +68,48 @@ void UpdateCamera(float dt, CameraData * camData)
 	//rotation is broken.
 	if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
 	{
+		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 		ImVec2 currentCursorPosition = ImGui::GetMousePos();
 		ImVec2 posOffset = {
-			currentCursorPosition.y - MouseControl::previousCursorPosition.y,
-			currentCursorPosition.x - MouseControl::previousCursorPosition.x
+			MouseControl::previousCursorPosition.y - currentCursorPosition.y,
+			MouseControl::previousCursorPosition.x - currentCursorPosition.x
 		};
-		ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
-		MouseControl::previousCursorPosition = { currentCursorPosition.x, currentCursorPosition.y };
-		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-		float xRot = CLAMP(posOffset.x, -1.0f, 1.0f) * -1.0f;
-		float yRot = CLAMP(posOffset.y, -1.0f, 1.0f) * -1.0f;
-
-		LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(xRot) + " Y: " + STR(yRot)));
-
-		xRot = xRot * rotSpeed * dt;
-		yRot = yRot * rotSpeed * dt;
+		float xRot = 0.0f;
+		float yRot = 0.0f;
+		if (abs(posOffset.x) > 15.0f)
+		{
+			MouseControl::previousCursorPosition = { currentCursorPosition.x, currentCursorPosition.y };
+			xRot = CLAMP(posOffset.x, -1.0f, 1.0f) * -1.0f;
+			xRot = xRot * rotSpeed * dt; // rotation around x axis
+		}
+		if (abs(posOffset.y) > 15.0f)
+		{
+			MouseControl::previousCursorPosition = { currentCursorPosition.x, currentCursorPosition.y };
+			yRot = CLAMP(posOffset.y, -1.0f, 1.0f) * -1.0f;
+			yRot = yRot * rotSpeed * dt; // rotation around y axis
+		}
+		//LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(xRot) + " Y: " + STR(yRot)));
 		
+
 		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationRollPitchYaw(xRot, yRot, 0.0f);
+
 		DirectX::XMVECTOR cT = DirectX::XMLoadFloat4(&CameraControl::camTarget);
-		DirectX::XMVECTOR cR = DirectX::XMLoadFloat4(&CameraControl::camRight);
-		DirectX::XMVECTOR cF = DirectX::XMLoadFloat4(&CameraControl::camFwd);
-		DirectX::XMVECTOR cU = DirectX::XMLoadFloat4(&CameraControl::camUp);
-
 		cT = DirectX::XMVector3TransformCoord(cT, rotMat);
-		cR = DirectX::XMVector3TransformCoord(cR, rotMat);
-		cF = DirectX::XMVector3TransformCoord(cF, rotMat);
-		cU = DirectX::XMVector3Cross(cF, cR);
+		
+		DirectX::XMVECTOR cU = DirectX::XMLoadFloat4(&CameraControl::camUp);
+		cU = DirectX::XMVector3TransformCoord(cU, rotMat);
 
-		//cR = DirectX::XMVector4Normalize(cR);
-		//cF = DirectX::XMVector4Normalize(cF);
-		//cU = DirectX::XMVector4Normalize(cU);
+		DirectX::XMVECTOR cF = DirectX::XMLoadFloat4(&CameraControl::camFwd);
+		cF = DirectX::XMVector3TransformCoord(cF, rotMat);
+		
+		DirectX::XMVECTOR cR = DirectX::XMLoadFloat4(&CameraControl::camRight);
+		cR = DirectX::XMVector3TransformCoord(cR, rotMat);
 		
 		DirectX::XMStoreFloat4(&CameraControl::camTarget, cT);
-		DirectX::XMStoreFloat4(&CameraControl::camRight, cR);
-		DirectX::XMStoreFloat4(&CameraControl::camFwd, cF);
 		DirectX::XMStoreFloat4(&CameraControl::camUp, cU);
+		DirectX::XMStoreFloat4(&CameraControl::camFwd, cF);
+		DirectX::XMStoreFloat4(&CameraControl::camRight, cR);
+
 	}
 
 	// TODO(Fran): Check the disable obsolete keyIO
@@ -115,18 +129,42 @@ void UpdateCamera(float dt, CameraData * camData)
 	float xMov = hormove * movSpeed * dt;
 	float zMov = fwdmove * movSpeed * dt;
 	float yMov = vermove * movSpeed * dt;
+	
+	DirectX::XMFLOAT3 xMovement =
+	{
+		xMov * CameraControl::camRight.x,
+		xMov * CameraControl::camRight.y,
+		xMov * CameraControl::camRight.z
+	};
+
+	DirectX::XMFLOAT3 yMovement =
+	{
+		yMov * CameraControl::camUp.x,
+		yMov * CameraControl::camUp.y,
+		yMov * CameraControl::camUp.z
+	};
+
+	DirectX::XMFLOAT3 zMovement =
+	{
+		zMov * CameraControl::camFwd.x,
+		zMov * CameraControl::camFwd.y,
+		zMov * CameraControl::camFwd.z
+	};
+
 	CameraControl::camPosition = {
-		CameraControl::camPosition.x + xMov,
-		CameraControl::camPosition.y + yMov,
-		CameraControl::camPosition.z + zMov,
+		CameraControl::camPosition.x + xMovement.x + yMovement.x + zMovement.x,
+		CameraControl::camPosition.y + xMovement.y + yMovement.y + zMovement.y,
+		CameraControl::camPosition.z + xMovement.z + yMovement.z + zMovement.z,
 		0.0f
 	};
+	
 	CameraControl::camTarget = {
-		CameraControl::camTarget.x + xMov,
-		CameraControl::camTarget.y + yMov,
-		CameraControl::camTarget.z + zMov,
+		CameraControl::camTarget.x + xMovement.x + yMovement.x + zMovement.x,
+		CameraControl::camTarget.y + xMovement.y + yMovement.y + zMovement.y,
+		CameraControl::camTarget.z + xMovement.z + yMovement.z + zMovement.z,
 		0.0f
 	};
+
 	//camData->mView *= DirectX::XMMatrixTranslation(xMov, yMov, zMov);
 	camData->mView = DirectX::XMMatrixLookAtLH(
 		DirectX::XMLoadFloat4(&CameraControl::camPosition),

@@ -111,12 +111,12 @@ void InitializeCBuffer(CameraData& camData, DX11Data* dxData, ConstantBuffer* cb
 
 void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], ConstantBuffer* cbuffer) {
 
-	float anim = DirectX::XMConvertToRadians(deltarot);
+	float anim = 180.0f;// DirectX::XMConvertToRadians(deltarot);
 
 	// triangle transformations/ world matrix basically rotate around arbitrary axis with arbitrary speed
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, -anim);
-	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -3.0f, 2.0f);
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -3.0f, 5.0f);
 	DirectX::XMMATRIX currentWorld = scaleMatrix * rotationMatrix * translation;
 
 	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
