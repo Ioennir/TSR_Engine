@@ -26,6 +26,22 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	ImGui::DragFloat("Rotation speed", &imData->rotSpeed, 60.0f, -1000.0f, 1000.0f);
 	ImGui::End();
 
+	ImGui::Begin("Camera details");
+	//ImGui::SliderFloat3("Position", );
+	float fp[] = { CameraControl::camPosition.x, CameraControl::camPosition.y, CameraControl::camPosition.z };
+	ImGui::SliderFloat3("Position", fp, 0.0f, 1000.0f);
+	float ft[] = { CameraControl::camTarget.x, CameraControl::camTarget.y, CameraControl::camTarget.z };
+	ImGui::SliderFloat3("Target", ft, 0.0f, 1000.0f);
+
+	float fu[] = { CameraControl::camUp.x, CameraControl::camUp.y, CameraControl::camUp.z };
+	ImGui::SliderFloat3("Up", fu, 0.0f, 1000.0f);
+	float fr[] = { CameraControl::camRight.x, CameraControl::camRight.y, CameraControl::camRight.z };
+	ImGui::SliderFloat3("Right", fr, 0.0f, 1000.0f);
+	float ff[] = { CameraControl::camFwd.x, CameraControl::camFwd.y, CameraControl::camFwd.z };
+	ImGui::SliderFloat3("Forward", ff, 0.0f, 1000.0f);
+
+	ImGui::End();
+
 	ImGui::Begin("Frame statistics");
 	ImGui::Text("fps: %f", fStats.fps);
 	ImGui::Text("ms per frame: %f", fStats.ms_per_frame);

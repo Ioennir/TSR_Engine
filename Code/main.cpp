@@ -91,10 +91,9 @@ INT WINAPI wWinMain(
 	
 
 	float aspectRatio = DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height;
-	CameraData camData{};
-	InitializeCamera({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio, &camData);
+	InitializeCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio);
 	ConstantBuffer cbuffer{};
-	InitializeCBuffer(camData, &DX11::dxData, &cbuffer);
+	InitializeCBuffer(CameraControl::camData, &DX11::dxData, &cbuffer);
 
 	IMData imData{};
 	//this is for testing purposes;
@@ -119,12 +118,12 @@ INT WINAPI wWinMain(
 			
 			dt = TYPECAST(r32, Time::Time.deltaTime);
 			//SCENE UPDATE
-			TSR_Update(dt, &camData);
+			TSR_Update(dt, &CameraControl::camData);
 
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &camData, &cbuffer, &imData, DX11::dxData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
+			TSR_Draw(rotVelocity, &CameraControl::camData, &cbuffer, &imData, DX11::dxData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
 			// GUI RENDERING
 			TSR_DrawGUI(DX11::dxData, &imData, Profiling::frameStats);
 
