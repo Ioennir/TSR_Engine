@@ -77,8 +77,25 @@ void UpdateCamera(float dt, CameraData * camData)
 		xRot = xRot * rotSpeed * dt;
 		yRot = yRot * rotSpeed * dt;
 		
-		
+		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationRollPitchYaw(xRot, yRot, 0.0f);
+		DirectX::XMVECTOR cT = DirectX::XMLoadFloat4(&CameraControl::camTarget);
+		DirectX::XMVECTOR cR = DirectX::XMLoadFloat4(&CameraControl::camRight);
+		DirectX::XMVECTOR cF = DirectX::XMLoadFloat4(&CameraControl::camFwd);
+		DirectX::XMVECTOR cU = DirectX::XMLoadFloat4(&CameraControl::camUp);
 
+		cT = DirectX::XMVector3TransformCoord(cT, rotMat);
+		cR = DirectX::XMVector3TransformCoord(cR, rotMat);
+		cF = DirectX::XMVector3TransformCoord(cF, rotMat);
+		cU = DirectX::XMVector3Cross(cF, cR);
+
+		//cR = DirectX::XMVector4Normalize(cR);
+		//cF = DirectX::XMVector4Normalize(cF);
+		//cU = DirectX::XMVector4Normalize(cU);
+		
+		DirectX::XMStoreFloat4(&CameraControl::camTarget, cT);
+		DirectX::XMStoreFloat4(&CameraControl::camRight, cR);
+		DirectX::XMStoreFloat4(&CameraControl::camFwd, cF);
+		DirectX::XMStoreFloat4(&CameraControl::camUp, cU);
 	}
 
 	// TODO(Fran): Check the disable obsolete keyIO
