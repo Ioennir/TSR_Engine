@@ -34,10 +34,10 @@ namespace MouseControl
 	DirectX::XMFLOAT2 previousCursorPosition = {0.0f, 0.0f};
 }
 
-// test
+// Fix the camera rotation
 void UpdateCamera(float dt, CameraData * camData)
 {
-	const float rotSpeed = 1.0f;
+	const float rotSpeed = 15.0f;
 	const float movSpeed = 15.0f;
 	// Fetch input from keyboard
 	
@@ -56,18 +56,24 @@ void UpdateCamera(float dt, CameraData * camData)
 	camData->mView *= DirectX::XMMatrixTranslation(xMov, 0.0f, zMov);
 
 	//rotation
-	ImVec2 currentCursorPosition = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
-	ImVec2 posOffset = { currentCursorPosition.x - MouseControl::previousCursorPosition.x, currentCursorPosition.y - MouseControl::previousCursorPosition.y};
-	
+	ImVec2 posOffset = { 0.0f, 0.0f };
+	if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+	{
+		ImVec2 currentCursorPosition = ImGui::GetMousePos();
+		posOffset = {
+			currentCursorPosition.y - MouseControl::previousCursorPosition.y,
+			currentCursorPosition.x - MouseControl::previousCursorPosition.x
+		};
+		MouseControl::previousCursorPosition = { currentCursorPosition.x, currentCursorPosition.y };
+	}
 	float xRot = CLAMP(posOffset.x, -1.0f, 1.0f);
 	float yRot = CLAMP(posOffset.y, -1.0f, 1.0f);
 	
-	//MouseControl::previousCursorPosition = { currentCursorPosition.x, currentCursorPosition.y };
 
 	LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(xRot) + " Y: " + STR(yRot)));
 
-	xRot = xRot * rotSpeed * dt;
-	yRot = yRot * rotSpeed * dt;
+	xRot = xRot * rotSpeed * -dt;
+	yRot = yRot * rotSpeed * -dt;
 
 	camData->mView *= DirectX::XMMatrixRotationX(xRot);
 	camData->mView *= DirectX::XMMatrixRotationY(yRot);
