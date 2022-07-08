@@ -76,7 +76,7 @@ void UpdateCamera(float dt, CameraData * camData)
 		};
 		float xRot = 0.0f;
 		float yRot = 0.0f;
-		if (abs(posOffset.x) > 15.0f)
+		if (abs(posOffset.x) > 1.0f)
 		{
 			MouseControl::previousCursorPosition = { currentCursorPosition.x, currentCursorPosition.y };
 			xRot = CLAMP(posOffset.x, -1.0f, 1.0f) * -1.0f;
@@ -90,25 +90,33 @@ void UpdateCamera(float dt, CameraData * camData)
 		}
 		//LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(xRot) + " Y: " + STR(yRot)));
 		
-
 		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationRollPitchYaw(xRot, yRot, 0.0f);
+		camData->mView *= rotMat;
 
-		DirectX::XMVECTOR cT = DirectX::XMLoadFloat4(&CameraControl::camTarget);
-		cT = DirectX::XMVector3TransformCoord(cT, rotMat);
-		
-		DirectX::XMVECTOR cU = DirectX::XMLoadFloat4(&CameraControl::camUp);
-		cU = DirectX::XMVector3TransformCoord(cU, rotMat);
+		//DirectX::XMVECTOR fwd = DirectX::XMVector4Transform({ 0.0f, 0.0f, 1.0f, 0.0f }, camData->mView);
+		//DirectX::XMVECTOR up = DirectX::XMVector4Transform({ 0.0f, 1.0f, 0.0f, 0.0f }, camData->mView);
+		//DirectX::XMVECTOR right = DirectX::XMVector4Transform({ 1.0f, 0.0f, 0.0f, 0.0f }, camData->mView);
 
-		DirectX::XMVECTOR cF = DirectX::XMLoadFloat4(&CameraControl::camFwd);
-		cF = DirectX::XMVector3TransformCoord(cF, rotMat);
-		
-		DirectX::XMVECTOR cR = DirectX::XMLoadFloat4(&CameraControl::camRight);
-		cR = DirectX::XMVector3TransformCoord(cR, rotMat);
-		
-		DirectX::XMStoreFloat4(&CameraControl::camTarget, cT);
-		DirectX::XMStoreFloat4(&CameraControl::camUp, cU);
-		DirectX::XMStoreFloat4(&CameraControl::camFwd, cF);
-		DirectX::XMStoreFloat4(&CameraControl::camRight, cR);
+		//
+		//DirectX::XMVECTOR cT = DirectX::XMLoadFloat4(&CameraControl::camTarget);
+		//cT = DirectX::XMVector3TransformCoord(cT, rotMat);
+		//
+		//DirectX::XMVECTOR cU = DirectX::XMLoadFloat4(&CameraControl::camUp);
+		//cU = DirectX::XMVector3TransformCoord(cU, rotMat);
+		//cU = DirectX::XMVector3Normalize(cU);
+		//
+		//DirectX::XMVECTOR cF = DirectX::XMLoadFloat4(&CameraControl::camFwd);
+		//cF = DirectX::XMVector3TransformCoord(cF, rotMat);
+		//cF = DirectX::XMVector3Normalize(cF);
+		//
+		//DirectX::XMVECTOR cR = DirectX::XMLoadFloat4(&CameraControl::camRight);
+		//cR = DirectX::XMVector3TransformCoord(cR, rotMat);
+		//cR = DirectX::XMVector3Normalize(cR);
+		//
+		//DirectX::XMStoreFloat4(&CameraControl::camTarget, cT);
+		//DirectX::XMStoreFloat4(&CameraControl::camUp, cU);
+		//DirectX::XMStoreFloat4(&CameraControl::camFwd, cF);
+		//DirectX::XMStoreFloat4(&CameraControl::camRight, cR);
 
 	}
 
@@ -130,45 +138,45 @@ void UpdateCamera(float dt, CameraData * camData)
 	float zMov = fwdmove * movSpeed * dt;
 	float yMov = vermove * movSpeed * dt;
 	
-	DirectX::XMFLOAT3 xMovement =
-	{
-		xMov * CameraControl::camRight.x,
-		xMov * CameraControl::camRight.y,
-		xMov * CameraControl::camRight.z
-	};
+	//DirectX::XMFLOAT3 xMovement =
+	//{
+	//	xMov * CameraControl::camRight.x,
+	//	xMov * CameraControl::camRight.y,
+	//	xMov * CameraControl::camRight.z
+	//};
+	//
+	//DirectX::XMFLOAT3 yMovement =
+	//{
+	//	yMov * CameraControl::camUp.x,
+	//	yMov * CameraControl::camUp.y,
+	//	yMov * CameraControl::camUp.z
+	//};
+	//
+	//DirectX::XMFLOAT3 zMovement =
+	//{
+	//	zMov * CameraControl::camFwd.x,
+	//	zMov * CameraControl::camFwd.y,
+	//	zMov * CameraControl::camFwd.z
+	//};
+	//
+	//CameraControl::camPosition = {
+	//	CameraControl::camPosition.x + xMovement.x + yMovement.x + zMovement.x,
+	//	CameraControl::camPosition.y + xMovement.y + yMovement.y + zMovement.y,
+	//	CameraControl::camPosition.z + xMovement.z + yMovement.z + zMovement.z,
+	//	0.0f
+	//};
+	//
+	//CameraControl::camTarget = {
+	//	CameraControl::camTarget.x + xMovement.x + yMovement.x + zMovement.x,
+	//	CameraControl::camTarget.y + xMovement.y + yMovement.y + zMovement.y,
+	//	CameraControl::camTarget.z + xMovement.z + yMovement.z + zMovement.z,
+	//	0.0f
+	//};
 
-	DirectX::XMFLOAT3 yMovement =
-	{
-		yMov * CameraControl::camUp.x,
-		yMov * CameraControl::camUp.y,
-		yMov * CameraControl::camUp.z
-	};
-
-	DirectX::XMFLOAT3 zMovement =
-	{
-		zMov * CameraControl::camFwd.x,
-		zMov * CameraControl::camFwd.y,
-		zMov * CameraControl::camFwd.z
-	};
-
-	CameraControl::camPosition = {
-		CameraControl::camPosition.x + xMovement.x + yMovement.x + zMovement.x,
-		CameraControl::camPosition.y + xMovement.y + yMovement.y + zMovement.y,
-		CameraControl::camPosition.z + xMovement.z + yMovement.z + zMovement.z,
-		0.0f
-	};
-	
-	CameraControl::camTarget = {
-		CameraControl::camTarget.x + xMovement.x + yMovement.x + zMovement.x,
-		CameraControl::camTarget.y + xMovement.y + yMovement.y + zMovement.y,
-		CameraControl::camTarget.z + xMovement.z + yMovement.z + zMovement.z,
-		0.0f
-	};
-
-	//camData->mView *= DirectX::XMMatrixTranslation(xMov, yMov, zMov);
-	camData->mView = DirectX::XMMatrixLookAtLH(
+	camData->mView *= DirectX::XMMatrixTranslation(xMov, yMov, zMov);
+		/*DirectX::XMMatrixLookAtLH(
 		DirectX::XMLoadFloat4(&CameraControl::camPosition),
 		DirectX::XMLoadFloat4(&CameraControl::camTarget),
 		DirectX::XMLoadFloat4(&CameraControl::camUp)
-	);
+	);*/
 }
