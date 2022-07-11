@@ -420,7 +420,7 @@ void TSR_FillComponentVertexInput(DrawComponent * drawComponent)
 		DirectX::XMFLOAT2 texcoord = drawComponent->model.texCoords[i];
 		DirectX::XMFLOAT4 tangent = { drawComponent->model.tangents[i].x,drawComponent->model.tangents[i].y,drawComponent->model.tangents[i].z,0.0f };
 		DirectX::XMFLOAT4 binormal = { drawComponent->model.binormals[i].x,drawComponent->model.binormals[i].y,drawComponent->model.binormals[i].z,0.0f };
-		Vertex_PCNTTB v{ position, white, normal, texcoord, tangent, binormal };
+		Vertex_PCNTTB v{ position, TSR_White, normal, texcoord, tangent, binormal };
 		drawComponent->vertexBufferInput.push_back(v);
 	}
 }

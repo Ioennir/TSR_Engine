@@ -45,7 +45,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Code\main.cpp" />
+    <ClInclude Include="Code\tsr_lights.cpp" />
     <ClInclude Include="Code\tsr_camera.cpp" />
+    <ClInclude Include="Code\tsr_math.h" />
     <ClInclude Include="Code\tsr_primitives.cpp" />
     <ClInclude Include="Code\platform\tsr_win32.cpp" />
     <ClInclude Include="Code\tsr_assets.cpp" />

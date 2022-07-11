@@ -1,6 +1,7 @@
 // TYPES & MACROS
 #include "tsr_types.cpp"
 #include "tsr_macros.h"
+#include "tsr_math.h"
 
 // EASTL
 #include "tsr_eastl.h" 
@@ -37,6 +38,7 @@
 #include "tsr_assets.cpp"
 
 #include "tsr_camera.cpp"
+#include "tsr_lights.cpp"
 
 #include "tsr_rendering.cpp"
 #include "tsr_primitives.cpp"
@@ -70,7 +72,7 @@ INT WINAPI wWinMain(
 	ImGui_ImplWin32_Init(Platform::windowData.handle);
 	ImGui_ImplDX11_Init(DX11::dxData.device, DX11::dxData.context);
 	ImGui::StyleColorsDark();
-	
+
 	// Load vivi
 	eastl::string path = "..\\..\\..\\MODELS\\vivi\\vivi_modified.fbx";
 	DrawComponent drawable{};
@@ -89,11 +91,9 @@ INT WINAPI wWinMain(
 	ModelBuffers primitiveBuffers{};
 	TSR_DX11_BuildPrimitiveBuffers(Primitive::Plane, DX11::dxData.device, &primitiveBuffers);
 	
-
-	float aspectRatio = DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height;
-	InitializeCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, aspectRatio);
+	InitializeCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, (DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height));
 	ConstantBuffer cbuffer{};
-	InitializeCBuffer(CameraControl::camData, &DX11::dxData, &cbuffer);
+	InitializeCBuffer(CameraControl::CamData, &DX11::dxData, &cbuffer);
 
 	IMData imData{};
 	//this is for testing purposes;
@@ -118,14 +118,14 @@ INT WINAPI wWinMain(
 			
 			dt = TYPECAST(r32, Time::Time.deltaTime);
 			//SCENE UPDATE
-			TSR_Update(dt, &CameraControl::camData);
+			TSR_Update(dt);
 
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &CameraControl::camData, &cbuffer, &imData, DX11::dxData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
+			TSR_Draw(rotVelocity, &cbuffer, &imData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
 			// GUI RENDERING
-			TSR_DrawGUI(DX11::dxData, &imData, Profiling::frameStats);
+			TSR_DrawGUI(&imData);
 
 			DX11::dxData.swapChain->Present(NO_VSYNC, 0);
 		}

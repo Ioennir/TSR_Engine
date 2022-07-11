@@ -12,8 +12,10 @@ struct IMData
 	r32 rotSpeed{ 60.0f };
 };
 
-void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
+void TSR_DrawGUI(IMData* imData)
 {
+	DX11Data& dxData = DX11::dxData;
+	FrameStats& fStats = Profiling::frameStats;
 	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
@@ -27,19 +29,18 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	ImGui::End();
 
 	ImGui::Begin("Camera details");
-	//ImGui::SliderFloat3("Position", );
-	float fp[] = { CameraControl::camPosition.x, CameraControl::camPosition.y, CameraControl::camPosition.z };
-	ImGui::SliderFloat3("Position", fp, 0.0f, 1000.0f);
-	float ft[] = { CameraControl::camTarget.x, CameraControl::camTarget.y, CameraControl::camTarget.z };
-	ImGui::SliderFloat3("Target", ft, 0.0f, 1000.0f);
+		//ImGui::SliderFloat3("Position", );
+		float fp[] = { CameraControl::camPosition.x, CameraControl::camPosition.y, CameraControl::camPosition.z };
+		ImGui::SliderFloat3("Position", fp, 0.0f, 1000.0f);
+		float ft[] = { CameraControl::camTarget.x, CameraControl::camTarget.y, CameraControl::camTarget.z };
+		ImGui::SliderFloat3("Target", ft, 0.0f, 1000.0f);
 
-	float fu[] = { CameraControl::camUp.x, CameraControl::camUp.y, CameraControl::camUp.z };
-	ImGui::SliderFloat3("Up", fu, 0.0f, 1000.0f);
-	float fr[] = { CameraControl::camRight.x, CameraControl::camRight.y, CameraControl::camRight.z };
-	ImGui::SliderFloat3("Right", fr, 0.0f, 1000.0f);
-	float ff[] = { CameraControl::camFwd.x, CameraControl::camFwd.y, CameraControl::camFwd.z };
-	ImGui::SliderFloat3("Forward", ff, 0.0f, 1000.0f);
-
+		float fu[] = { CameraControl::camUp.x, CameraControl::camUp.y, CameraControl::camUp.z };
+		ImGui::SliderFloat3("Up", fu, 0.0f, 1000.0f);
+		float fr[] = { CameraControl::camRight.x, CameraControl::camRight.y, CameraControl::camRight.z };
+		ImGui::SliderFloat3("Right", fr, 0.0f, 1000.0f);
+		float ff[] = { CameraControl::camFwd.x, CameraControl::camFwd.y, CameraControl::camFwd.z };
+		ImGui::SliderFloat3("Forward", ff, 0.0f, 1000.0f);
 	ImGui::End();
 
 	ImGui::Begin("Frame statistics");
@@ -86,12 +87,12 @@ void TSR_DrawGUI(DX11Data& dxData, IMData* imData, FrameStats& fStats)
 	}
 }
 
-void InitializeCBuffer(CameraData& camData, DX11Data* dxData, ConstantBuffer* cbuffer) {
+void InitializeCBuffer(CameraData& CamData, DX11Data* dxData, ConstantBuffer* cbuffer) {
 	//Simple translation followed by the camera view and projection
 	//Note(Fran): Camera world now is identity but maybe we should multiply it aswell for the future
 	//transpose?
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(mWorld * camData.mWorld * camData.mView * camData.mProj);
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(mWorld * CamData.mWorld * CamData.mView * CamData.mProj);
 	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixIdentity();
 	*cbuffer = {
 		mWorld,
@@ -109,7 +110,7 @@ void InitializeCBuffer(CameraData& camData, DX11Data* dxData, ConstantBuffer* cb
 	HRESULT hr = dxData->device->CreateBuffer(&cbdesc, &csd, &dxData->dx11_cbuffer);
 }
 
-void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], ConstantBuffer* cbuffer) {
+void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], ConstantBuffer* cbuffer) {
 
 	float anim = 180.0f;// DirectX::XMConvertToRadians(deltarot);
 
@@ -119,7 +120,7 @@ void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], 
 	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -3.0f, 5.0f);
 	DirectX::XMMATRIX currentWorld = scaleMatrix * rotationMatrix * translation;
 
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * camData.mView * camData.mProj);
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * CamData.mView * CamData.mProj);
 
 	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(currentWorld.r, currentWorld));
 
@@ -130,9 +131,9 @@ void UpdateCBuffer(const CameraData& camData, float deltarot, float rotaxis[3], 
 	};
 }
 
-void TSR_Update(float dt, CameraData * camData)
+void TSR_Update(float dt)
 {
-	UpdateCamera(dt, camData);
+	UpdateCamera(dt, &CameraControl::CamData);
 }
 
 //NOTE(I should think on grouping by material or something like that. (VIVI's ball hasnt got normals so it appears black)
@@ -164,8 +165,10 @@ void TSR_RenderPrimitive(ID3D11DeviceContext * context, ModelBuffers * primitive
 	context->DrawIndexed(4, 0, 0);
 }
 
-void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, IMData* imData, DX11Data& dxData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
+void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
 {
+	DX11Data& dxData = DX11::dxData;
+	CameraData* CamData = &CameraControl::CamData;
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
 
@@ -185,7 +188,7 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	
 	//CBUFFER
 	// TODO(Fran): Move this to the update, check the issues 
-	UpdateCBuffer(*camData, rotVelocity, imData->rot, cbuffer);
+	UpdateCBuffer(*CamData, rotVelocity, imData->rot, cbuffer);
 	dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	dxData.context->PSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
@@ -193,18 +196,3 @@ void TSR_Draw(float rotVelocity, CameraData* camData, ConstantBuffer* cbuffer, I
 	//TSR_RenderPrimitive(dxData.context, primitiveBuffers);
 }
 
-void TSR_UpdateTransformComponents()
-{
-
-}
-
-void TSR_UpdateDrawComponentRelatedBuffers()
-{
-
-}
-
-//Only draws the draw component of the entity
-void TSR_DrawEntities()
-{
-
-}

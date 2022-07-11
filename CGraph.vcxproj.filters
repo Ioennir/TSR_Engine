@@ -110,6 +110,12 @@
     <ClInclude Include="Code\tsr_camera.cpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Code\tsr_lights.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\tsr_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\mainPS.hlsl">

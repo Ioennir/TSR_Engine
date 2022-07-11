@@ -3,6 +3,8 @@ struct CameraData
 	DirectX::XMMATRIX mWorld;
 	DirectX::XMMATRIX mView;
 	DirectX::XMMATRIX mProj;
+	float AspectRatio;
+	float Fov;
 };
 
 namespace MouseControl
@@ -18,11 +20,13 @@ namespace CameraControl
 	DirectX::XMFLOAT4 camFwd;
 	DirectX::XMFLOAT4 camTarget;
 	DirectX::XMFLOAT4 camRight;
-	CameraData camData = {};
+	CameraData CamData = {};
 }
 
 void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, DirectX::XMFLOAT3 up, float fov, float aspectRatio)
 {
+	CameraControl::CamData.AspectRatio = aspectRatio;
+	CameraControl::CamData.Fov = fov;
 	CameraControl::camPosition = { position.x, position.y, position.z, 0.0f };
 	CameraControl::camUp = { up.x, up.y, up.z, 0.0f };
 	CameraControl::camFwd = { target.x, target.y, target.z, 0.0f };
@@ -49,13 +53,14 @@ void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, Dire
 	// world mat
 	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
 
-	CameraControl::camData.mWorld = mWorld;
-	CameraControl::camData.mView = mView;
-	CameraControl::camData.mProj = mProj;
+	CameraControl::CamData.mWorld = mWorld;
+	CameraControl::CamData.mView = mView;
+	CameraControl::CamData.mProj = mProj;
 }
 
+//https://stackoverflow.com/questions/36779161/trap-cursor-in-window
 // Fix the camera rotation
-void UpdateCamera(float dt, CameraData * camData)
+void UpdateCamera(float dt, CameraData * CamData)
 {
 	const float rotSpeed = 30.0f;
 	const float movSpeed = 15.0f;
@@ -67,7 +72,7 @@ void UpdateCamera(float dt, CameraData * camData)
 		// Fetch and process mouse input
 		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 		ImVec2 dir = { 0.0f, 0.0f };
-		ImVec2 mouseDrag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right, 5.0f);
+		ImVec2 mouseDrag = ImGui::GetMousePos();//ImGui::GetMouseDragDelta(ImGuiMouseButton_Right, 0.0f);
 		ImVec2 prev = { MouseControl::prevDrag.x, MouseControl::prevDrag.y };
 		if (mouseDrag.x > prev.x)
 		{
@@ -93,10 +98,17 @@ void UpdateCamera(float dt, CameraData * camData)
 
 		
 		//LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(xRot) + " Y: " + STR(yRot)));
-		
+		//NOTE(Fran): rotation is funky sometimes, doing rombo movement shows the issue (diagonals)
 		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationRollPitchYaw(yRot, xRot, 0.0f);
-		camData->mView *= rotMat;
+		CamData->mView *= rotMat;
 
+		// store them
+		DirectX::XMVECTOR f = DirectX::XMVector4Transform({ 0.0f, 0.0f, 1.0f, 0.0f }, CamData->mView);
+		DirectX::XMStoreFloat4(&CameraControl::camFwd, f);
+		DirectX::XMVECTOR r = DirectX::XMVector4Transform({ 1.0f, 0.0f, 0.0f, 0.0f }, CamData->mView);
+		DirectX::XMStoreFloat4(&CameraControl::camRight, r);
+		DirectX::XMVECTOR u = DirectX::XMVector4Transform({ 0.0f, 1.0f, 0.0f, 0.0f }, CamData->mView);
+		DirectX::XMStoreFloat4(&CameraControl::camUp, u);
 	}
 
 	// TODO(Fran): Check the disable obsolete keyIO
@@ -117,5 +129,5 @@ void UpdateCamera(float dt, CameraData * camData)
 	float zMov = -fwdmove * movSpeed * dt;
 	float yMov = -vermove * movSpeed * dt;
 	
-	camData->mView *= DirectX::XMMatrixTranslation(xMov, yMov, zMov);
+	CamData->mView *= DirectX::XMMatrixTranslation(xMov, yMov, zMov);
 }

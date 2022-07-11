@@ -62,14 +62,14 @@ void CreateAndSpawnWindow(LPCWSTR winName, WindowData & winData, HINSTANCE hInst
 	winData.height = 720;//wRect.bottom - wRect.top;
 }
 
-void FetchPerformanceCounter(long long* performanceCounter)
+void FetchPerformanceCounter(long long* PerformanceCounter)
 {
-	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(performanceCounter));
+	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(PerformanceCounter));
 }
 
-void FetchPerformanceFreq(long long* performanceFreq)
+void FetchPerformanceFreq(long long* PerformanceFreq)
 {
-	QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(performanceFreq));
+	QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(PerformanceFreq));
 }
 
 #endif

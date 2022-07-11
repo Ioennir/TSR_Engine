@@ -1,7 +1,7 @@
 
 // These are supossed to be functions that are present on each platform
-void FetchPerformanceCounter(long long* performanceCounter);
-void FetchPerformanceFreq(long long* performanceFreq);
+void FetchPerformanceCounter(long long* PerformanceCounter);
+void FetchPerformanceFreq(long long* PerformanceFreq);
 
 // TODO(Fran): HWND is a windows only type.
 struct WindowData
