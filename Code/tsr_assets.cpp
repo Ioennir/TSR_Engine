@@ -156,7 +156,7 @@ void TSR_LoadMeshFromPath(ModelData * model, eastl::string path)
 			if (!mapNames[i].diffuse.empty())
 			{
 				tex = path + mapNames[i].diffuse;
-				model->materials[i].diffuse = TSR_DX11_LoadTextureFromPath(tex);
+				model->materials[i].diffuse = TSR_DX11_LoadTextureFromPath(tex, true);
 			}
 
 			if (!mapNames[i].metallic.empty())

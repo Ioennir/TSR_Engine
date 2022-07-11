@@ -53,10 +53,9 @@ float4 main(
     float3 bumpNormal = (normalTex.x * tangentWS) + (normalTex.y * binormalWS) + (normalTex.z * normalWS);
     bumpNormal = normalize(bumpNormal);
     
-    float4 pixelColor = float4(sRGBToLinear(texColor.rgb), texColor.a);
+    float4 pixelColor = texColor.rgba;
     float4 lightIntensity = saturate(dot(bumpNormal, LIGHT_DIR));
     pixelColor = saturate(pixelColor * lightIntensity);
-    pixelColor = float4(LinearTosRGB(pixelColor.rgb), 1.0f);
     
     return pixelColor;
 }

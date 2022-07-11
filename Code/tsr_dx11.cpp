@@ -189,14 +189,16 @@ void TSR_DX11_CreateDeviceAndSwapChain(WindowData & winData, bool msaaOn, DX11Da
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Device & Swapchain created!");
 }
 
-ID3D11ShaderResourceView* TSR_DX11_LoadTextureFromPath(eastl::string texturePath)
+ID3D11ShaderResourceView* TSR_DX11_LoadTextureFromPath(eastl::string texturePath, bool srgb = false)
 {
 	ID3D11ShaderResourceView* TextureView = nullptr;
 	HRESULT hr;
-	eastl::wstring wide;
-	wide.append_convert(texturePath.data(), texturePath.size());
-	//DirectX::CreateWICTextureFromFileEx <- Use this to do the sRGB / linear
-	hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, wide.c_str(), nullptr, &TextureView);
+	eastl::wstring TexPathWide;
+	DirectX::WIC_LOADER_FLAGS LoadFlags = srgb ? DirectX::WIC_LOADER_FLAGS::WIC_LOADER_DEFAULT : DirectX::WIC_LOADER_FLAGS::WIC_LOADER_IGNORE_SRGB;
+	TexPathWide.append_convert(texturePath.data(), texturePath.size());
+	
+	hr = DirectX::CreateWICTextureFromFileEx(DX11::dxData.device, DX11::dxData.context, TexPathWide.c_str(), TYPECAST(size_t, 0), D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0, LoadFlags, nullptr, &TextureView);
+	//hr = DirectX::CreateWICTextureFromFile(DX11::dxData.device, DX11::dxData.context, TexPathWide.c_str(), nullptr, &TextureView);
 	LOGCHECK(LOGSYSTEM_ASSIMP, TEXTMESSAGE("No texture present in path: " + texturePath + " (Null or invalid texture path.)"), !FAILED(hr));
 	return TextureView;
 }
