@@ -94,7 +94,7 @@ inline DirectX::XMFLOAT2 operator/(const DirectX::XMFLOAT2 fv, const r32 d)
 {
 	DirectX::XMFLOAT2 R;
 	r32 s = 1.0f / d;
-	R = R * s;
+	R = fv * s;
 	return R;
 }
 
@@ -102,7 +102,7 @@ inline DirectX::XMFLOAT3 operator/(const DirectX::XMFLOAT3 fv, const r32 d)
 {
 	DirectX::XMFLOAT3 R;
 	r32 s = 1.0f / d;
-	R = R * s;
+	R = fv * s;
 	return R;
 }
 
@@ -110,7 +110,7 @@ inline DirectX::XMFLOAT4 operator/(const DirectX::XMFLOAT4 fv, const r32 d)
 {
 	DirectX::XMFLOAT4 R;
 	r32 s = 1.0f / d;
-	R = R * s;
+	R = fv * s;
 	return R;
 }
 

@@ -58,7 +58,6 @@ INT WINAPI wWinMain(
 	ResetTimeInformation(&Time::Time);
 
 	// create the window and display it.
-	//WindowData winData{};
 	CreateAndSpawnWindow(L"TSR Engine", Platform::windowData, hInstance, nCmdShow);
 
 	// Initialize DX11 and get all the information needed
@@ -91,7 +90,7 @@ INT WINAPI wWinMain(
 	ModelBuffers primitiveBuffers{};
 	TSR_DX11_BuildPrimitiveBuffers(Primitive::Plane, DX11::dxData.device, &primitiveBuffers);
 	
-	InitializeCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, (DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height));
+	TSR_InitCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, (DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height));
 	ConstantBuffer cbuffer{};
 	InitializeCBuffer(CameraControl::CamData, &DX11::dxData, &cbuffer);
 
