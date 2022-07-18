@@ -23,14 +23,15 @@ namespace CameraControl
 	DirectX::XMFLOAT4 camTarget;
 	DirectX::XMFLOAT4 camRight;
 	CameraData CamData = {};
+
+	DirectX::XMFLOAT3 camRotation;
 }
 
 void TSR_RecalculateCameraVectors(DirectX::XMFLOAT3 UpDir, DirectX::XMFLOAT3 Position, DirectX::XMFLOAT3 Target)
 {
 	// Store Up vector
 	DirectX::XMFLOAT3 Up = TSR_DX_NormalizeFLOAT3(UpDir);
-	CameraControl::camUp = { Up.x, Up.y, Up.z, 0.0f };
-	LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("UP ::: X: " + STR(Up.x) + " Y: " + STR(Up.y) + " Z: " + STR(Up.z)));
+	CameraControl::camUp = {Up.x, Up.y, Up.z, 0.0f };
 
 	// Calculate Forward vector which is equal to target vector.
 	CameraControl::camTarget = { Target.x, Target.y, Target.z, 1.0f };
@@ -38,23 +39,20 @@ void TSR_RecalculateCameraVectors(DirectX::XMFLOAT3 UpDir, DirectX::XMFLOAT3 Pos
 	Forward = TSR_DX_NormalizeFLOAT3(Forward);
 	CameraControl::camFwd = { Forward.x, Forward.y, Forward.z, 0.0f };
 
-	LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("FW ::: X: " + STR(Forward.x) + " Y: " + STR(Forward.y) + " Z: " + STR(Forward.z)));
-
 	// Calculate Right vector which is equal to Up cross Forward
 
 	DirectX::XMFLOAT3 Right;
 	DirectX::XMStoreFloat3(&Right, DirectX::XMVector3Cross({ Up.x, Up.y, Up.z }, { Forward.x, Forward.y, Forward.z }));
 	CameraControl::camRight = { Right.x, Right.y, Right.z, 0.0f };
 
-	LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("RI ::: X: " + STR(Right.x) + " Y: " + STR(Right.y) + " Z: " + STR(Right.z)));
-
 }
 
 void TSR_InitCamera(DirectX::XMFLOAT3 Position, DirectX::XMFLOAT3 Target, DirectX::XMFLOAT3 UpDir, float Fov, float AspectRatio)
 {
-	// Store AspectRatio and Fov
+	// Store AspectRatio and Fov and camrotation
 	CameraControl::CamData.AspectRatio = AspectRatio;
 	CameraControl::CamData.Fov = Fov;
+	CameraControl::camRotation = { 0.0f, 0.0f, 0.0f };
 
 	// Store Position, w=1 point, w=0 vector
 	CameraControl::camPosition = { Position.x, Position.y, Position.z, 1.0f };
@@ -80,43 +78,6 @@ void TSR_InitCamera(DirectX::XMFLOAT3 Position, DirectX::XMFLOAT3 Target, Direct
 	CameraControl::CamData.mProj = mProj;
 }
 
-void InitializeCamera(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 target, DirectX::XMFLOAT3 up, float fov, float aspectRatio)
-{
-	CameraControl::CamData.AspectRatio = aspectRatio;
-	CameraControl::CamData.Fov = fov;
-	CameraControl::camPosition = { position.x, position.y, position.z, 0.0f };
-	CameraControl::camUp = { up.x, up.y, up.z, 0.0f };
-	CameraControl::camFwd = { target.x, target.y, target.z, 0.0f };
-	CameraControl::camTarget = { target.x, target.y, target.z, 0.0f };
-	DirectX::XMVECTOR Up = { up.x, up.y, up.z, 0.0f };
-	DirectX::XMVECTOR Fwd = { target.x, target.y, target.z, 0.0f };
-	DirectX::XMVECTOR Right = DirectX::XMVector3Cross(Up, Fwd);
-	DirectX::XMStoreFloat4(&CameraControl::camRight, Right);
-
-	// camera position, target and up vector in 3D world
-	DirectX::XMVECTOR cEye = DirectX::XMLoadFloat4(&CameraControl::camPosition);
-	DirectX::XMVECTOR cFocus = DirectX::XMLoadFloat4(&CameraControl::camTarget);
-	DirectX::XMVECTOR cUp = DirectX::XMLoadFloat4(&CameraControl::camUp);
-
-	// build view matrix
-	DirectX::XMMATRIX mView = DirectX::XMMatrixLookToLH(cEye, cFocus, cUp);//DirectX::XMMatrixLookAtLH(cEye, cFocus, cUp);
-
-	// frustum data
-	float yFov = DirectX::XMConvertToRadians(fov);
-	float nearZ = 0.1f;
-	float farZ = 1000.0f;
-	CameraControl::CamData.NearClipPlane = nearZ;
-	CameraControl::CamData.FarClipPlane = farZ;
-	DirectX::XMMATRIX mProj = DirectX::XMMatrixPerspectiveFovLH(yFov, aspectRatio, nearZ, farZ);
-
-	// world mat
-	DirectX::XMMATRIX mWorld = DirectX::XMMatrixIdentity();
-
-	CameraControl::CamData.mWorld = mWorld;
-	CameraControl::CamData.mView = mView;
-	CameraControl::CamData.mProj = mProj;
-}
-
 //https://stackoverflow.com/questions/36779161/trap-cursor-in-window
 // Fix the camera rotation
 void UpdateCamera(float dt, CameraData * CamData)
@@ -124,60 +85,81 @@ void UpdateCamera(float dt, CameraData * CamData)
 	const float rotSpeed = 30.0f;
 	const float movSpeed = 15.0f;
 	// Fetch input from keyboard
+
+	DirectX::XMMATRIX mTranslation = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX mRotation = DirectX::XMMatrixIdentity();;
 	
-	//rotation is broken.
-	if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+	// Fetch and process mouse input
+	ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+	ImVec2 dir = { 0.0f, 0.0f };
+	ImVec2 mouseDrag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right, 0.0f);
+	ImVec2 prev = { MouseControl::prevDrag.x, MouseControl::prevDrag.y };
+	if (mouseDrag.x > prev.x)
 	{
-		// Fetch and process mouse input
-		ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-		ImVec2 dir = { 0.0f, 0.0f };
-		ImVec2 mouseDrag = ImGui::GetMousePos();//ImGui::GetMouseDragDelta(ImGuiMouseButton_Right, 0.0f);
-		ImVec2 prev = { MouseControl::prevDrag.x, MouseControl::prevDrag.y };
-		if (mouseDrag.x > prev.x)
-		{
-			dir.x = -1.0f;
-		}
-		else if (mouseDrag.x < prev.x)
-		{
-			dir.x = 1.0f;
-		}
-
-		if (mouseDrag.y > prev.y)
-		{
-			dir.y = -1.0f;
-		}
-		else if (mouseDrag.y < prev.y)
-		{
-			dir.y = 1.0f;
-		}
-		MouseControl::prevDrag = { mouseDrag.x, mouseDrag.y};
-
-		float UpAxisRot = dir.x * rotSpeed * dt;
-		float RightAxisRot = dir.y * rotSpeed * dt;
-		//UpAxisRot = 0.0f;
-		
-		LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(UpAxisRot) + " Y: " + STR(RightAxisRot)));
-		//NOTE(Fran): rotation is funky sometimes, doing rombo movement shows the issue (diagonals)
-		
-		//DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationRollPitchYaw(yRot, xRot, 0.0f);
-		//CamData->mView *= rotMat;
-
-		// Get the local rotation axis
-		DirectX::XMVECTOR f = DirectX::XMVector4Normalize(DirectX::XMVector4Transform({ 0.0f, 0.0f, 1.0f, 0.0f }, CamData->mView));
-		DirectX::XMStoreFloat4(&CameraControl::camFwd, f);
-		DirectX::XMVECTOR r = DirectX::XMVector4Normalize(DirectX::XMVector4Transform({ 1.0f, 0.0f, 0.0f, 0.0f }, CamData->mView));
-		DirectX::XMStoreFloat4(&CameraControl::camRight, r);
-		DirectX::XMVECTOR u = DirectX::XMVector4Normalize(DirectX::XMVector4Transform({ 0.0f, 1.0f, 0.0f, 0.0f }, CamData->mView));
-		DirectX::XMStoreFloat4(&CameraControl::camUp, u);
-		
-		// y rotations will always be around world y axis XD
-		DirectX::XMMATRIX RotY = DirectX::XMMatrixRotationAxis(u, UpAxisRot);
-		DirectX::XMMATRIX RotX = DirectX::XMMatrixRotationAxis(r, RightAxisRot);
-
-		CamData->mView *= RotX;
-		//CamData->mView *= RotY;
-
+		dir.x = 1.0f;
 	}
+	else if (mouseDrag.x < prev.x)
+	{
+		dir.x = -1.0f;
+	}
+
+	if (mouseDrag.y > prev.y)
+	{
+		dir.y = 1.0f;
+	}
+	else if (mouseDrag.y < prev.y)
+	{
+		dir.y = -1.0f;
+	}
+	MouseControl::prevDrag = { mouseDrag.x, mouseDrag.y};
+
+	float UpAxisRot = dir.x * rotSpeed * dt;
+	float RightAxisRot = dir.y * rotSpeed * dt;
+	//UpAxisRot = 0.0f;
+
+	//CameraControl::camRotation += {RightAxisRot, UpAxisRot, 0.0f};
+	
+	//Limit this movement as it glitches
+	CameraControl::camRotation.x = (CameraControl::camRotation.x + RightAxisRot);
+	CameraControl::camRotation.y = (CameraControl::camRotation.y + UpAxisRot) > 175.0f ? CameraControl::camRotation.y : (CameraControl::camRotation.y + UpAxisRot);
+
+	float RightRot = CameraControl::camRotation.x;//DirectX::XMConvertToRadians(CameraControl::camRotation.x);
+	float UpRot = CameraControl::camRotation.y;//DirectX::XMConvertToRadians(CameraControl::camRotation.y);
+
+	mRotation *= DirectX::XMMatrixRotationRollPitchYaw(RightRot, UpRot, 0.0f);
+	//mRotation *= DirectX::XMMatrixRotationAxis({1.0f, 0.0f, 0.0f, 0.0f}, RightRot);
+	//mRotation *= DirectX::XMMatrixRotationAxis({0.0f, 1.0f, 0.0f, 0.0f}, UpRot);
+
+	//mRotation *= DirectX::XMMatrixTranslationFromVector({-CameraControl::camPosition.x, -CameraControl::camPosition.y, -CameraControl::camPosition.z, 1.0f });
+	//DirectX::XMVECTOR cEye = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camPosition), mRotation);
+	//DirectX::XMVECTOR cTarget = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camTarget), mRotation);
+	//DirectX::XMVECTOR cUp = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camUp), mRotation);
+	//
+	//DirectX::XMStoreFloat4(&CameraControl::camPosition, cEye);
+	//DirectX::XMStoreFloat4(&CameraControl::camTarget, cTarget);
+	//DirectX::XMStoreFloat4(&CameraControl::camUp, cUp);
+
+
+	//LOGDEBUG(LOGSYSTEM_TSR, TEXTMESSAGE("X: " + STR(UpAxisRot) + " Y: " + STR(RightAxisRot)));
+	//NOTE(Fran): rotation is funky sometimes, doing rombo movement shows the issue (diagonals)
+	
+	//DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationRollPitchYaw(yRot, xRot, 0.0f);
+	//CamData->mView *= rotMat;
+
+	// Get the local rotation axis
+	//DirectX::XMVECTOR f = DirectX::XMVector4Normalize(DirectX::XMVector4Transform({ 0.0f, 0.0f, 1.0f, 0.0f }, CamData->mView));
+	//DirectX::XMStoreFloat4(&CameraControl::camFwd, f);
+	//DirectX::XMVECTOR r = DirectX::XMVector4Normalize(DirectX::XMVector4Transform({ 1.0f, 0.0f, 0.0f, 0.0f }, CamData->mView));
+	//DirectX::XMStoreFloat4(&CameraControl::camRight, r);
+	//DirectX::XMVECTOR u = DirectX::XMVector4Normalize(DirectX::XMVector4Transform({ 0.0f, 1.0f, 0.0f, 0.0f }, CamData->mView));
+	//DirectX::XMStoreFloat4(&CameraControl::camUp, u);
+	//
+	//// y rotations will always be around world y axis XD
+	//DirectX::XMMATRIX RotY = DirectX::XMMatrixRotationAxis(u, UpAxisRot);
+	//DirectX::XMMATRIX RotX = DirectX::XMMatrixRotationAxis(r, RightAxisRot);
+	//
+	//CamData->mView *= RotX;
+	//CamData->mView *= RotY;
 
 	// TODO(Fran): Check the disable obsolete keyIO
 	bool forward = ImGui::IsKeyDown(ImGuiKey_W);
@@ -197,20 +179,46 @@ void UpdateCamera(float dt, CameraData * CamData)
 	float zMov = fwdmove * movSpeed * dt;
 	float yMov = vermove * movSpeed * dt;
 
-	DirectX::XMMATRIX mTranslation = DirectX::XMMatrixTranslation(xMov, yMov, zMov);
-	DirectX::XMVECTOR cEye = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camPosition), mTranslation);
-	DirectX::XMVECTOR cTarget = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camTarget), mTranslation);
-	DirectX::XMVECTOR cUp = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camUp), mTranslation);
+	DirectX::XMFLOAT4 MovOffset = (CameraControl::camRight * xMov) + (CameraControl::camUp * yMov) + (CameraControl::camFwd * zMov);
+	DirectX::XMFLOAT4 Movement = CameraControl::camPosition + MovOffset;
 
+	mTranslation *= DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat4(&Movement));
+	DirectX::XMMATRIX mRT = mRotation * mTranslation;
+
+	DirectX::XMVECTOR cEye = DirectX::XMVector4Transform({0.0f, 0.0f, 0.0f, 1.0f}, mRT);
 	DirectX::XMStoreFloat4(&CameraControl::camPosition, cEye);
+	DirectX::XMVECTOR cTarget = DirectX::XMVector4Transform({ 0.0f, 0.0f, 1.0f, 1.0f }, mRT);
 	DirectX::XMStoreFloat4(&CameraControl::camTarget, cTarget);
+	DirectX::XMVECTOR cUp = DirectX::XMVector4Transform({ 0.0f, 1.0f, 0.0f, 0.0f }, mRT);
 	DirectX::XMStoreFloat4(&CameraControl::camUp, cUp);
 
-	CamData->mView = DirectX::XMMatrixLookAtLH(cEye, cTarget, cUp);
 
-	//CamData->mView *= DirectX::XMMatrixTranslation(xMov, yMov, zMov);
-
+	//
+	//DirectX::XMFLOAT4 Movement = CameraControl::camPosition + MovOffset;
+	//DirectX::XMFLOAT4 Move = { Movement.x, Movement.y, Movement.z, 1.0f };
+	//
+	////mTranslation *= mRotation;
+	//mTranslation *= DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat4(&Move));
+	//
 	
-
-	//CamData->mView = DirectX::XMMatrixLookAtLH();
+	//
+	//DirectX::XMVECTOR cEye = DirectX::XMVector4Transform({0.0f, 0.0f, 0.0f, 1.0f}, mRT);
+	//DirectX::XMVECTOR cTarget = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camTarget), mRT);
+	//DirectX::XMVECTOR cUp = DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&CameraControl::camUp), mRT);
+	//
+	//DirectX::XMStoreFloat4(&CameraControl::camPosition, cEye);
+	//DirectX::XMStoreFloat4(&CameraControl::camTarget, cTarget);
+	//DirectX::XMStoreFloat4(&CameraControl::camUp, cUp);
+	//
+	TSR_RecalculateCameraVectors(
+		{ CameraControl::camUp.x, CameraControl::camUp.y, CameraControl::camUp.z },
+		{ CameraControl::camPosition.x, CameraControl::camPosition.y, CameraControl::camPosition.z },
+		{ CameraControl::camTarget.x, CameraControl::camTarget.y, CameraControl::camTarget.z }
+	);
+	
+	CamData->mView = DirectX::XMMatrixLookAtLH(
+		cEye,
+		cTarget,
+		cUp
+	);
 }

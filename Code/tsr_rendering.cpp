@@ -32,6 +32,8 @@ void TSR_DrawGUI(IMData* imData)
 		//ImGui::SliderFloat3("Position", );
 		float fp[] = { CameraControl::camPosition.x, CameraControl::camPosition.y, CameraControl::camPosition.z };
 		ImGui::SliderFloat3("Position", fp, 0.0f, 1000.0f);
+		float fo[] = { CameraControl::camRotation.x, CameraControl::camRotation.y, CameraControl::camRotation.z };
+		ImGui::SliderFloat3("Orientation", fo, 0.0f, 1000.0f);
 		float ft[] = { CameraControl::camTarget.x, CameraControl::camTarget.y, CameraControl::camTarget.z };
 		ImGui::SliderFloat3("Target", ft, 0.0f, 1000.0f);
 
@@ -41,6 +43,7 @@ void TSR_DrawGUI(IMData* imData)
 		ImGui::SliderFloat3("Right", fr, 0.0f, 1000.0f);
 		float ff[] = { CameraControl::camFwd.x, CameraControl::camFwd.y, CameraControl::camFwd.z };
 		ImGui::SliderFloat3("Forward", ff, 0.0f, 1000.0f);
+		
 	ImGui::End();
 
 	ImGui::Begin("Frame statistics");
