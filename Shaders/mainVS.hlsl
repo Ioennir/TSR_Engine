@@ -1,4 +1,4 @@
-cbuffer cb
+cbuffer cb : register(b0)
 {
 	matrix mWorld;
 	matrix mWVP; //transform
@@ -25,7 +25,7 @@ struct VS_Output
     float4 oBinormal : BINORMAL0;
 };
 
-static const float3 LIGHT_DIR = normalize(float3(5.0f, 5.0f, -5.0f));
+//static const float3 LIGHT_DIR = normalize(float3(5.0f, 5.0f, -5.0f));
 
 void main(
     VS_Input input,

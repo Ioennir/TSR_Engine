@@ -390,6 +390,39 @@ void TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	TSR_DX11_InitSampler();
 }
 
+void TSR_DX11_BuildStructuredBuffer(ID3D11Device* device, ui32 bStride, ui32 bOffset, ui32 bElementCount, ui32 bCPUAccessFlags, D3D11_USAGE bUsage, UINT bBindFlags, void* bMemoryPtr, BufferData* buffer, ID3D11ShaderResourceView** bBufferView)
+{
+	buffer->stride = bStride;
+	buffer->offset = bOffset;
+	D3D11_BUFFER_DESC bDesc{};
+	bDesc.Usage = bUsage;
+	bDesc.BindFlags = bBindFlags;
+	bDesc.ByteWidth = bStride * bElementCount;
+	bDesc.CPUAccessFlags = bCPUAccessFlags;
+	bDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED | D3D11_CREATE_DEVICE_DEBUG;
+	bDesc.StructureByteStride = bStride;
+
+	D3D11_SUBRESOURCE_DATA bData{};
+	bData.pSysMem = bMemoryPtr;
+	bData.SysMemPitch = bStride * bElementCount;
+	bData.SysMemSlicePitch = 0;
+
+	HRESULT hr = device->CreateBuffer(&bDesc, &bData, &buffer->buffer);
+	LOGASSERT(LOGSYSTEM_DX11, "Structured Buffer creation failed.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Structured Buffer creation succeeded.");
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srDesc{};
+	srDesc.Buffer.NumElements = bElementCount;
+	srDesc.Buffer.ElementOffset = bStride;
+	srDesc.Buffer.FirstElement = 0;
+	srDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srDesc.ViewDimension = D3D_SRV_DIMENSION_BUFFER;
+
+	hr = device->CreateShaderResourceView(buffer->buffer, &srDesc, bBufferView);
+	LOGASSERT(LOGSYSTEM_DX11, "Structured Buffer view creation failed.", !FAILED(hr));
+	LOGDEBUG(LOGSYSTEM_DX11, "Structured Buffer view creation succeeded.");
+}
+
 //TODO(Fran): Maybe implement a template here
 //TODO(Fran): Maybe implement a way of knowing what kind of buffer we are creating to ease debugging if it fails. (maybe with the bindflag)
 void TSR_DX11_BuildBuffer(ID3D11Device * device, ui32 bStride, ui32 bOffset, ui32 bElementCount, D3D11_USAGE bUsage, UINT bBindFlags, void * bMemoryPtr, BufferData * buffer)

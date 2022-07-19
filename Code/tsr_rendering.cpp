@@ -147,6 +147,8 @@ void TSR_RenderEntity(ID3D11DeviceContext * context, ModelBuffers * buffers, Dra
 	context->IASetVertexBuffers(0, 1, &buffers->vertexBuffer.buffer, &buffers->vertexBuffer.stride, &buffers->vertexBuffer.offset);
 	context->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
 	context->PSSetSamplers(0, 1, &DX11::dxData.samplerState);
+	context->PSSetShaderResources(3, 1, &Lighting::LightBufferView);
+	//context->PSSetConstantBuffers(1, 1, &Lighting::LightBuffer.buffer);
 	//context->DrawIndexed(drawable->model.indexCount, 0, 0);
 	for (ui32 i = 0; i < drawable->model.submeshCount; ++i)
 	{

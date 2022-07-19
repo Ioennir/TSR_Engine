@@ -94,6 +94,8 @@ INT WINAPI wWinMain(
 	ConstantBuffer cbuffer{};
 	InitializeCBuffer(CameraControl::CamData, &DX11::dxData, &cbuffer);
 
+	TSR_InitDirectionalLightBuffer(&Lighting::LightBuffer);
+
 	IMData imData{};
 	//this is for testing purposes;
 	

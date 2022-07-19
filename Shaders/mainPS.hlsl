@@ -4,12 +4,21 @@ Texture2D nor : TEXTURE1 : register(t1);
 
 SamplerState smp : SAMPLER0 : register(s0);
 
-cbuffer cb
+cbuffer cb : register(b0)
 {
     matrix mWorld;
     matrix mWVP; //transform
     matrix normalMatrix;
 };
+
+struct DirectionalLight
+{
+    float4 Position;
+    float4 Direction;
+    float4 Color;
+};
+
+StructuredBuffer<DirectionalLight> DLBuffer : register(t3);
 
 struct PS_Input
 {
@@ -41,6 +50,7 @@ float4 main(
     PS_Input input
 ) : SV_TARGET
 {
+    
     float3 normalTex = nor.Sample(smp, input.iTexcoord);
     //Unpack normal
     normalTex = normalTex * 2.0f - 1.0f;
@@ -54,7 +64,7 @@ float4 main(
     bumpNormal = normalize(bumpNormal);
     
     float4 pixelColor = texColor.rgba;
-    float4 lightIntensity = saturate(dot(bumpNormal, LIGHT_DIR));
+    float4 lightIntensity = saturate(dot(bumpNormal, normalize(DLBuffer[0].Position.xyz)));
     pixelColor = saturate(pixelColor * lightIntensity);
     
     return pixelColor;
