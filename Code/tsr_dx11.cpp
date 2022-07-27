@@ -577,3 +577,9 @@ void TSR_DX11_BuildShaders(ID3D11Device * device, DX11VertexShaderData * vsData,
 	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/mainVS.cso"), DX11InputLayout::pcnttbsize, DX11InputLayout::PCNTTB, vsData);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/mainPS.cso"), psData);
 }
+
+void TSR_DX11_BuildPrimitiveShaders(ID3D11Device* device, DX11VertexShaderData* primVS, DX11PixelShaderData* primPS)
+{
+	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/primitiveVS.cso"), DX11InputLayout::pcnsize, DX11InputLayout::PCN, primVS);
+	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/primitivePS.cso"), primPS);
+}

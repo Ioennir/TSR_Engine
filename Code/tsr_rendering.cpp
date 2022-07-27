@@ -134,6 +134,21 @@ void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], 
 	};
 }
 
+void UpdatePlane(const CameraData& CamData, ConstantBuffer* cbuffer)
+{
+	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -4.0f, 3.5f);
+	DirectX::XMMATRIX currentWorld = scaleMatrix * rotationMatrix * translation;
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * CamData.mView * CamData.mProj);
+	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(currentWorld.r, currentWorld));
+	*cbuffer = {
+		currentWorld,
+		mWVP,
+		normalMatrix
+	};
+}
+
 void TSR_Update(float dt)
 {
 	UpdateCamera(dt, &CameraControl::CamData);
@@ -148,8 +163,7 @@ void TSR_RenderEntity(ID3D11DeviceContext * context, ModelBuffers * buffers, Dra
 	context->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
 	context->PSSetSamplers(0, 1, &DX11::dxData.samplerState);
 	context->PSSetShaderResources(3, 1, &Lighting::LightBufferView);
-	//context->PSSetConstantBuffers(1, 1, &Lighting::LightBuffer.buffer);
-	//context->DrawIndexed(drawable->model.indexCount, 0, 0);
+	context->PSSetShaderResources(4, 1, &Lighting::PointLightBufferView);
 	for (ui32 i = 0; i < drawable->model.submeshCount; ++i)
 	{
 		DX11::dxData.context->PSSetShaderResources(0, 1, &drawable->model.materials[drawable->model.submeshMaterialIndex[i]].diffuse);
@@ -167,10 +181,10 @@ void TSR_RenderPrimitive(ID3D11DeviceContext * context, ModelBuffers * primitive
 	context->IASetVertexBuffers(0, 1, &primitiveBuffers->vertexBuffer.buffer, &primitiveBuffers->vertexBuffer.stride, &primitiveBuffers->vertexBuffer.offset);
 	context->IASetIndexBuffer(primitiveBuffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, primitiveBuffers->indexBuffer.offset);
 	//plane
-	context->DrawIndexed(4, 0, 0);
+	context->DrawIndexed(6, 0, 0);
 }
 
-void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
+void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, DX11VertexShaderData& primVS, DX11PixelShaderData& primPS, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
 {
 	DX11Data& dxData = DX11::dxData;
 	CameraData* CamData = &CameraControl::CamData;
@@ -198,6 +212,18 @@ void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11Ve
 	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	dxData.context->PSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	TSR_RenderEntity(dxData.context, buffers, drawable);
-	//TSR_RenderPrimitive(dxData.context, primitiveBuffers);
+
+
+	dxData.context->IASetInputLayout(primVS.inputLayout);
+	dxData.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	dxData.context->VSSetShader(primVS.shader, 0, 0);
+	dxData.context->PSSetShader(primPS.shader, 0, 0);
+	UpdatePlane(*CamData, cbuffer);
+	dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
+	dxData.context->PSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
+	dxData.context->PSSetShaderResources(3, 1, &Lighting::LightBufferView);
+	dxData.context->PSSetShaderResources(4, 1, &Lighting::PointLightBufferView);
+	TSR_RenderPrimitive(dxData.context, primitiveBuffers);
 }
 

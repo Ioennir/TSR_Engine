@@ -17,8 +17,15 @@ struct DirectionalLight
     float4 Direction;
     float4 Color;
 };
-
+struct PointLight
+{
+    float4 Position;
+    float4 Color;
+    float3 Fallof;
+    float Range;
+};
 StructuredBuffer<DirectionalLight> DLBuffer : register(t3);
+StructuredBuffer<DirectionalLight> PLBuffer : register(t4);
 
 struct PS_Input
 {
@@ -45,7 +52,6 @@ half3 LinearTosRGB(half3 lin)
     //return min(lin * 12.92, exp2(log2(max(lin, 0.00313067)) * (1.0/2.4) + log2(1.055)) - 0.055);
 }
 
-static const float3 LIGHT_DIR = normalize(float3(5.0f, 7.0f, -5.0f));
 float4 main(
     PS_Input input
 ) : SV_TARGET
@@ -64,7 +70,7 @@ float4 main(
     bumpNormal = normalize(bumpNormal);
     
     float4 pixelColor = texColor.rgba;
-    float4 lightIntensity = saturate(dot(bumpNormal, normalize(DLBuffer[0].Position.xyz)));
+    float4 lightIntensity = saturate(dot(bumpNormal, DLBuffer[0].Direction.xyz));
     pixelColor = saturate(pixelColor * lightIntensity);
     
     return pixelColor;

@@ -88,6 +88,9 @@ INT WINAPI wWinMain(
 	//Primitives
 	//NOTE(Fran): This is a test to check on generating primitive data from cpu computation to gpu rendering.
 	ModelBuffers primitiveBuffers{};
+	DX11VertexShaderData primVS;
+	DX11PixelShaderData primPS;
+	TSR_DX11_BuildPrimitiveShaders(DX11::dxData.device, &primVS, &primPS);
 	TSR_DX11_BuildPrimitiveBuffers(Primitive::Plane, DX11::dxData.device, &primitiveBuffers);
 	
 	TSR_InitCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, (DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height));
@@ -124,7 +127,7 @@ INT WINAPI wWinMain(
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &cbuffer, &imData, vsData, psData, &buffers, &primitiveBuffers, &drawable);
+			TSR_Draw(rotVelocity, &cbuffer, &imData, vsData, psData, &buffers, primVS, primPS, &primitiveBuffers, &drawable);
 			// GUI RENDERING
 			TSR_DrawGUI(&imData);
 
