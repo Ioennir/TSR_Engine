@@ -27,6 +27,7 @@ void main(
 {
     // Calculate position
     output.oPos = mul(float4(input.iPos, 1.0f), mWVP);
+    output.oPosWorld = float4(input.iPos, 1.0f); //mul(float4(input.iPos, 1.0f), mWorld);
     output.oPosWorld = mul(float4(input.iPos, 1.0f), mWorld);
     output.oCol = input.iCol;
     output.oNormal = input.iNormal;

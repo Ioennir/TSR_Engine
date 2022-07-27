@@ -171,10 +171,10 @@ void TSR_DX11_BuildPrimitiveBuffers(Primitive primitive, ID3D11Device* device, M
 		DirectX::XMFLOAT3 normal = { 0.0f, 1.0f, 0.0f };
 		vertices.insert(vertices.end(),
 			{
-				{DirectX::XMFLOAT3(-10.0f, 0.0f, 10.0f), TSR_White,normal},
-				{DirectX::XMFLOAT3(10.0f, 0.0f, 10.0f), TSR_White,normal},
-				{DirectX::XMFLOAT3(-10.0f, 0.0f, -10.0f), TSR_White,normal},
-				{DirectX::XMFLOAT3(10.0f, 0.0f, -10.0f), TSR_White,normal}
+				{DirectX::XMFLOAT3(-0.5f, 0.0f, 0.5f), TSR_White,normal},
+				{DirectX::XMFLOAT3(0.5f, 0.0f, 0.5f), TSR_White,normal},
+				{DirectX::XMFLOAT3(-0.5f, 0.0f, -0.5f), TSR_White,normal},
+				{DirectX::XMFLOAT3(0.5f, 0.0f, -0.5f), TSR_White,normal}
 			});
 		indices.insert(indices.end(),
 			{

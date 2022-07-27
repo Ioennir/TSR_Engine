@@ -30,6 +30,7 @@ StructuredBuffer<DirectionalLight> PLBuffer : register(t4);
 struct PS_Input
 {
     float4 iPosition    : SV_POSITION;
+    float4 iWorldPos    : POSITION;
     float4 iColor       : COLOR0;
     float3 iNormal      : NORMAL0;
     float2 iTexcoord    : TEXCOORD0;
@@ -56,7 +57,6 @@ float4 main(
     PS_Input input
 ) : SV_TARGET
 {
-    
     float3 normalTex = nor.Sample(smp, input.iTexcoord);
     //Unpack normal
     normalTex = normalTex * 2.0f - 1.0f;

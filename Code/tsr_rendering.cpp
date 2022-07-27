@@ -120,13 +120,12 @@ void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], 
 	// triangle transformations/ world matrix basically rotate around arbitrary axis with arbitrary speed
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, -anim);
-	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -3.0f, 5.0f);
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -3.0f, 7.0f);
 	DirectX::XMMATRIX currentWorld = scaleMatrix * rotationMatrix * translation;
-
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * CamData.mView * CamData.mProj);
-
-	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(currentWorld.r, currentWorld));
-
+	currentWorld = DirectX::XMMatrixTranspose(currentWorld);
+	DirectX::XMMATRIX tempWorld = scaleMatrix * rotationMatrix * translation;
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(tempWorld * CamData.mView * CamData.mProj);
+	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(tempWorld.r, tempWorld));
 	*cbuffer = {
 		currentWorld,
 		mWVP,
@@ -136,12 +135,14 @@ void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], 
 
 void UpdatePlane(const CameraData& CamData, ConstantBuffer* cbuffer)
 {
-	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(100.0f, 100.0f, 100.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
-	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -4.0f, 3.5f);
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -4.0f, 7.0f);
 	DirectX::XMMATRIX currentWorld = scaleMatrix * rotationMatrix * translation;
-	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(currentWorld * CamData.mView * CamData.mProj);
-	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(currentWorld.r, currentWorld));
+	currentWorld = DirectX::XMMatrixTranspose(currentWorld);
+	DirectX::XMMATRIX tempWorld = scaleMatrix * rotationMatrix * translation;
+	DirectX::XMMATRIX mWVP = DirectX::XMMatrixTranspose(tempWorld * CamData.mView * CamData.mProj);
+	DirectX::XMMATRIX normalMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(tempWorld.r, tempWorld));
 	*cbuffer = {
 		currentWorld,
 		mWVP,

@@ -16,8 +16,7 @@ struct LightPoint //Spherical
 {
 	DirectX::XMFLOAT4 Position;
 	DirectX::XMFLOAT4 Color; //RGBA Where A is LightIntensity.
-	DirectX::XMFLOAT3 Fallof;
-	r32 Range;
+	DirectX::XMFLOAT4 Fallof;
 };
 
 struct LightSpot //ConeLight
@@ -72,10 +71,9 @@ void TSR_InitDirectionalLightBuffer(BufferData * LightBuffer)
 	LightsPoint.insert(
 		LightsPoint.end(),
 		{
-			{0.0f, 4.0f, 0.0f, 1.0f},
+			{0.0f, 8.0f, 0.0f, 1.0f},
 			{1.0f, 1.0f, 1.0f, 1.0f},
-			{0.0f, 0.2f, 0.0f},
-			100.0f
+			{0.0f, 0.2f, 0.0f, 5.0f}
 		}
 	);
 
