@@ -126,6 +126,8 @@
     </FxCompile>
     <FxCompile Include="Shaders\primitiveVS.hlsl" />
     <FxCompile Include="Shaders\primitivePS.hlsl" />
+    <FxCompile Include="Shaders\depthVS.hlsl" />
+    <FxCompile Include="Shaders\depthPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Config\EASTL.natvis" />

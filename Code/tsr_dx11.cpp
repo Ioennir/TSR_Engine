@@ -57,6 +57,7 @@ struct DX11Data
 	ID3D11DepthStencilView*		depthStencilView{};
 	ID3D11RasterizerState*		currentRasterizerState{};
 	ID3D11SamplerState*			samplerState{};
+	ID3D11SamplerState*			clampSampler{};
 	DX11ViewportData			VP;
 	ID3D11Buffer*				dx11_cbuffer{}; // this will be moved elsewhere
 };
@@ -362,6 +363,12 @@ void TSR_DX11_InitSampler()
 	sDesc.MinLOD = 0;
 	sDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	HRESULT hr = DX11::dxData.device->CreateSamplerState(&sDesc, &DX11::dxData.samplerState);
+	LOGASSERT(LOGSYSTEM_DX11, "Failed Creating the sampler state.", !FAILED(hr));
+	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Successfully created sampler state.");
+	sDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	hr = DX11::dxData.device->CreateSamplerState(&sDesc, &DX11::dxData.clampSampler);
 	LOGASSERT(LOGSYSTEM_DX11, "Failed Creating the sampler state.", !FAILED(hr));
 	LOG(LOGTYPE::LOG_DEBUG, LOGSYSTEM_DX11, "Successfully created sampler state.");
 }

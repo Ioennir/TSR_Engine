@@ -3,6 +3,7 @@ cbuffer cb : register(b0)
     matrix mWorld;
     matrix mWVP; //transform
     matrix normalMatrix;
+    matrix lWVP;
 };
 
 struct VS_Input
@@ -18,7 +19,17 @@ struct VS_Output
     float4 oPosWorld : POSITION;
     float4 oCol : COLOR0;
     float3 oNormal : NORMAL0;
+    float3 oLightVP : TEXCOORD0;
+    float3 oLightPos : TEXCOORD1;
 };
+
+struct DirectionalLight
+{
+    float4 Position;
+    float4 Direction;
+    float4 Color;
+};
+StructuredBuffer<DirectionalLight> DLBuffer : register(t1);
 
 void main(
     VS_Input input,
@@ -31,4 +42,8 @@ void main(
     output.oPosWorld = mul(float4(input.iPos, 1.0f), mWorld);
     output.oCol = input.iCol;
     output.oNormal = input.iNormal;
+    
+    output.oLightVP = mul(float4(input.iPos, 1.0f), lWVP);
+    output.oLightPos = normalize(DLBuffer[0].Position.xyz - output.oPosWorld.xyz);
+
 }

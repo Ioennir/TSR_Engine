@@ -35,6 +35,7 @@ struct LightRect //Squared
 
 namespace Lighting
 {
+	eastl::vector<LightDirectional> LightsDir;
 	BufferData LightBuffer{};
 	ID3D11ShaderResourceView* LightBufferView;
 	BufferData PointLightBuffer{};
@@ -43,10 +44,8 @@ namespace Lighting
 
 void TSR_InitDirectionalLightBuffer(BufferData * LightBuffer)
 {
-
-	eastl::vector<LightDirectional> LightsDir;
-	LightsDir.insert(
-		LightsDir.end(),
+	Lighting::LightsDir.insert(
+		Lighting::LightsDir.end(),
 		{
 			{5.0f, 7.0f, -5.0f, 1.0f},
 			TSR_DX_NormalizeFLOAT4({5.0f, 7.0f, -5.0f, 0.0f}),
@@ -58,11 +57,11 @@ void TSR_InitDirectionalLightBuffer(BufferData * LightBuffer)
 		DX11::dxData.device,
 		sizeof(LightDirectional),
 		0,
-		LightsDir.size(),
+		Lighting::LightsDir.size(),
 		0,
 		D3D11_USAGE_DEFAULT,
 		D3D11_BIND_SHADER_RESOURCE,
-		LightsDir.data(),
+		Lighting::LightsDir.data(),
 		LightBuffer,
 		&Lighting::LightBufferView
 	);

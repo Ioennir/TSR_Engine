@@ -3,6 +3,7 @@ struct ConstantBuffer
 	DirectX::XMMATRIX mWorld;
 	DirectX::XMMATRIX mVWP;
 	DirectX::XMMATRIX normalMatrix;
+	DirectX::XMMATRIX lWVP;
 };
 
 //TODO(Fran): this will be surely changed
@@ -117,6 +118,21 @@ void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], 
 
 	float anim = 180.0f;// DirectX::XMConvertToRadians(deltarot);
 
+	// Light WVP Matrix;
+	DirectX::XMFLOAT4 lPosition = Lighting::LightsDir[0].Position;
+	DirectX::XMFLOAT4 lDirection = Lighting::LightsDir[0].Direction;
+	DirectX::XMMATRIX lScaleMat = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX lRotMat	= DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX lTranslationMat = DirectX::XMMatrixTranslation(lPosition.x, lPosition.y, lPosition.z);
+
+	DirectX::XMMATRIX lWorld = lScaleMat * lRotMat * lTranslationMat;
+	DirectX::XMMATRIX lView = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lPosition), { 0.0f, -3.0f, 7.0f, 1.0f }, {0.0f, 1.0f, 0.0f, 0.0f});
+	float nearZ = 0.1f;
+	float farZ = 1000.0f;
+	DirectX::XMMATRIX lProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(CameraControl::CamData.Fov), CameraControl::CamData.AspectRatio, nearZ, farZ);
+
+	DirectX::XMMATRIX lWVP = lWorld * lView * lProj;
+
 	// triangle transformations/ world matrix basically rotate around arbitrary axis with arbitrary speed
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationAxis({ rotaxis[0], rotaxis[1], rotaxis[2], 0.0f }, -anim);
@@ -129,12 +145,28 @@ void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], 
 	*cbuffer = {
 		currentWorld,
 		mWVP,
-		normalMatrix
+		normalMatrix,
+		lWVP
 	};
 }
 
 void UpdatePlane(const CameraData& CamData, ConstantBuffer* cbuffer)
 {
+	// Light WVP Matrix;
+	DirectX::XMFLOAT4 lPosition = Lighting::LightsDir[0].Position;
+	DirectX::XMFLOAT4 lDirection = Lighting::LightsDir[0].Direction;
+	DirectX::XMMATRIX lScaleMat = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX lRotMat = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX lTranslationMat = DirectX::XMMatrixTranslation(lPosition.x, lPosition.y, lPosition.z);
+
+	DirectX::XMMATRIX lWorld = lScaleMat * lRotMat * lTranslationMat;
+	DirectX::XMMATRIX lView = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lPosition), { 0.0f, -3.0f, 7.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 0.0f });
+	float nearZ = 0.1f;
+	float farZ = 1000.0f;
+	DirectX::XMMATRIX lProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(CameraControl::CamData.Fov), CameraControl::CamData.AspectRatio, nearZ, farZ);
+
+	DirectX::XMMATRIX lWVP = lWorld * lView * lProj;
+
 	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(100.0f, 100.0f, 100.0f);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0.0f, -4.0f, 7.0f);
@@ -146,7 +178,8 @@ void UpdatePlane(const CameraData& CamData, ConstantBuffer* cbuffer)
 	*cbuffer = {
 		currentWorld,
 		mWVP,
-		normalMatrix
+		normalMatrix,
+		lWVP
 	};
 }
 
@@ -223,6 +256,7 @@ void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11Ve
 	dxData.context->UpdateSubresource(dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
 	dxData.context->VSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
 	dxData.context->PSSetConstantBuffers(0, 1, &dxData.dx11_cbuffer);
+	dxData.context->VSSetShaderResources(1, 1, &Lighting::LightBufferView);
 	dxData.context->PSSetShaderResources(3, 1, &Lighting::LightBufferView);
 	dxData.context->PSSetShaderResources(4, 1, &Lighting::PointLightBufferView);
 	TSR_RenderPrimitive(dxData.context, primitiveBuffers);

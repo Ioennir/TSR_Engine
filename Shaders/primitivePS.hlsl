@@ -3,6 +3,7 @@ cbuffer cb : register(b0)
     matrix mWorld;
     matrix mWVP; //transform
     matrix normalMatrix;
+    matrix lWVP;
 };
 
 struct DirectionalLight
@@ -28,6 +29,8 @@ struct PS_Input
     float4 iPosWorld : POSITION;
     float4 iColor : COLOR0;
     float3 iNormal : NORMAL0;
+    float3 lightVP : TEXCOORD0;
+    float3 lightPos : TEXCOORD1;
 };
 
 float4 main(
