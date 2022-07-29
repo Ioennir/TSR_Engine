@@ -93,6 +93,10 @@ INT WINAPI wWinMain(
 	TSR_DX11_BuildPrimitiveShaders(DX11::dxData.device, &primVS, &primPS);
 	TSR_DX11_BuildPrimitiveBuffers(Primitive::Plane, DX11::dxData.device, &primitiveBuffers);
 	
+	DX11VertexShaderData depthVS;
+	DX11PixelShaderData depthPS;
+	TSR_DX11_BuildDepthShaders(DX11::dxData.device, &depthVS, &depthPS);
+
 	TSR_InitCamera({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, 65.0f, (DX11::dxData.VP.Viewport.Width / DX11::dxData.VP.Viewport.Height));
 	ConstantBuffer cbuffer{};
 	InitializeCBuffer(CameraControl::CamData, &DX11::dxData, &cbuffer);
@@ -127,7 +131,7 @@ INT WINAPI wWinMain(
 			rotVelocity += imData.rotSpeed * dt;
 
 			// SCENE RENDERING
-			TSR_Draw(rotVelocity, &cbuffer, &imData, vsData, psData, &buffers, primVS, primPS, &primitiveBuffers, &drawable);
+			TSR_Draw(rotVelocity, &cbuffer, &imData, vsData, psData, &buffers, primVS, primPS, depthVS, depthPS, &primitiveBuffers, &drawable);
 			// GUI RENDERING
 			TSR_DrawGUI(&imData);
 

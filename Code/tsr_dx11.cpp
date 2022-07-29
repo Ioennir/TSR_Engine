@@ -129,6 +129,89 @@ struct ModelBuffers
 namespace DX11 
 {
 	DX11Data dxData{};
+
+	//temporal
+	ID3D11Texture2D* dRTTexture;
+	ID3D11RenderTargetView* dRTTextureView;
+	ID3D11ShaderResourceView* dRTSRView;
+	ID3D11Texture2D* dDepthStencilBuffer;
+	ID3D11DepthStencilView* dDepthStencilView;
+}
+
+void TSR_DX11_SetupDepthTestResources(ui32 vpWidth, ui32 vpHeight)
+{
+	D3D11_TEXTURE2D_DESC textureDesc;
+	HRESULT result;
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+	D3D11_TEXTURE2D_DESC depthBufferDesc;
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+
+
+	// Initialize the render target texture description.
+	ZeroMemory(&textureDesc, sizeof(textureDesc));
+
+	// Setup the render target texture description.
+	textureDesc.Width = vpWidth;
+	textureDesc.Height = vpHeight;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+
+	// Create the render target texture.
+	result = DX11::dxData.device->CreateTexture2D(&textureDesc, NULL, &DX11::dRTTexture);
+
+	// Setup the description of the render target view.
+	renderTargetViewDesc.Format = textureDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDesc.Texture2D.MipSlice = 0;
+
+	// Create the render target view.
+	result = DX11::dxData.device->CreateRenderTargetView(DX11::dRTTexture, &renderTargetViewDesc, &DX11::dRTTextureView);
+
+	// Setup the description of the shader resource view.
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	// Create the shader resource view.
+	result = DX11::dxData.device->CreateShaderResourceView(DX11::dRTTexture, &shaderResourceViewDesc, &DX11::dRTSRView);
+
+	// Initialize the description of the depth buffer.
+	ZeroMemory(&depthBufferDesc, sizeof(depthBufferDesc));
+
+	// Set up the description of the depth buffer.
+	depthBufferDesc.Width = vpWidth;
+	depthBufferDesc.Height = vpHeight;
+	depthBufferDesc.MipLevels = 1;
+	depthBufferDesc.ArraySize = 1;
+	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDesc.SampleDesc.Count = 1;
+	depthBufferDesc.SampleDesc.Quality = 0;
+	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthBufferDesc.CPUAccessFlags = 0;
+	depthBufferDesc.MiscFlags = 0;
+
+	// Create the texture for the depth buffer using the filled out description.
+	DX11::dxData.device->CreateTexture2D(&depthBufferDesc, NULL, &DX11::dDepthStencilBuffer);
+
+	// Initailze the depth stencil view description.
+	ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
+
+	// Set up the depth stencil view description.
+	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+	// Create the depth stencil view.
+	DX11::dxData.device->CreateDepthStencilView(DX11::dDepthStencilBuffer, &depthStencilViewDesc, &DX11::dDepthStencilView);
 }
 
 // TODO(Fran): update this to do all the checks we need.
@@ -392,6 +475,7 @@ void TSR_DX11_Init(WindowData & winData, DX11Data* dxData)
 	TSR_DX11_InitRenderTargetTexture(rtWidth, rtHeight, dxData->device, &dxData->VP.RenderTargetTexture);
 	// Viewport depth buffer initialization
 	TSR_DX11_InitDepthBuffer(rtWidth, rtHeight, dxData->device, &dxData->VP.DepthStencilTexture);
+	TSR_DX11_SetupDepthTestResources(rtWidth, rtHeight);
 	TSR_DX11_InitViewport(dxData->device, dxData->context, &dxData->VP);
 	TSR_DX11_SetGameViewport(rtWidth, rtHeight, &dxData->VP);
 	TSR_DX11_InitSampler();
@@ -589,4 +673,10 @@ void TSR_DX11_BuildPrimitiveShaders(ID3D11Device* device, DX11VertexShaderData* 
 {
 	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/primitiveVS.cso"), DX11InputLayout::pcnsize, DX11InputLayout::PCN, primVS);
 	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/primitivePS.cso"), primPS);
+}
+
+void TSR_DX11_BuildDepthShaders(ID3D11Device* device, DX11VertexShaderData* primVS, DX11PixelShaderData* primPS)
+{
+	TSR_DX11_BuildVertexShader(device, eastl::wstring(L"./CompiledShaders/DepthVS.cso"), DX11InputLayout::pcnsize, DX11InputLayout::PCN, primVS);
+	TSR_DX11_BuildPixelShader(device, eastl::wstring(L"./CompiledShaders/DepthPS.cso"), primPS);
 }

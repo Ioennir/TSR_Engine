@@ -23,6 +23,7 @@ struct PointLight
 StructuredBuffer<DirectionalLight> DLBuffer : register(t3);
 StructuredBuffer<PointLight> PLBuffer : register(t4);
 
+Texture2D depthMapTexture : register(t5);
 struct PS_Input
 {
     float4 iPosition : SV_POSITION;
@@ -61,26 +62,6 @@ float4 main(
     appliedLight += diffuseLight;
     
     float4 pixelColor = float4(input.iColor.xyz * appliedLight, 1.0f);
-    
-    //float3 LightWorldPos = float4(PLBuffer[0].Position.xyz, 1.0f);//    mul(float4(PLBuffer[0].Position.xyz, 1.0f), mWorld).xyz;
-    //float3 WorldPos = mul(float4(input.iPosWorld.xyz, 1.0f), mWorld);
-    //float3 lightToPixelVec = normalize(LightWorldPos.xyz - WorldPos);
-    //
-    //float d = distance(LightWorldPos, WorldPos);
-    //if (d > PLBuffer[0].Range)
-    //{
-    //    pixelColor = float4(ambientLight.xyz, 1.0f);
-    //}
-    //lightToPixelVec = normalize(lightToPixelVec);
-    //float howMuchLight = dot(lightToPixelVec, normalWS);
-    //
-    //if (howMuchLight > 0.0f)
-    //{
-    //    pixelColor += howMuchLight * input.iColor;
-    //    pixelColor /= PLBuffer[0].Fallof.x + (PLBuffer[0].Fallof.y * d) + (PLBuffer[0].Fallof.z * (d * d));
-    //}
-    ////float4 lightIntensity = saturate(dot(normalWS, DLBuffer[0].Direction.xyz));
-    //pixelColor = saturate(pixelColor + ambientLight);
     
     return float4(pixelColor.xyz, 1.0f);
 

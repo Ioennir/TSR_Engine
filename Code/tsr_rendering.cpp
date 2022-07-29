@@ -68,6 +68,11 @@ void TSR_DrawGUI(IMData* imData)
 	}
 	ImGui::End();
 
+	ImGui::Begin("Shadowmap", 0, rtWindowFlags);
+	{
+		ImGui::Image(PTRCAST(void*, DX11::dRTSRView), ImVec2{ 640.0f, 360.0f }, ImVec2{ 0,0 }, ImVec2{ 1,1 });
+	}
+	ImGui::End();
 	
 	//ImGui::Begin("texture", 0, rtWindowFlags);
 	//{
@@ -118,15 +123,17 @@ void UpdateCBuffer(const CameraData& CamData, float deltarot, float rotaxis[3], 
 
 	float anim = 180.0f;// DirectX::XMConvertToRadians(deltarot);
 
-	// Light WVP Matrix;
+	// Light WVP Matrix; Position properly the mat
 	DirectX::XMFLOAT4 lPosition = Lighting::LightsDir[0].Position;
 	DirectX::XMFLOAT4 lDirection = Lighting::LightsDir[0].Direction;
 	DirectX::XMMATRIX lScaleMat = DirectX::XMMatrixIdentity();
 	DirectX::XMMATRIX lRotMat	= DirectX::XMMatrixIdentity();
-	DirectX::XMMATRIX lTranslationMat = DirectX::XMMatrixTranslation(lPosition.x, lPosition.y, lPosition.z);
+	DirectX::XMMATRIX lTranslationMat = DirectX::XMMatrixTranslation(0.0f, 4.0f, 7.0f);
+
+	DirectX::XMFLOAT4 lFocus = TSR_DX_NormalizeFLOAT4(DirectX::XMFLOAT4(0.0f, -3.0f, 7.0f, 0.0f) - lPosition);
 
 	DirectX::XMMATRIX lWorld = lScaleMat * lRotMat * lTranslationMat;
-	DirectX::XMMATRIX lView = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lPosition), { 0.0f, -3.0f, 7.0f, 1.0f }, {0.0f, 1.0f, 0.0f, 0.0f});
+	DirectX::XMMATRIX lView = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lPosition), DirectX::XMLoadFloat4(&lFocus), {1.0f, 0.0f, 0.0f, 0.0f});
 	float nearZ = 0.1f;
 	float farZ = 1000.0f;
 	DirectX::XMMATRIX lProj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(CameraControl::CamData.Fov), CameraControl::CamData.AspectRatio, nearZ, farZ);
@@ -218,17 +225,58 @@ void TSR_RenderPrimitive(ID3D11DeviceContext * context, ModelBuffers * primitive
 	context->DrawIndexed(6, 0, 0);
 }
 
-void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, DX11VertexShaderData& primVS, DX11PixelShaderData& primPS, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
+void TSR_MapDepthToTexture(DX11VertexShaderData& depthVS, DX11PixelShaderData& depthPS, ModelBuffers * PrimitiveBuffers, ModelBuffers* buffers, DrawComponent * drawable, ConstantBuffer* cbuffer)
+{
+	// switch render target to texture
+	DX11::dxData.context->OMSetRenderTargets(1, &DX11::dRTTextureView, DX11::dDepthStencilView);
+	DirectX::XMVECTORF32 ClearColor = TSR_Black;
+	DX11::dxData.context->ClearRenderTargetView(DX11::dRTTextureView, ClearColor);
+	DX11::dxData.context->ClearDepthStencilView(DX11::dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	DX11::dxData.context->IASetInputLayout(depthVS.inputLayout);
+	DX11::dxData.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	DX11::dxData.context->VSSetShader(depthVS.shader, 0, 0);
+	DX11::dxData.context->PSSetShader(depthPS.shader, 0, 0);
+	// render vivi
+	float rotaxis [3] = { 0.0f, 1.0f, 0.0f };
+	UpdateCBuffer(CameraControl::CamData, 0.0f, rotaxis, cbuffer);
+	DX11::dxData.context->UpdateSubresource(DX11::dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	DX11::dxData.context->VSSetConstantBuffers(0, 1, &DX11::dxData.dx11_cbuffer);
+	DX11::dxData.context->PSSetConstantBuffers(0, 1, &DX11::dxData.dx11_cbuffer);
+	//TSR_RenderEntity(DX11::dxData.context, buffers, drawable);
+	// for now, one drawcall.
+	DX11::dxData.context->IASetVertexBuffers(0, 1, &buffers->vertexBuffer.buffer, &buffers->vertexBuffer.stride, &buffers->vertexBuffer.offset);
+	DX11::dxData.context->IASetIndexBuffer(buffers->indexBuffer.buffer, DXGI_FORMAT_R32_UINT, buffers->indexBuffer.offset);
+	for (ui32 i = 0; i < drawable->model.submeshCount; ++i)
+	{
+		//also set the textures
+		ui32 start = drawable->model.submeshStartIndex[i];
+		ui32 indexcount = drawable->model.submeshEndIndex[i] - start;
+		DX11::dxData.context->DrawIndexed(indexcount, start, 0);
+	}
+
+
+	// render plane
+	UpdatePlane(CameraControl::CamData, cbuffer);
+	DX11::dxData.context->UpdateSubresource(DX11::dxData.dx11_cbuffer, 0, 0, cbuffer, 0, 0);
+	TSR_RenderPrimitive(DX11::dxData.context, PrimitiveBuffers);
+}
+
+void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11VertexShaderData& vsData, DX11PixelShaderData& psData, ModelBuffers * buffers, DX11VertexShaderData& primVS, DX11PixelShaderData& primPS, DX11VertexShaderData& depthVS, DX11PixelShaderData& depthPS, ModelBuffers * primitiveBuffers, DrawComponent * drawable)
 {
 	DX11Data& dxData = DX11::dxData;
 	CameraData* CamData = &CameraControl::CamData;
 	//clear backbuffer
 	DirectX::XMVECTORF32 clearColor_orange{ 1.0f, 0.5f, 0.0f, 1.0f };
+	dxData.context->RSSetViewports(1, &dxData.VP.Viewport);
+
+	//Render Depth To Texture
+	TSR_MapDepthToTexture(depthVS, depthPS, primitiveBuffers, buffers, drawable, cbuffer);
 
 	// VIEWPORT RENDERING - 
 	// NOTE(Fran): should this be called all the time?
 	dxData.context->OMSetRenderTargets(1, &dxData.VP.RenderTargetView, dxData.VP.DepthStencilView);
-	dxData.context->RSSetViewports(1, &dxData.VP.Viewport);
+	
 
 	dxData.context->ClearRenderTargetView(dxData.VP.RenderTargetView, PTRCAST(const float*, &clearColor_orange));
 	dxData.context->ClearDepthStencilView(dxData.VP.DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -259,6 +307,7 @@ void TSR_Draw(float rotVelocity, ConstantBuffer* cbuffer, IMData* imData, DX11Ve
 	dxData.context->VSSetShaderResources(1, 1, &Lighting::LightBufferView);
 	dxData.context->PSSetShaderResources(3, 1, &Lighting::LightBufferView);
 	dxData.context->PSSetShaderResources(4, 1, &Lighting::PointLightBufferView);
+	dxData.context->PSSetShaderResources(5, 1, &DX11::dRTSRView);
 	TSR_RenderPrimitive(dxData.context, primitiveBuffers);
 }
 
